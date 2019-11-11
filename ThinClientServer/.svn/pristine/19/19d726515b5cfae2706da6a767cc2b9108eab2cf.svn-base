@@ -1,0 +1,104 @@
+package com.awl.tch.util;
+
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.server.TcpServer;
+
+@Component("appConfig")
+public class AppConfigMaster {
+
+
+	private static ConcurrentHashMap<String, Map<String,String>> appConfigCache; 
+	private static ConcurrentHashMap<String, UtilityDTO> appUtilInfoCache;
+	private static Logger logger = LoggerFactory.getLogger(AppConfigMaster.class);
+	
+	public static void load(){
+		ApplicationContext app = TcpServer.getContext();
+		DataSource d = (DataSource) app.getBean("dataSource");
+		JdbcTemplate jd = (JdbcTemplate) TcpServer.getContext().getBean("jdbcTemplate",d);
+
+		String query = "SELECT * FROM TCH_UTILITY_CONFIG order by U_UTILITY_NAME";
+
+		if(Property.isShowSql()){
+			logger.debug("SQL query : " + query);
+		}
+		try{
+			appConfigCache = new ConcurrentHashMap<String, Map<String,String>>(); 
+			List<Map<String,Object>> ls = jd.queryForList(query);
+			Map<String,String> row = null;
+			
+			for(Map<String , Object> map : ls){
+				if(appConfigCache.containsKey((String) map.get("U_UTILITY_NAME"))){
+					row.put((String) map.get("U_KEY"), (String) map.get("U_VALUE"));
+				}else{
+					row = new HashMap<String,String>();
+					row.put((String) map.get("U_KEY"), (String) map.get("U_VALUE"));
+					appConfigCache.put((String) map.get("U_UTILITY_NAME"),row);
+				}
+			}
+			logger.debug("Application config loaded successfully...");
+
+			appUtilInfoCache = new ConcurrentHashMap<String, UtilityDTO>();
+			String sql = "SELECT * FROM TCH_UTILITY_INFO";
+
+			if(Property.isShowSql()){
+				logger.debug("Fetching utility info sql ["+sql+"]");
+			}
+			List<Map<String,Object>> rows = jd.queryForList(sql);
+			UtilityDTO u = null;
+			if(rows	!= null){
+				for(Map<String,Object> utilIfo : rows){
+					u = new UtilityDTO();
+					String appName= (String) utilIfo.get("U_APP_NAME");
+					u.setAppName((String) utilIfo.get("U_APP_NAME"));
+					u.setIpAddress((String) utilIfo.get("U_IP_ADDRESS"));
+					u.setPortNumber((String) utilIfo.get("U_PORT_NUMBER"));
+					u.setUrl((String) utilIfo.get("U_URL"));
+					u.setPrintLabels((String) utilIfo.get("U_PRINT_LABELS"));
+					appUtilInfoCache.put(appName, u);
+
+					logger.debug("Application util info loaded successfully...");
+				}
+			}else{
+				throw new TCHQueryException(ErrorConstants.TCH_U001,ErrorMaster.get(ErrorConstants.TCH_U001));
+			}
+
+
+			logger.debug("Application config loaded successfully...");
+		}
+		catch(Exception e){
+			logger.debug("Excetion while loading Application config details",e);
+		}
+
+	}
+
+	public static Map<String,String>  getConfigValue(String utilityName){
+		return appConfigCache.get(utilityName);
+	}
+
+	public static UtilityDTO  getUtilInfoValue(String utilityName){
+		return appUtilInfoCache.get(utilityName);
+	}
+
+	public static String  getConfigValue(String utilityName,String key){
+		if(appConfigCache.get(utilityName) != null)
+			return appConfigCache.get(utilityName).get(key);
+		else
+			return null;
+	}
+}

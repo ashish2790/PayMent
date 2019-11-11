@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+        <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        	<append>true</append>
+                <encoder>
+                        <Pattern>
+                                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %line - %msg%n
+                        </Pattern>
+                </encoder>
+        </appender>
+
+        <appender name="THINCLIENT-APPLICATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>logs/tch-application.log</file>
+                <append>true</append>
+                <encoder>
+                        <Pattern>
+                                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - [%line] - %msg%n
+                        </Pattern>
+                </encoder>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                        <!-- rollover daily -->
+                        <fileNamePattern>logs/tch-application.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                        <maxHistory>20</maxHistory>
+                        <timeBasedFileNamingAndTriggeringPolicy
+                                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                                <maxFileSize>500MB</maxFileSize>
+                        </timeBasedFileNamingAndTriggeringPolicy>
+                </rollingPolicy>
+
+        </appender>
+
+        <appender name="SPRING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>logs/tch-spring.log</file>
+                <append>true</append>
+                <encoder>
+                        <Pattern>
+                                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%line] - %msg%n
+                        </Pattern>
+                </encoder>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                        <!-- rollover daily -->
+                        <fileNamePattern>logs/tch-spring.%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+                        <timeBasedFileNamingAndTriggeringPolicy
+                                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                                <maxFileSize>500MB</maxFileSize>
+                                <totalSizeCap>500MB</totalSizeCap>
+                        </timeBasedFileNamingAndTriggeringPolicy>
+                </rollingPolicy>
+
+        </appender>
+
+        <logger name="com.awl.tch" level="debug,info" additivity="false">
+                <appender-ref ref="STDOUT" />
+                <appender-ref ref="THINCLIENT-APPLICATION" />
+        </logger>
+        <logger name="org.tempuri" level="debug" additivity="false">
+                <appender-ref ref="STDOUT" />
+                <appender-ref ref="THINCLIENT-APPLICATION" />
+        </logger>
+         <logger name="com.awl.job" level="debug,info" additivity="false">
+                <appender-ref ref="STDOUT" />
+                <appender-ref ref="THINCLIENT-APPLICATION" />
+        </logger>
+		<logger name="org.springframework.jdbc.core.JdbcTemplate" level="debug" additivity="false">
+				<appender-ref ref="STDOUT" />	
+                <appender-ref ref="THINCLIENT-APPLICATION" />
+        </logger>
+        <logger name="com.aab" level="debug,info" additivity="false">
+		    <appender-ref ref="STDOUT" />	
+            <appender-ref ref="THINCLIENT-APPLICATION" />
+		</logger>
+		<logger name="com.tch.sbiepay" level="debug,info" additivity="false">
+		    <appender-ref ref="STDOUT" />	
+            <appender-ref ref="THINCLIENT-APPLICATION" />
+		</logger>
+		 <logger name="com.egras" level="debug,info" additivity="false">
+		    <appender-ref ref="STDOUT" />	
+            <appender-ref ref="THINCLIENT-APPLICATION" />
+		</logger>
+        <root level="error">
+                <appender-ref ref="STDOUT" />
+                <appender-ref ref="THINCLIENT-APPLICATION" />
+        </root>
+
+</configuration>

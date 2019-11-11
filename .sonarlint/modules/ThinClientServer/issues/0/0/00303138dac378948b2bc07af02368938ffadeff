@@ -1,0 +1,45 @@
+
+squid:S2629;"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(åÖ§şøÿÿÿÿH¢ªRMAJORZ
+CODE_SMELL
+ˆsquid:S1192B"RDefine a constant instead of duplicating this literal "Excetion occured " 4 times.(¯½øõøÿÿÿÿH£ªRCRITICALZ
+CODE_SMELL
+˜squid:S1192q"bDefine a constant instead of duplicating this literal "Exception while getting QR status" 4 times.(ÿæÂºüÿÿÿÿH¤ªRCRITICALZ
+CODE_SMELL
+‡squid:S2293["YReplace the type specification in this constructor call with the diamond operator ("<>").(çÍ·¾H¥ªRMINORZ
+CODE_SMELL
+~squid:CommentedOutCodeLineb"<This block of commented-out lines of code should be removed.(–ìÎÙûÿÿÿÿH¦ªRMAJORZ
+CODE_SMELL
+~squid:CommentedOutCodeLinet"<This block of commented-out lines of code should be removed.(Àâ«ÎşÿÿÿÿH§ªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine¥"<This block of commented-out lines of code should be removed.(Òò¬‹øÿÿÿÿH¨ªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineª"<This block of commented-out lines of code should be removed.(Àâ«ÎşÿÿÿÿH©ªRMAJORZ
+CODE_SMELL
+dsquid:S1135~"2Complete the task associated to this TODO comment.(» æÿÿÿÿÿHªªRINFOZ
+CODE_SMELL
+osquid:S34577"AFormat specifiers should be used instead of string concatenation.(ûÇÏ™H«ªRMAJORZ
+CODE_SMELL
+tsquid:S34578"AFormat specifiers should be used instead of string concatenation.(„éğ©ùÿÿÿÿH¬ªRMAJORZ
+CODE_SMELL
+nsquid:S34579"AFormat specifiers should be used instead of string concatenation.(¦İ=H­ªRMAJORZ
+CODE_SMELL
+tsquid:S3457;"AFormat specifiers should be used instead of string concatenation.(åÖ§şøÿÿÿÿH®ªRMAJORZ
+CODE_SMELL
+tsquid:S3457S"AFormat specifiers should be used instead of string concatenation.(ÒÂ†“ùÿÿÿÿH¯ªRMAJORZ
+CODE_SMELL
+nsquid:S3457X"AFormat specifiers should be used instead of string concatenation.(ÍÑ¾ZH°ªRMAJORZ
+CODE_SMELL
+tsquid:S3457Y"AFormat specifiers should be used instead of string concatenation.(şöãŸüÿÿÿÿH±ªRMAJORZ
+CODE_SMELL
+tsquid:S3457f"AFormat specifiers should be used instead of string concatenation.(˜Ë­ØşÿÿÿÿH²ªRMAJORZ
+CODE_SMELL
+osquid:S3457g"AFormat specifiers should be used instead of string concatenation.(Õ¼çùH³ªRMAJORZ
+CODE_SMELL
+usquid:S3457š"AFormat specifiers should be used instead of string concatenation.(ÒÂ†“ùÿÿÿÿH´ªRMAJORZ
+CODE_SMELL
+osquid:S3457¡"AFormat specifiers should be used instead of string concatenation.(ÍÑ¾ZHµªRMAJORZ
+CODE_SMELL
+usquid:S3457¢"AFormat specifiers should be used instead of string concatenation.(şöãŸüÿÿÿÿH¶ªRMAJORZ
+CODE_SMELL
+psquid:S3457Í"AFormat specifiers should be used instead of string concatenation.(¶æá™H·ªRMAJORZ
+CODE_SMELL

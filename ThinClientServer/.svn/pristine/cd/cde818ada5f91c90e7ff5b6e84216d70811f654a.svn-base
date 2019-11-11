@@ -1,0 +1,753 @@
+package com.awl.tch.bean;
+
+import java.util.Arrays;
+import java.util.List;
+
+import com.awl.tch.annotation.Mandate;
+import com.awl.tch.model.HandshakeDTO;
+import com.awl.tch.model.HealthObjectDTO;
+import com.google.gson.annotations.SerializedName;
+
+public class Handshake {
+	
+	// Following field used in request JSON
+	@SerializedName(value="eAppVer")
+	private String edcAppVersion;
+	
+	// Following field used in request JSON
+	@SerializedName(value="pckNum")
+	@Mandate
+	private String packetNumber;
+	
+	// Following field used in request JSON
+	@SerializedName(value="hanVerNum")
+	@Mandate
+	private String handshakeVersion;
+		
+	@SerializedName(value="crdObj")
+	private CardObj cardObj[]; 
+	
+	@SerializedName(value="billObj")
+	private BillingObj billingObj[]; 
+	
+	@SerializedName(value="binVl")
+	private String binValue[] = {"NULL"};
+	
+	@SerializedName(value="hltObj")
+	private HealthObject healthObject;
+	
+	@SerializedName(value = "menuObj")
+	private MenuObject[] menuObj;
+	
+	// Following field used in request JSON
+	@SerializedName(value="tSerNum")
+	@Mandate
+	private String terminalSerialNumber;
+	
+	@SerializedName(value="cltId")
+	@Mandate
+	private String clientId;
+	
+	@SerializedName(value="bkNm")
+	@Mandate
+	private String bankName;
+	
+	@SerializedName(value="mrNm")
+	@Mandate
+	private String merchantName;
+	
+	@SerializedName(value="lglNm")
+	@Mandate
+	private String legalName;
+	
+	@SerializedName(value="mrLoc")
+	@Mandate
+	private String merchantLocation;
+	
+	@SerializedName(value="lst4Dgt")
+	@Mandate
+	private String lastFourDigitPromptFlag;
+	
+	@SerializedName(value="dt")
+	@Mandate
+	private String date;
+	
+	@SerializedName(value="tm")
+	@Mandate
+	private String time;
+	
+	@SerializedName(value="flg")
+	private String flags[];
+	
+	@SerializedName(value="desflg")
+	@Mandate
+	private String descFlag;
+	
+	@SerializedName(value="sessKey")
+	@Mandate
+	private String sessionKey;
+	
+	//Following field is used to send cardAcquiringId in request to SWITCH
+	@SerializedName(value="mid")
+	@Mandate
+	private String cardAcquiringId;
+	
+	//Following field is used to send tid in request to SWITCH
+	@SerializedName(value="tid")
+	@Mandate
+	private String tid;
+	
+	@SerializedName(value="unqId")
+	private String branchCode;
+	
+	@SerializedName("appNm")
+	private String appName;
+	
+	//@SerializedName(value="branchName")
+	private transient String branchName;
+	
+	@SerializedName("invNum")
+	private String invoiceNumber;
+	
+	@SerializedName("stNum")
+	private String stanNumber;
+	
+	@SerializedName("rctPrt")
+	private String receiptPrinting;
+	
+	@SerializedName("hstId")
+	private String[] hostId;
+	
+	@SerializedName("conFee")
+	private String conFee;
+	
+	
+	/**
+	 * @return the conFee
+	 */
+	public String getConFee() {
+		return conFee;
+	}
+
+	/**
+	 * @param conFee the conFee to set
+	 */
+	public void setConFee(String conFee) {
+		this.conFee = conFee;
+	}
+
+	/**
+	 * @return the hostId
+	 */
+	public String[] getHostId() {
+		return hostId;
+	}
+
+	/**
+	 * @param hostId the hostId to set
+	 */
+	public void setHostId(String[] hostId) {
+		this.hostId = hostId;
+	}
+
+	/**
+	 * @return the receiptPrinting
+	 */
+	public String getReceiptPrinting() {
+		return receiptPrinting;
+	}
+
+	/**
+	 * @param receiptPrinting the receiptPrinting to set
+	 */
+	public void setReceiptPrinting(String receiptPrinting) {
+		this.receiptPrinting = receiptPrinting;
+	}
+
+
+	//Following field is used to save response from SWITCH. 
+	private transient String responseCode;
+	
+	//Following field is used to send straceNumber in request to SWITCH
+	private transient String straceNumber;
+	
+	//Following field is used to send NII in request to SWITCH
+	private transient String nii;
+	
+	//Following field is used for deciding processing Code
+	private transient String lineEncryptionFlag;
+	
+	//Following field is used for deciding processing Code
+	private transient String tpdu;
+	
+	//Following field is used for saving Terminal Model in HandshakeDTO
+	private transient String terminalModel;
+	
+	private transient List<String> menuEnableList;
+	
+	private transient String submenuEnableList;
+	
+	private transient String bankCode;
+	
+	private transient String keyExchange = "N";
+	
+	/**
+	 * @return the keyExchange
+	 */
+	public String getKeyExchange() {
+		return keyExchange;
+	}
+
+	/**
+	 * @param keyExchange the keyExchange to set
+	 */
+	public void setKeyExchange(String keyExchange) {
+		this.keyExchange = keyExchange;
+	}	
+	
+	/**
+	 * @return the bankCode
+	 */
+	public String getBankCode() {
+		return bankCode;
+	}
+
+	/**
+	 * @param bankCode the bankCode to set
+	 */
+	public void setBankCode(String bankCode) {
+		this.bankCode = bankCode;
+	}
+
+	/**
+	 * @return the menuEnableList
+	 */
+	public List<String> getMenuEnableList() {
+		return menuEnableList;
+	}
+
+	/**
+	 * @param menuEnableList the menuEnableList to set
+	 */
+	public void setMenuEnableList(List<String> menuEnableList) {
+		this.menuEnableList = menuEnableList;
+	}
+
+	/**
+	 * @return the menuObj
+	 */
+	public MenuObject[] getMenuObj() {
+		return menuObj;
+	}
+
+	/**
+	 * @param menuObj the menuObj to set
+	 */
+	public void setMenuObj(MenuObject[] menuObj) {
+		this.menuObj = menuObj;
+	}
+
+	/**
+	 * @return the healthObject
+	 */
+	public HealthObject getHealthObject() {
+		return healthObject;
+	}
+
+	/**
+	 * @param healthObject the healthObject to set
+	 */
+	public void setHealthObject(HealthObject healthObject) {
+		this.healthObject = healthObject;
+	}
+
+	/**
+	 * @return the appName
+	 */
+	public String getAppName() {
+		return appName;
+	}
+
+	/**
+	 * @param appName the appName to set
+	 */
+	public void setAppName(String appName) {
+		this.appName = appName;
+	}
+
+	/**
+	 * @return the invoiceNumber
+	 */
+	public String getInvoiceNumber() {
+		return invoiceNumber;
+	}
+
+	/**
+	 * @param invoiceNumber the invoiceNumber to set
+	 */
+	public void setInvoiceNumber(String invoiceNumber) {
+		this.invoiceNumber = invoiceNumber;
+	}
+
+	/**
+	 * @return the stanNumber
+	 */
+	public String getStanNumber() {
+		return stanNumber;
+	}
+
+	/**
+	 * @param stanNumber the stanNumber to set
+	 */
+	public void setStanNumber(String stanNumber) {
+		this.stanNumber = stanNumber;
+	}
+
+	/**
+	 * @return the billingObj
+	 */
+	public BillingObj[] getBillingObj() {
+		return billingObj;
+	}
+
+	/**
+	 * @param billingObj the billingObj to set
+	 */
+	public void setBillingObj(BillingObj[] billingObj) {
+		this.billingObj = billingObj;
+	}
+
+	/**
+	 * @return the branchCode
+	 */
+	public String getBranchCode() {
+		return branchCode;
+	}
+
+	/**
+	 * @param branchCode the branchCode to set
+	 */
+	public void setBranchCode(String branchCode) {
+		this.branchCode = branchCode;
+	}
+
+	/**
+	 * @return the branchName
+	 */
+	public String getBranchName() {
+		return branchName;
+	}
+
+	/**
+	 * @param branchName the branchName to set
+	 */
+	public void setBranchName(String branchName) {
+		this.branchName = branchName;
+	}
+
+	public String getEdcAppVersion() {
+		return edcAppVersion;
+	}
+
+	public void setEdcAppVersion(String edcAppVersion) {
+		this.edcAppVersion = edcAppVersion;
+	}
+
+	public String getPacketNumber() {
+		return packetNumber;
+	}
+
+	public void setPacketNumber(String packetNumber) {
+		this.packetNumber = packetNumber;
+	}
+
+	public String getHandshakeVersion() {
+		return handshakeVersion;
+	}
+
+	public void setHandshakeVersion(String handshakeVersion) {
+		this.handshakeVersion = handshakeVersion;
+	}
+
+	public CardObj[] getCardObj() {
+		return cardObj;
+	}
+
+	public void setCardObj(CardObj[] cardObj) {
+		this.cardObj = cardObj;
+	}
+
+	public String[] getBinValue() {
+		return binValue;
+	}
+
+	public void setBinValue(String[] binValue) {
+		this.binValue = binValue;
+	}
+
+	public String getTerminalSerialNumber() {
+		return terminalSerialNumber;
+	}
+
+	public void setTerminalSerialNumber(String terminalSerialNumber) {
+		this.terminalSerialNumber = terminalSerialNumber;
+	}
+
+	public String getClientId() {
+		return clientId;
+	}
+
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
+	}
+
+	public String getBankName() {
+		return bankName;
+	}
+
+	public void setBankName(String bankName) {
+		this.bankName = bankName;
+	}
+
+	public String getMerchantName() {
+		return merchantName;
+	}
+
+	public void setMerchantName(String merchantName) {
+		this.merchantName = merchantName;
+	}
+
+	public String getMerchantLocation() {
+		return merchantLocation;
+	}
+
+	public void setMerchantLocation(String merchantLocation) {
+		this.merchantLocation = merchantLocation;
+	}
+
+	public String getLastFourDigitPromptFlag() {
+		return lastFourDigitPromptFlag;
+	}
+
+	public void setLastFourDigitPromptFlag(String lastFourDigitPromptFlag) {
+		this.lastFourDigitPromptFlag = lastFourDigitPromptFlag;
+	}
+
+	public String getDate() {
+		return date;
+	}
+
+	public void setDate(String date) {
+		this.date = date;
+	}
+
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
+	}
+	
+	public String[] getFlags() {
+		return flags;
+	}
+
+	public void setFlags(String[] flags) {
+		this.flags = flags;
+	}
+
+	public String getDescFlag() {
+		return descFlag;
+	}
+
+	public void setDescFlag(String descFlag) {
+		this.descFlag = descFlag;
+	}
+
+	public String getSessionKey() {
+		return sessionKey;
+	}
+
+	public void setSessionKey(String sessionKey) {
+		this.sessionKey = sessionKey;
+	}
+	
+	public String getLegalName() {
+		return legalName;
+	}
+
+	public void setLegalName(String legalName) {
+		this.legalName = legalName;
+	}
+
+	public String getResponseCode() {
+		return responseCode;
+	}
+
+	public void setResponseCode(String responseCode) {
+		this.responseCode = responseCode;
+	}
+
+	public String getStraceNumber() {
+		return straceNumber;
+	}
+
+	public void setStraceNumber(String straceNumber) {
+		this.straceNumber = straceNumber;
+	}
+	
+	public String getTid() {
+		return tid;
+	}
+
+	public void setTid(String tid) {
+		this.tid = tid;
+	}
+
+	public String getCardAcquiringId() {
+		return cardAcquiringId;
+	}
+
+	public void setCardAcquiringId(String cardAcquiringId) {
+		this.cardAcquiringId = cardAcquiringId;
+	}
+	
+	public String getNii() {
+		return nii;
+	}
+
+	public void setNii(String nii) {
+		this.nii = nii;
+	}
+	
+	public String getLineEncryptionFlag() {
+		return lineEncryptionFlag;
+	}
+
+	public void setLineEncryptionFlag(String lineEncryptionFlag) {
+		this.lineEncryptionFlag = lineEncryptionFlag;
+	}
+
+	public String getTpdu() {
+		return tpdu;
+	}
+
+	public void setTpdu(String tpdu) {
+		this.tpdu = tpdu;
+	}
+	
+	public String getTerminalModel() {
+		return terminalModel;
+	}
+
+	public void setTerminalModel(String terminalModel) {
+		this.terminalModel = terminalModel;
+	}
+
+
+
+	public class CardObj{
+		
+		@SerializedName(value="crdNmH")
+		private String cardNameHigh;
+		
+		@SerializedName(value="crdNmL")
+		private String cardNameLow;
+		
+		@SerializedName(value="pnPptFlg")
+		private String pinPromptFlag;
+		
+		@SerializedName(value="accTyp")
+		private boolean accountType;
+
+		public String getCardNameHigh() {
+			return cardNameHigh;
+		}
+
+		public void setCardNameHigh(String cardNameHigh) {
+			this.cardNameHigh = cardNameHigh;
+		}
+
+		public String getCardNameLow() {
+			return cardNameLow;
+		}
+
+		public void setCardNameLow(String cardNameLow) {
+			this.cardNameLow = cardNameLow;
+		}
+
+		/**
+		 * @return the pinPromptFlag
+		 */
+		public String getPinPromptFlag() {
+			return pinPromptFlag;
+		}
+
+		/**
+		 * @param pinPromptFlag the pinPromptFlag to set
+		 */
+		public void setPinPromptFlag(String pinPromptFlag) {
+			this.pinPromptFlag = pinPromptFlag;
+		}
+
+		public boolean getAccountType() {
+			return accountType;
+		}
+
+		public void setAccountType(boolean accountType) {
+			this.accountType = accountType;
+		}
+		
+		
+	}
+	
+	/**
+	 * @Purpose : To set the flag in terminal based on the insight input
+	 * @author ashish.bhavsar
+	 *
+	 */
+	public static enum Flags{
+		SALE,
+		TIP,
+		REL,
+		VAS,
+		CSHBK,
+		SCSHBK,
+		UAPP,
+		BALENQ,
+		CONT,
+		PREAUTH,
+		PREACOMP,
+		REF,
+		SETL,
+		BRDEMI,
+		QR
+		
+	}
+	
+	/**
+	 * @Purpose : To set the hostid in terminal based on the insight input
+	 * @author ashish.bhavsar
+	 *
+	 */
+	
+	public static enum HostId{
+		CRDB,
+		AMEX,
+		DCC,
+		CUG
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Handshake [edcAppVersion=" + edcAppVersion + ", packetNumber="
+				+ packetNumber + ", handshakeVersion=" + handshakeVersion
+				+ ", cardObj=" + Arrays.toString(cardObj) + ", billingObj="
+				+ Arrays.toString(billingObj) + ", binValue="
+				+ Arrays.toString(binValue) + ", healthObject=" + healthObject
+				+ ", terminalSerialNumber=" + terminalSerialNumber
+				+ ", clientId=" + clientId + ", bankName=" + bankName
+				+ ", merchantName=" + merchantName + ", legalName=" + legalName
+				+ ", merchantLocation=" + merchantLocation
+				+ ", lastFourDigitPromptFlag=" + lastFourDigitPromptFlag
+				+ ", date=" + date + ", time=" + time + ", flags="
+				+ Arrays.toString(flags) + ", descFlag=" + descFlag
+				+ ", cardAcquiringId=" + cardAcquiringId + ", tid=" + tid
+				+ ", branchCode=" + branchCode + ", appName=" + appName
+				+ ", branchName=" + branchName + "]";
+	}
+
+	public HandshakeDTO createDTO()
+	{
+		HandshakeDTO handshakeDto = new HandshakeDTO();
+		handshakeDto.setEdcAppVersion(this.getEdcAppVersion());
+		handshakeDto.setPacketNumber(this.getPacketNumber()!=null ? Integer.parseInt(this.getPacketNumber()): null);
+		handshakeDto.setHandshakeVersion(this.getHandshakeVersion());
+		handshakeDto.setBinValues(Arrays.toString(this.getBinValue()));
+		handshakeDto.setTerminalSerialNumber(this.getTerminalSerialNumber());
+		handshakeDto.setClientId(this.getClientId());
+		handshakeDto.setBankName(this.getBankName());
+		handshakeDto.setMerchantName(this.getMerchantName());
+		handshakeDto.setLegalName(this.getLegalName());
+		handshakeDto.setMerchantLocation(this.getMerchantLocation());
+		handshakeDto.setLastFourDigitPromptFlag(this.getLastFourDigitPromptFlag());
+		handshakeDto.setDate(this.getDate());
+		handshakeDto.setTime(this.getTime());
+		handshakeDto.setFlags(Arrays.toString(this.getFlags()));
+		if(this.getHostId() != null)
+			handshakeDto.setHostIdFlags(Arrays.toString(this.getHostId()));
+		handshakeDto.setDescFlag(this.getDescFlag() == null ?  null : this.getDescFlag());
+		//handshakeDto.setSessionKey(this.getSessionKey());
+		handshakeDto.setResponseCode(this.getResponseCode());
+		handshakeDto.setStraceNumber(this.getStraceNumber());
+		handshakeDto.setTid(this.getTid());
+		handshakeDto.setCardAcquiringId(this.getCardAcquiringId());
+		handshakeDto.setNii(this.getNii());
+		handshakeDto.setLineEncryptionFlag(this.getLineEncryptionFlag());
+		handshakeDto.setTpdu(this.getTpdu());
+		handshakeDto.setTerminalModel(this.getTerminalModel());
+		handshakeDto.setInstallFlag("Y");
+		handshakeDto.setRtmFlag(0);
+		return handshakeDto;		
+	}
+	
+	public void setNull()
+	{
+		if(edcAppVersion==null){ edcAppVersion= "NULL"; }
+		if(packetNumber==null){packetNumber= "NULL"; }
+		if(handshakeVersion==null){handshakeVersion= "NULL"; }
+		if(terminalSerialNumber==null){terminalSerialNumber= "NULL"; }
+		if(clientId==null){clientId= "NULL"; }
+		if(bankName==null){bankName= "NULL"; }
+		if(merchantName==null){merchantName= "NULL"; }
+		if(legalName==null){legalName= "NULL"; }
+		if(merchantLocation==null){merchantLocation= "NULL"; }
+		if(lastFourDigitPromptFlag==null){lastFourDigitPromptFlag = "NULL"; }
+		if(date==null){date= "NULL"; }
+		if(time==null){time= "NULL"; }
+		if(descFlag==null){descFlag= "NULL"; }
+		if(sessionKey==null){sessionKey= "NULL"; }
+	}
+	
+	
+	public HealthObjectDTO getHealthDto(){
+		HealthObjectDTO healthDto = new HealthObjectDTO();
+		if(healthObject != null){
+			healthDto.setApn(this.healthObject.getApn());
+			healthDto.setTerminalSerialNumber(this.terminalSerialNumber);
+			healthDto.setCommMode(this.healthObject.getCommMode());
+			healthDto.setDisplayStat(this.healthObject.getDisplayStat());
+			healthDto.setPrintStat(this.healthObject.getPrintStat());
+			healthDto.setFailTrnxToHost(Integer.valueOf(this.healthObject.getFailTrnxToHost()));
+			healthDto.setImeiNumber(this.healthObject.getIMIENumber());
+			healthDto.setModemStat(this.healthObject.getModemStat());
+			healthDto.setUserProcTime(Integer.valueOf(this.healthObject.getUserProcTime()));
+			healthDto.setSimNumber(this.healthObject.getSimNumber());
+			healthDto.setTmsIp(this.healthObject.getTmsIp() != null ? this.healthObject.getTmsIp() : "");
+			healthDto.setTmsPort(this.healthObject.getTmsPort() != null ? this.healthObject.getTmsPort():"");
+			healthDto.setIpNum(this.healthObject.getIpNum());
+			healthDto.setPortNum(this.healthObject.getPortNum());
+			healthDto.setNacVal(this.healthObject.getNacVal() != null? Integer.parseInt(this.healthObject.getNacVal()) : 0);
+			healthDto.setRtmFlag(1);
+			healthDto.setMid(this.getCardAcquiringId());
+			healthDto.setTid(this.getTid());
+			healthDto.setClientId(this.getClientId());
+			healthDto.setTerminalSerialNumber(this.getTerminalSerialNumber());
+		}
+		return healthDto;
+	}
+
+	public String getSubmenuEnableList() {
+		return submenuEnableList;
+	}
+
+	public void setSubmenuEnableList(String submenuEnableList) {
+		this.submenuEnableList = submenuEnableList;
+	}
+
+	
+}

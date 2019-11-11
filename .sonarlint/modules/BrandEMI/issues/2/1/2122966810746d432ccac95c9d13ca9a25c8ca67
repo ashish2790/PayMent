@@ -1,0 +1,35 @@
+
+jsquid:S2629"7Use the built-in formatting to construct this argument.(ä…¼¯ûÿÿÿÿHšÎRMAJORZ
+CODE_SMELL
+squid:S2629"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(à€¨‹üÿÿÿÿH›ÎRMAJORZ
+CODE_SMELL
+Šsquid:S2629"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(µçâİHœÎRMAJORZ
+CODE_SMELL
+esquid:S2629%"7Use the built-in formatting to construct this argument.(Ìù†ñHÎRMAJORZ
+CODE_SMELL
+jsquid:S2629*"7Use the built-in formatting to construct this argument.(†ªÕÙüÿÿÿÿHÎRMAJORZ
+CODE_SMELL
+fsquid:S1197$"8Move the array designator from the variable to the type.(üÈçóHŸÎRMINORZ
+CODE_SMELL
+†squid:S2293"YReplace the type specification in this constructor call with the diamond operator ("<>").(ÕÉùJH ÎRMINORZ
+CODE_SMELL
+ysquid:CommentedOutCodeLine("<This block of commented-out lines of code should be removed.(ùõó¡H¡ÎRMAJORZ
+CODE_SMELL
+£squid:S1319"vThe type of the "menuObject" object should be an interface such as "List" rather than the implementation "LinkedList".(ç”ÀH¢ÎRMINORZ
+CODE_SMELL
+¤squid:S13197"qThe return type of this method should be an interface such as "List" rather than the implementation "LinkedList".(è¹®ÛşÿÿÿÿH£ÎRMINORZ
+CODE_SMELL
+hsquid:S1118":Add a private constructor to hide the implicit public one.(÷ÍŞH¤ÎRMAJORZ
+CODE_SMELL
+~squid:UselessImportCheck	"CRemove this unused import 'org.springframework.stereotype.Service'.(¼º¡ÚH¥ÎRMINORZ
+CODE_SMELL
+tsquid:S3457"AFormat specifiers should be used instead of string concatenation.(ä…¼¯ûÿÿÿÿH¦ÎRMAJORZ
+CODE_SMELL
+tsquid:S3457"AFormat specifiers should be used instead of string concatenation.(à€¨‹üÿÿÿÿH§ÎRMAJORZ
+CODE_SMELL
+osquid:S3457"AFormat specifiers should be used instead of string concatenation.(µçâİH¨ÎRMAJORZ
+CODE_SMELL
+osquid:S3457%"AFormat specifiers should be used instead of string concatenation.(Ìù†ñH©ÎRMAJORZ
+CODE_SMELL
+tsquid:S3457*"AFormat specifiers should be used instead of string concatenation.(†ªÕÙüÿÿÿÿHªÎRMAJORZ
+CODE_SMELL

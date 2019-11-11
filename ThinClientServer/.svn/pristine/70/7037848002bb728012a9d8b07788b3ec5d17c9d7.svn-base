@@ -1,0 +1,53 @@
+package com.awl.tch.externalentityImpl;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternalEntityBridge;
+import com.awl.tch.bridge.ExternlaEntityInterface;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.service.IrctcSaleEnqServiceImpl;
+import com.awl.tch.model.IrctcDTO;
+import com.tch.irctc.model.SaleEnquiry;
+
+@Service(Constants.TCH_IRCTC_BRIDGE)
+public class IrctcBridgeServiceImpl extends ExternalEntityBridge implements ExternlaEntityInterface<Payment>{
+
+	private static Logger logger = LoggerFactory.getLogger(IrctcBridgeServiceImpl.class);
+	@Override
+	public Payment updateStatus(Payment input) throws TCHServiceException {
+		
+		return input;
+	}
+
+	@Override
+	public Payment getAmount(Payment input) throws TCHServiceException {
+		logger.debug("inside codition for IRCTC");
+		SaleEnquiry saleEnquiry=new SaleEnquiry();
+		saleEnquiry.setTid(input.getTerminalId());
+		saleEnquiry.setAssetSrNo(input.getTempSerialNumber());
+		saleEnquiry.setServiceProvider("WL");
+		IrctcSaleEnqServiceImpl saleEnq =new IrctcSaleEnqServiceImpl();
+		IrctcDTO irctcDto =new IrctcDTO();
+		try {
+			saleEnquiry = saleEnq.cosumeWS(getUtilityInfo(input), saleEnquiry);
+			irctcDto.setTid(saleEnquiry.getTid());
+			irctcDto.setAsstSrNo(saleEnquiry.getAssetSrNo());
+			irctcDto.setStatus(saleEnquiry.getStatus());
+			irctcDto.setServiceProvider(saleEnquiry.getServiceProvider());
+			irctcDto.setTimeStamp(saleEnquiry.getTimeStamp());
+			irctcDto.setAppTxnId(saleEnquiry.getAppTxnId());
+			irctcDto.setReqType("Enquiry");
+			irctcDto.setAmount(saleEnquiry.getAmount());
+			input.setOriginalAmount(saleEnquiry.getAmount());
+			irctcDao.save(irctcDto);
+		} catch (IRCTCException e) {
+			throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+		} 
+		return input;
+	}
+}

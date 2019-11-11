@@ -1,0 +1,111 @@
+package com.awl.tch.cache;
+
+
+import java.util.ArrayList;
+
+import org.apache.commons.collections.MapIterator;
+import org.apache.commons.collections.map.LRUMap;
+
+/**
+ * @author ashish.bhavsar
+ */
+ 
+public class TCHMemoryCache<K, T> {
+ 
+    private long timeToLive;
+    private LRUMap tchCacheMap = new LRUMap();;
+ 
+    protected class TCHCacheObject {
+        public long lastAccessed = System.currentTimeMillis();
+        public T value;
+ 
+        protected TCHCacheObject(T value) {
+            this.value = value;
+        }
+    }
+ 
+   /* public TCHMemoryCache(long TchTimeToLive, final long TchTimerInterval, int maxItems) {
+        this.timeToLive = TchTimeToLive * 1000;
+ 
+        if (timeToLive > 0 && TchTimerInterval > 0) {
+            Thread t = new Thread(new Runnable() {
+                public void run() {
+                    while (true) {
+                        try {
+                            Thread.sleep(TchTimerInterval * 1000);
+                        } catch (InterruptedException ex) {
+                        }
+                        cleanup();
+                    }
+                }
+            });
+ 
+            t.setDaemon(true);
+            t.start();
+        }
+    }*/
+ 
+    public void put(K key, T value) {
+        synchronized (tchCacheMap) {
+        	tchCacheMap.put(key, new TCHCacheObject(value));
+        }
+    }
+ 
+    @SuppressWarnings("unchecked")
+    public T get(K key) {
+        synchronized (tchCacheMap) {
+            TCHCacheObject c = (TCHCacheObject) tchCacheMap.get(key);
+ 
+            if (c == null)
+                return null;
+            else {
+                c.lastAccessed = System.currentTimeMillis();
+                return c.value;
+            }
+        }
+    }
+ 
+    public void remove(K key) {
+        synchronized (tchCacheMap) {
+        	tchCacheMap.remove(key);
+        }
+    }
+ 
+    public int size() {
+        synchronized (tchCacheMap) {
+            return tchCacheMap.size();
+        }
+    }
+ 
+    @SuppressWarnings("unchecked")
+    public void cleanup() {
+ 
+        long now = System.currentTimeMillis();
+        ArrayList<K> deleteKey = null;
+ 
+        synchronized (tchCacheMap) {
+            MapIterator itr = tchCacheMap.mapIterator();
+ 
+            deleteKey = new ArrayList<K>((tchCacheMap.size() / 2) + 1);
+            K key = null;
+            TCHCacheObject c = null;
+ 
+            while (itr.hasNext()) {
+                key = (K) itr.next();
+                c = (TCHCacheObject) itr.getValue();
+ 
+                if (c != null && (now > (timeToLive + c.lastAccessed))) {
+                    deleteKey.add(key);
+                }
+            }
+        }
+ 
+        for (K key : deleteKey) {
+            synchronized (tchCacheMap) {
+            	tchCacheMap.remove(key);
+            }
+ 
+            Thread.yield();
+        }
+    }
+}

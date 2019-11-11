@@ -1,0 +1,13 @@
+2018-01-11 21:40:54 [Thread-2] DEBUG c.awl.tch.events.MyApplicationEvent - [18] - Event occured...
+2018-01-11 21:40:54 [Thread-2] INFO  com.awl.tch.util.ISOMessages - [25] - Loading messages
+2018-01-11 21:40:54 [Thread-2] DEBUG com.awl.tch.util.ErrorMaster - [51] - Query :SELECT EM_ERROR_CODE ,  EM_ERROR_DISPLAY_MSG FROM TCH_ERROR_MASTER
+2018-01-11 21:40:54 [Thread-2] DEBUG com.awl.tch.util.ErrorMaster - [54] - Fetching data for error messages
+2018-01-11 21:41:00 [Thread-2] DEBUG com.awl.tch.util.ErrorMaster - [56] - Data fetched
+2018-01-11 21:41:00 [Thread-2] DEBUG com.awl.tch.util.ErrorMaster - [35] - Error messages loaded successfully..
+2018-01-11 21:41:00 [Thread-2] DEBUG com.awl.tch.util.AppConfigMaster - [35] - SQL query : SELECT * FROM TCH_UTILITY_CONFIG order by U_UTILITY_NAME
+2018-01-11 21:41:01 [Thread-2] DEBUG com.awl.tch.util.AppConfigMaster - [51] - Application config loaded successfully...
+2018-01-11 21:41:01 [Thread-2] DEBUG com.awl.tch.util.EMIMaster - [48] - Query for setting emi display message :SELECT EMI_MSG_CODE,EMI_DISPLAY_MSG from TCH_EMI_DETAILS
+2018-01-11 21:41:01 [Thread-2] DEBUG com.awl.tch.util.EMIMaster - [32] - Emi details loaded successfully..
+2018-01-11 21:41:01 [Thread-2] DEBUG com.awl.tch.util.AppConfigMaster - [34] - SQL query : select th.h_tid,th.h_card_acquiring_id,ttp.se_number,th.h_terminal_serial_number,ttp.dccmid,ttp.dcctid from tch_handshakes th join tc_term_parameter ttp on th.h_tid = ttp.TID order by th.h_tid,ttp.se_number desc
+2018-01-11 21:41:03 [Thread-2] DEBUG com.awl.tch.util.AppConfigMaster - [60] - Cache loaded successfully...
+2018-01-11 21:41:03 [Thread-2] DEBUG c.awl.tch.events.MyApplicationEvent - [24] - Event closed...

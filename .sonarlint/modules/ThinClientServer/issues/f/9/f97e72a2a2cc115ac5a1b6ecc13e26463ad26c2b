@@ -1,0 +1,16 @@
+
+hsquid:S1141J"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿHÆãRMAJORZ
+CODE_SMELL
+hsquid:S1141="5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿHÇãRMAJORZ
+CODE_SMELL
+psquid:S3457„"AFormat specifiers should be used instead of string concatenation.(â†âûHÈãRMAJORZ
+CODE_SMELL
+hsquid:S1141Z"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿHÉãRMAJORZ
+CODE_SMELL
+ˆsquid:S37768"RRefactor this method to reduce its Cognitive Complexity from 34 to the 15 allowed.(¶ºÀ‘ÿÿÿÿÿHÊãRCRITICALZ
+CODE_SMELL
+œsquid:S1192O"kDefine a constant instead of duplicating this literal "Setting health object information in error" 3 times.(ïÿýžHËãRCRITICALZ
+CODE_SMELL
+hsquid:S1141m"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿHÌãRMAJORZ
+CODE_SMELL
+Ysquid:S1148D"#Use a logger to log this exception.(€ÉÔ…ýÿÿÿÿHÍãRMINORZVULNERABILITY

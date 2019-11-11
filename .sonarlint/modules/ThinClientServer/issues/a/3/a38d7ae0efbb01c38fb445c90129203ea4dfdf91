@@ -1,0 +1,21 @@
+
+esquid:S2629T"7Use the built-in formatting to construct this argument.(åó“ÂH„£RMAJORZ
+CODE_SMELL
+fsquid:S1197b"8Move the array designator from the variable to the type.(Ä›êH…£RMINORZ
+CODE_SMELL
+Œsquid:S2293"YReplace the type specification in this constructor call with the diamond operator ("<>").(Ä„˜ŸûÿÿÿÿH†£RMINORZ
+CODE_SMELL
+ysquid:CommentedOutCodeLine"<This block of commented-out lines of code should be removed.(ÒÊ›£H‡£RMAJORZ
+CODE_SMELL
+~squid:CommentedOutCodeLineQ"<This block of commented-out lines of code should be removed.(µÎÀÄûÿÿÿÿHˆ£RMAJORZ
+CODE_SMELL
+~squid:CommentedOutCodeLinel"<This block of commented-out lines of code should be removed.(áÊ‹üÿÿÿÿH‰£RMAJORZ
+CODE_SMELL
+Æsquid:S1319"’The type of the "terminalParameterCache" object should be an interface such as "ConcurrentMap" rather than the implementation "ConcurrentHashMap".(Ä„˜ŸûÿÿÿÿHŠ£RMINORZ
+CODE_SMELL
+hsquid:S1118":Add a private constructor to hide the implicit public one.(îÏûÛH‹£RMAJORZ
+CODE_SMELL
+rsquid:S2259]"KA "NullPointerException" could be thrown; "termParameter" is nullable here.(Í¾ÿHŒ£RMAJORZBUG
+Ssquid:S2386"Make this member "protected".(Ä„˜ŸûÿÿÿÿH£RMINORZVULNERABILITY
+osquid:S3457T"AFormat specifiers should be used instead of string concatenation.(åó“ÂH£RMAJORZ
+CODE_SMELL

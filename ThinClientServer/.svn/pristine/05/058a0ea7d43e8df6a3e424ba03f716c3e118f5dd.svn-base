@@ -1,0 +1,160 @@
+package com.awl.tch.model;
+
+import com.awl.tch.annotation.Column;
+import com.awl.tch.annotation.ICurrentTimestamp;
+import com.awl.tch.annotation.Id;
+import com.awl.tch.annotation.Table;
+import com.awl.tch.annotation.UCurrentTimestamp;
+
+@Table(name="TCH_MPOS_REPORT")
+public class MposDTO {
+	
+
+	
+	@Column(name="M_BANKREFERENCENO")
+	private String bankRefNo;
+
+	@Column(name="M_DATETIME")
+	private String dateTime;
+
+	@Column(name="M_AMOUNT")
+	private String amount;
+	
+	@Column(name="M_STATUS")
+	private String status;
+	
+	@Column(name="M_STATUSCODE")
+	private String statusCode;
+	
+	@Column(name="M_TRANSACTIONSTATUS")
+	private String transactionStatus;
+	
+	@Column(name="M_STATUSDESCRIPTION")
+	private String statusDescription;
+
+	@Column(name="M_ENCREQUESTVALUE")
+	private String encRequestVal;
+	
+	@Column(name="M_ENCDATA")
+	private String encData;
+	
+	@Column(name="M_RESMAP")
+	private String resMap;
+	
+	@Column(name="M_REQUEST_TYPE")
+	private String reqType;
+	
+	@Column(name="M_CREATED")
+	@ICurrentTimestamp
+	private String created;
+	
+	@Column(name="M_UPDATED")
+	@UCurrentTimestamp
+	private String updated;
+
+	public String getReqType() {
+		return reqType;
+	}
+
+	public void setReqType(String reqType) {
+		this.reqType = reqType;
+	}
+
+	public String getCreated() {
+		return created;
+	}
+
+	public void setCreated(String created) {
+		this.created = created;
+	}
+
+	public String getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(String updated) {
+		this.updated = updated;
+	}
+
+	
+	public String getBankRefNo() {
+		return bankRefNo;
+	}
+
+	public void setBankRefNo(String bankRefNo) {
+		this.bankRefNo = bankRefNo;
+	}
+
+	public String getDateTime() {
+		return dateTime;
+	}
+
+	public void setDateTime(String dateTime) {
+		this.dateTime = dateTime;
+	}
+
+	public String getAmount() {
+		return amount;
+	}
+
+	public void setAmount(String amount) {
+		this.amount = amount;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getStatusCode() {
+		return statusCode;
+	}
+
+	public void setStatusCode(String statusCode) {
+		this.statusCode = statusCode;
+	}
+
+	public String getTransactionStatus() {
+		return transactionStatus;
+	}
+
+	public void setTransactionStatus(String transactionStatus) {
+		this.transactionStatus = transactionStatus;
+	}
+
+	public String getStatusDescription() {
+		return statusDescription;
+	}
+
+	public void setStatusDescription(String statusDescription) {
+		this.statusDescription = statusDescription;
+	}
+
+	public String getEncRequestVal() {
+		return encRequestVal;
+	}
+
+	public void setEncRequestVal(String encRequestVal) {
+		this.encRequestVal = encRequestVal;
+	}
+
+	public String getEncData() {
+		return encData;
+	}
+
+	public void setEncData(String encData) {
+		this.encData = encData;
+	}
+
+	public String getResMap() {
+		return resMap;
+	}
+
+	public void setResMap(String resMap) {
+		this.resMap = resMap;
+	}
+
+}

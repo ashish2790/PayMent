@@ -1,0 +1,270 @@
+package com.awl.tch.iso8583;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.awl.tch.bean.DataPrintObject;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.util.AppConfigMaster;
+import com.awl.tch.util.UtilityHelper;
+import com.solab.iso8583.IsoMessage;
+import com.solab.iso8583.IsoType;
+import com.solab.iso8583.MessageFactory;
+
+public class ISOdccSale {
+private static final Logger logger = LoggerFactory.getLogger(ISOdccSale.class);
+	
+	public static String createISOProgramEnquiry(Payment paymentBean){
+		
+		MessageFactory<IsoMessage> msgFact = new MessageFactory<IsoMessage>();
+		IsoMessage iso = msgFact.newMessage(0x600);
+		logger.debug("TPDU : [" + "49534F383538332D31393837000000010000000500" +"]");
+		iso.setIsoHeader(UtilityHelper.unHex("49534F383538332D31393837000000010000000500"));
+		iso.setBinary(true);
+		iso.setCharacterEncoding("ISO-8859-1");
+		
+		logger.debug("Currency conversion trasaction");
+		
+		logger.info("ISO REQUEST FOR 0600");
+		logger.info("Field 3 :["+ 910000 +"]");
+		logger.info("Field 2 :["+ paymentBean.getPanNumber() +"]");
+		logger.info("Field 11 :["+paymentBean.getStanNumber()+"]");
+		logger.info("Field 24 :["+paymentBean.getNii().trim()+"]");
+		logger.info("Field 25 :["+00+"]");
+		logger.info("Field 41 :["+paymentBean.getTerminalId()+"]");
+		logger.info("Field 42 :["+paymentBean.getMerchantId()+"]");
+		logger.info("Field 63 :["+paymentBean.getField63()+"]");
+		
+		iso.setValue(2, paymentBean.getPanNumber() , new BCDencodeField60(), IsoType.LLBIN, 19); // pan number
+		iso.setValue(3, 910000 , IsoType.NUMERIC, 6);
+		iso.setValue(11, Integer.valueOf(paymentBean.getStanNumber()), IsoType.NUMERIC, 6); // stan number
+		iso.setValue(24, paymentBean.getNii().trim() , IsoType.NUMERIC, 3); // NII
+		iso.setValue(25, 00 , IsoType.NUMERIC, 2);// pos condition code
+		iso.setValue(41, paymentBean.getTerminalId(), IsoType.ALPHA, 8); // terminal id		
+		iso.setValue(42, paymentBean.getMerchantId(), IsoType.ALPHA, 15); // acquiring id or merchant id
+		iso.setValue(63, paymentBean.getField63(),new BCDencodeField60(), IsoType.LLLVAR, 6);
+		 
+
+		
+		/*iso.setValue(2, "5262344339046007" , new BCDencodeField60(), IsoType.LLBIN, 19); // pan number
+		iso.setValue(3, 910000 , IsoType.NUMERIC, 6);
+		iso.setValue(11,12233, IsoType.NUMERIC, 6); // stan number	
+		iso.setValue(24, 112 , IsoType.NUMERIC, 3); // NII
+		iso.setValue(25, 00 , IsoType.NUMERIC, 2);// pos condition code
+		iso.setValue(41, "84011223", IsoType.ALPHA, 8); // terminal id		
+		iso.setValue(42, "000310000000951  ", IsoType.ALPHA, 15); // acquiring id or merchant id
+		iso.setValue(63, paymentBean.getField63(),new BCDencodeField60(), IsoType.LLLVAR, 6);*/
+		
+		/*iso.setValue(2, "5262344339046007" , new BCDencodeField60(), IsoType.LLBIN, 19); // pan number
+		iso.setValue(3, 910000 , IsoType.NUMERIC, 6);
+		iso.setValue(11,123, IsoType.NUMERIC, 6); // stan number	
+		iso.setValue(24, 112 , IsoType.NUMERIC, 3); // NII
+		iso.setValue(25, 00 , IsoType.NUMERIC, 2);// pos condition code
+		iso.setValue(41, "84011223", IsoType.ALPHA, 8); // terminal id		
+		iso.setValue(42, "000310000000951", IsoType.ALPHA, 15); // acquiring id or merchant id
+		System.out.println(paymentBean.getField63());*/
+		
+		byte[] isoMsg = iso.writeData();
+		ByteArrayOutputStream byteOuts = new ByteArrayOutputStream();
+		
+		try {
+			iso.write(byteOuts, 2);
+			isoMsg = byteOuts.toByteArray();
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error("Exception in Program Enquiry transaction :",e);
+		}finally{	
+			try {
+				byteOuts.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		logger.info("dcc enquiry  packet :"+UtilityHelper.byteArrayToHexString(isoMsg));
+		
+		String str ="";
+			
+		try {
+			str = new String(isoMsg,"ISO-8859-1");
+		} catch (UnsupportedEncodingException e) {
+			logger.error("Exception in Program Enquiry packet trancation :",e);
+		}
+		return str;
+	}
+	
+	
+	public static void parseDccConversionEnquiry(final Payment paymentBean, String responseData){
+
+		try {
+			byte responseByteArray[] = responseData.getBytes("ISO-8859-1");
+			String hexDumpResponse = UtilityHelper.byteArrayToHexString(responseByteArray);
+			System.out.println("Response :" +hexDumpResponse);
+			final MessageFactory<IsoMessage> mfact = UtilityHelper.config("config.xml");
+			byte binArray[]  = Arrays.copyOfRange(responseByteArray, 2, responseByteArray.length);
+			mfact.setUseBinaryMessages(true);
+			logger.debug("Conversion  Enquiry response : [0610]");
+			IsoMessage m610 = mfact.parseMessage(binArray, 21);
+			
+			logger.info("Field 3 :"+m610.getField(3));
+			logger.info("Field 4 :"+m610.getField(4));
+			logger.info("Field 11 :"+m610.getField(11));
+			logger.info("Field 12 :"+m610.getField(12));
+			logger.info("Field 13 :"+m610.getField(13));
+			logger.info("Field 24 :"+m610.getField(24));
+			logger.info("Field 37 :"+m610.getField(37));
+			logger.info("Field 39 :"+m610.getField(39));
+			logger.info("Field 41 :"+m610.getField(41));
+			logger.info("Field 63 :"+m610.getField(63));
+			
+			paymentBean.setProcessingCode(m610.getField(3).toString());
+			
+			if(m610.getField(39) != null){
+				paymentBean.setResponseCode(m610.getField(39).toString());
+			}
+			if(m610.getField(37) != null){
+				paymentBean.setRetrivalRefNumber(m610.getField(37).toString());
+			}
+			//0003 01D
+			//000803840
+			//00060840 412900
+			//000412000000000122
+			//0007043300
+			//0010012
+			//000903USD
+			if(Constants.TCH_RESP_84.equals(paymentBean.getResponseCode())){
+				logger.debug("Continuew with local currency..");
+			}else{
+				if(m610.getField(63) !=null){
+					paymentBean.setField63(m610.getField(63).toString());
+					String tlv = m610.getField(63).toString();
+					
+					for(int i = 0 ; i < tlv.length();){
+						String key = tlv.substring(i, i=i+4);
+			            int length = Integer.parseInt(tlv.substring(i, i=i+2));
+						switch(key){
+						case "0003":
+							logger.debug("DCC Indicator :" + tlv.substring(i,i=i+length));
+							break;
+						case "0004":
+							paymentBean.setOriginalAmount(Long.valueOf(tlv.substring(i,i=i+length)).toString());
+							logger.debug("Original amount" + paymentBean.getOriginalAmount());
+							break;
+						case "0006":
+							String exchangeRate = tlv.substring(i,i=i+length);
+							if(exchangeRate != null && !exchangeRate.isEmpty()){
+								int precision = Integer.parseInt(exchangeRate.substring(0,1));
+								String value = exchangeRate.substring(1);
+								paymentBean.setExchangeRate(new BigDecimal(value).movePointLeft(precision).toPlainString());
+							}
+							logger.debug("Exchange rate : " +paymentBean.getExchangeRate());
+							break;
+						case "0007":
+							String mrkUp = tlv.substring(i,i=i+length);
+							if(mrkUp != null && !mrkUp.isEmpty())
+								paymentBean.setMarkup(new BigDecimal(mrkUp).movePointLeft(3).toPlainString());
+							logger.debug("Markup value :" + paymentBean.getMarkup());
+							break;
+						case "0008":
+							paymentBean.setCurrencyCode(tlv.substring(i,i=i+length));
+							logger.debug("Currency code :" + paymentBean.getCurrencyCode());
+							break;
+						case "0009":
+							paymentBean.setCurrencyName(tlv.substring(i,i=i+length));
+							logger.debug("Currency name :" + paymentBean.getCurrencyName());
+							break;
+						case "0010":
+							paymentBean.setNoOfDecimal(Integer.parseInt(tlv.substring(i,i=i+length)));
+							logger.debug("No of decimal  :" + paymentBean.getNoOfDecimal());
+							break;
+						default :
+							break;
+						}
+					}
+					if(m610.getField(4) != null)
+						paymentBean.setDccAmount(Long.valueOf(m610.getField(4).toString()).toString());
+				}
+			}
+		} catch (IOException e) {
+			logger.error("Exception in Program Enquiry :"+e.getMessage(),e);
+		} catch (ParseException e) {
+			logger.error("Exception in Program Enquiry:"+e.getMessage(),e);
+		}
+		catch (Exception e) {
+			logger.error("Exception in Program Enquiry :"+e.getMessage(),e);
+		}
+	}
+	
+	/**
+	 * set DataPrintObject as per DCC enquiry exchange request requirement
+	 * @param input
+	 * @throws TCHServiceException
+	 * @author pooja.patil
+	 */
+	public static void setDCCValues(final Payment input){
+		logger.debug("Inside setDCCValues()");
+		List<DataPrintObject> listdpo = new ArrayList<DataPrintObject>();
+		DataPrintObject d = new DataPrintObject();
+		String line = AppConfigMaster.getConfigValue(Constants.TCH_ENQ_EXCG, Constants.TCH_LINE_UTILITY);
+		String currExcg = AppConfigMaster.getConfigValue(Constants.TCH_ENQ_EXCG, Constants.TCH_CURREXCG_UTILITY);
+		d.setPrintLabel(line);
+		listdpo.add(d);
+		
+		d = new DataPrintObject();
+		d.setPrintLabel(currExcg);
+		d.setPrintVal(null);
+		listdpo.add(d);
+		
+		d = new DataPrintObject();
+		d.setPrintLabel(line);
+		listdpo.add(d);
+		
+		d = new DataPrintObject();
+		String strUSD = "USD";
+		String padded1 = String.format("%-23s", strUSD);
+		padded1 = String.format("%28s", padded1);
+		
+		d.setPrintLabel(padded1);
+		d.setPrintVal("058.2000");
+		listdpo.add(d);
+		
+		d = new DataPrintObject();
+		String strEUR = "EUR";
+		String padded2 = String.format("%-23s", strEUR);
+		padded2 = String.format("%28s", padded2);
+		
+		d.setPrintLabel(padded2);
+		d.setPrintVal("080.4400");
+		listdpo.add(d);
+		
+		d = new DataPrintObject();
+		d.setPrintLabel(line);	
+		listdpo.add(d);
+		DataPrintObject[] dArray = new DataPrintObject[listdpo.size()];
+		input.setDataPrintObject(listdpo.toArray(dArray));
+	}
+	
+	/*public static String addspace(int i, String str)
+    {       
+        StringBuilder str1 = new StringBuilder();
+            for(int j=0;j<i;j++)
+            {
+                str1.append(" ");
+            }
+            str1.append(str);           
+            return str1.toString();         
+
+    }*/
+	
+}

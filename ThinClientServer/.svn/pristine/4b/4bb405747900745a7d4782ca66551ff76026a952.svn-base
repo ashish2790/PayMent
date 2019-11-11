@@ -1,0 +1,712 @@
+package com.awl.tch.adaptor.brandemi;
+
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Component;
+
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.DataPrintObject;
+import com.awl.tch.bean.EMIObject;
+import com.awl.tch.bean.MenuObject;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bean.ProgramObject;
+import com.awl.tch.bean.SkuObject;
+import com.awl.tch.bean.SuperMenuObject;
+import com.awl.tch.bean.TenureObject;
+import com.awl.tch.brandemi.model.ValidationParameter;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.BrandEMIDTO;
+import com.awl.tch.util.AppConfigMaster;
+import com.awl.tch.util.ErrorMaster;
+
+@Component(Constants.TCH_BRAND_EMI_ADAPTOR)
+public class BrandEmiAdaptorImpl extends AbstractBrandEmiAdaptor implements BrandEmiAdaptor{
+
+	private static Logger logger = LoggerFactory.getLogger(BrandEmiAdaptorImpl.class);
+	
+	public static ConcurrentHashMap<String, SuperMenuObject> offlineEnq = new ConcurrentHashMap<String, SuperMenuObject>();
+	
+	@Override
+	public void getMenuDetails(SuperMenuObject input) throws TCHServiceException {
+		try{
+			MenuObject[] arrMenu = null;
+			List<MenuObject> lst = brandEmiservice.getMenuObject(input.getMerchantId());
+			logger.debug("Size of list: " + lst.size());
+			if(lst.size() > 20){
+				input.setDecisionFlag("CONT");
+			}
+			if(input.getPackectNumber() == null){
+				arrMenu = new MenuObject[20];
+				input.setMenuObject(lst.subList(0, 20).toArray(arrMenu));
+			}else{
+				logger.debug("Packet number : " + input.getPackectNumber());
+				int startIndex = Integer.parseInt(input.getPackectNumber()) * 20;
+				int lastIndex = startIndex + 20;
+				logger.debug("startIndex : " + startIndex);
+				if(lst.size() > (startIndex + 20)){
+					arrMenu = new MenuObject[20];
+					input.setMenuObject(lst.subList(startIndex,lastIndex).toArray(arrMenu));
+					logger.debug("lastIndex : " + lastIndex);
+				}else{
+					arrMenu = new MenuObject[lst.size() - startIndex];
+					logger.debug("lastIndex : " + lst.size());
+					input.setMenuObject(lst.subList(startIndex, lst.size()).toArray(arrMenu));
+					input.setDecisionFlag(null);
+				}
+			}
+		}catch(Exception e){
+			logger.debug("Exception in fetching menu" + e);
+			throw new TCHServiceException(ErrorConstants.TCH_BR10, ErrorMaster.get(ErrorConstants.TCH_BR10));
+		}
+	}
+
+	@Override
+	public void getSkuCode(SuperMenuObject input) throws TCHServiceException {
+		
+		/*
+		 * CHECK FOR OFFLINE VALIDATION
+		 */
+		
+		logger.debug("Getting validation info..");
+		ValidationParameter validParams = null;
+		if(AbstractBrandEmiAdaptor.brandEmiFinalCache.get(input.getTerminalSerialNumber()) != null){
+			validParams = AbstractBrandEmiAdaptor.brandEmiFinalCache.get(input.getTerminalSerialNumber()).getValidationParameter();
+		}
+		if(validParams != null){
+			if(Constants.TCH_BRAND_EMI_OFFLINE.equals(validParams.getValidationType())){
+				Integer noOfDayswithoutValidation = 0;
+				Integer noOfDaysForMerchant = 0;
+				noOfDaysForMerchant = Integer.valueOf(validParams.getNumberOfDays());
+				try {
+					noOfDayswithoutValidation = brandDao.getNumberOfDaysWithoutValidation(input);
+					logger.debug("Actual days ["+noOfDayswithoutValidation+"]" );
+					logger.debug("Current days ["+noOfDayswithoutValidation+"]" );
+					if(noOfDayswithoutValidation > noOfDaysForMerchant){
+						throw new TCHServiceException("BR-14", "EXCEED VALIDATION DAYS");
+					}
+				} catch (TCHQueryException e) {
+					throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+				}
+			}	
+		}
+		
+		/*
+		 * End of CHECK OFFLINE VALIDATION
+		 */
+		
+		
+		try{
+			if(input.getMenuObject() != null){
+				brdEmiStepWiseCaching.put(input.getTerminalSerialNumber(), input.getMenuObject());
+				SuperMenuObject superMenuObj = new SuperMenuObject();
+				superMenuObj.setMenuObject(input.getMenuObject());
+				brandEmiFinalCache.put(input.getTerminalSerialNumber(), superMenuObj); // save selected menu 
+			}else{
+				logger.info("Menu object is blank..");
+				throw new TCHServiceException("BR-06", "INVALID SELECTION");
+			}
+			logger.debug("MID [" +input.getMerchantId() +"]");
+			LinkedList<MenuObject> lst = brandEmiservice.getSKUCodeMenu(input.getMerchantId(), input);	//get sku code from insight
+			if(lst != null && !lst.isEmpty())
+				input.setMenuObject(lst.toArray(new MenuObject[lst.size()]));
+			else{
+				logger.info("sku code not present");
+				throw new TCHServiceException(ErrorConstants.TCH_BR06, ErrorMaster.get(ErrorConstants.TCH_BR06));
+			}
+		}catch(Exception e){
+			logger.debug("Exception in fetching sku code : ",e);
+			throw new TCHServiceException(ErrorConstants.TCH_BR06, ErrorMaster.get(ErrorConstants.TCH_BR06));
+		}
+	}
+
+	@Override
+	public void getTenureDetails(SuperMenuObject input) throws TCHServiceException {
+
+		logger.debug("inside tenure detail");
+		logger.debug("Pushing details in cache");
+		
+		//put the sku code in final cache
+		
+		SuperMenuObject superObj = brandEmiFinalCache.get(input.getTerminalSerialNumber());
+		superObj.setBinNumber(input.getBinNumber());
+		logger.debug("BIN value :" + superObj.getBinNumber());
+		superObj.setSkuCode(input.getMenuObject()[0].getDisplayName());
+		/*
+		 * product details response in string array
+		 * 
+		 * PRODUCTCODE
+		 * PRODUCTDESCRIPTION
+		 * PROGRAMCODE
+		 * PROGRAMSHORTNAME
+		 * 
+		 */
+		try {
+			superObj.setProductDetails(brandEmiservice.getProductDetails(input.getMerchantId(), superObj));
+			superObj.setManufactureDetails(brandEmiservice.getManufacturerDetails(input.getMerchantId(), superObj.getMenuObject()));
+			superObj.setValidationParameter(brandEmiservice.getValidationParameter(input.getMerchantId(), superObj.getMenuObject()));
+		} catch (Exception e2) {
+			throw new TCHServiceException(ErrorConstants.TCH_BR08, ErrorMaster.get(ErrorConstants.TCH_BR08));
+		}
+		superObj.setCustomerName(input.getCustomerName());
+		superObj.setMobileNumber(input.getMobileNumber());
+		// end pf putting sku code
+		putInGenericCache(input);
+		try {
+			MenuObject[] selectedMenuArr = input.getMenuObject();
+			BillingObj[] billingArr = null;
+			if(input.getMenuObject() != null && input.getMenuObject().length > 0){
+				billingArr = new BillingObj[1];
+				BillingObj blgObj = new BillingObj();
+				blgObj.setLabelName("SKU Code :");
+				blgObj.setLabelValue(superObj.getSkuCode());
+				billingArr[0] = blgObj;
+			}
+			if(selectedMenuArr != null && selectedMenuArr.length != 0){
+				try{
+					//ValidationParameter param =  (ValidationParameter) generalCacheForBRDEMI.get(input.getTerminalSerialNumber()+Constants.TCH_BRD_ISSUER_VALID);//brandEmiservice.getValidationParameter(input.getMerchantId(), brdEmiCaching.get(input.getTerminalSerialNumber()));
+					ValidationParameter param = brandEmiFinalCache.get(input.getTerminalSerialNumber()).getValidationParameter();
+					logger.debug("parameter values :" + param);
+					validationForInputParameters(input,param);
+					validateForSerialNumber(param, input,superObj);
+				}catch(TCHServiceException e){
+					logger.debug("Exception while getting validation param :" + e);
+					throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+				}catch (Exception e){
+					logger.debug("Exception while getting validation param :" + e);
+					throw new TCHServiceException("BR-07", "NO DATA FOUND" );
+				}
+			}else{
+				throw new TCHServiceException("BR-03", "INVALID SELECTION");
+			}
+		
+			Payment paymentBean = new Payment();
+			EMIObject emiObj = new EMIObject();
+			BeanUtils.copyProperties(input, paymentBean);
+			List<ProgramObject> prgLst = new ArrayList<ProgramObject>();
+			ProgramObject prg = new ProgramObject();
+			//prg.setProgramCode(getProductDetails(input).get(2));
+			prg.setProgramCode(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getProductDetails()[2]); // set program code from cache
+			prgLst.add(prg);
+			emiObj.setProgramObject(prgLst.toArray(new ProgramObject[prgLst.size()]));
+			paymentBean.setEmiObject(emiObj);
+			paymentBean.setBinNumber(input.getBinNumber());
+			paymentBean.setBinRangeValue(6);
+			paymentBean.setSchemeValue(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[2].getDisplayName());
+			//paymentBean.setProductCode(getProductDetails(input).get(0));
+			paymentBean.setProductCode(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getProductDetails()[0]);// set product code from cache
+			//paymentBean.setManufacturerCode(getManufactureDetails(input).get(0));
+			paymentBean.setManufacturerCode(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getManufactureDetails()[0]);
+			
+			logger.debug("Program code mapping.. done");
+			
+			paymentSaleDao.getEMIEnquiry(paymentBean); 		// calling getEMiEnquiry service
+			logger.info("getting values for tenure");
+			logger.debug("paymentBean.getEmiObject().getTenureObject() : " + paymentBean.getEmiObject().getTenureObject());
+			if(paymentBean.getEmiObject().getTenureObject() != null){
+				for(TenureObject t : paymentBean.getEmiObject().getTenureObject()){
+					Integer tenure = Integer.parseInt(t.getTenure());
+					generalCacheForBRDEMI.put(input.getTerminalSerialNumber() + tenure, t.getDiscountFlag());
+				}
+			}
+			emiObj.setTenureObject(paymentBean.getEmiObject().getTenureObject());
+			logger.debug("tenure value set");
+			input.setMenuObject(null);
+			input.setMobileNumber(null);
+			input.setIMIENumber(null);
+			input.setBillingObject(billingArr); //setting sku code
+			input.setEmiObject(emiObj);
+			//input.getEmiObject().setProgramObject(null);
+		} catch (TCHQueryException | TCHServiceException e1) {
+			logger.debug("Exception in query" + e1);
+			if(e1 instanceof TCHServiceException){
+				if(!"99".equals(((TCHServiceException) e1).getResponseCode())){
+					throw new TCHServiceException(((TCHServiceException) e1).getErrorCode(),((TCHServiceException) e1).getErrorMessage());
+				}else{
+					try {
+						unblockSerialNumber(input);
+					} catch (TCHQueryException e) {
+					}
+				}
+			}
+			if(e1 instanceof TCHQueryException)
+				throw new TCHServiceException("BR-04", ((TCHQueryException) e1).getErrorMessage());
+			else
+				throw new TCHServiceException("BR-04", ((TCHServiceException) e1).getErrorMessage());
+		}
+	}
+
+	@Override
+	public void send(SuperMenuObject input) throws TCHServiceException {
+		
+		/*
+		 * CHECK FOR OFFLINE VALIDATION
+		 */
+		
+		logger.debug("Getting validation info..");
+		ValidationParameter validParams = null;
+		if(AbstractBrandEmiAdaptor.brandEmiFinalCache.get(input.getTerminalSerialNumber()) != null){
+			validParams = AbstractBrandEmiAdaptor.brandEmiFinalCache.get(input.getTerminalSerialNumber()).getValidationParameter();
+		}
+		if(validParams != null){
+			if(Constants.TCH_BRAND_EMI_OFFLINE.equals(validParams.getValidationType())){
+				Integer noOfDayswithoutValidation = 0;
+				Integer noOfDaysForMerchant = 0;
+				noOfDaysForMerchant = Integer.valueOf(validParams.getNumberOfDays());
+				try {
+					noOfDayswithoutValidation = brandDao.getNumberOfDaysWithoutValidation(input);
+					logger.debug("Actual days ["+noOfDayswithoutValidation+"]" );
+					logger.debug("Current days ["+noOfDayswithoutValidation+"]" );
+					if(noOfDayswithoutValidation > noOfDaysForMerchant){
+						throw new TCHServiceException("BR-14", "EXCEED VALIDATION DAYS");
+					}
+				} catch (TCHQueryException e) {
+					throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+				}
+			}	
+		}
+		
+		/*
+		 * End of CHECK OFFLINE VALIDATION
+		 */
+		
+		logger.debug("setting the values in brand emi object");
+		SuperMenuObject superObj = brandEmiFinalCache.get(input.getTerminalSerialNumber()); // get cached thing in object form
+		 
+		Payment paymentBean = new Payment();
+		EMIObject emiObj = new EMIObject(); 
+		try{
+			logger.debug("Getting value from cache");
+			if(superObj.getMenuObject() != null && superObj.getMenuObject().length != 0){
+				BeanUtils.copyProperties(input, paymentBean);
+				logger.debug("input.getIMIENumber() : " + input.getIMIENumber());
+				paymentBean.setEmiObject(input.getEmiObject());
+				paymentBean.setSkuCode(superObj.getProductDetails()[0]);
+				ProgramObject[] prg = new ProgramObject[1];
+				ProgramObject prg1 = new ProgramObject();  
+				logger.debug("Product code: " + superObj.getProductDetails()[0]) ;
+				paymentBean.setProductCode(superObj.getProductDetails()[0]);
+				logger.debug("Program code : " +superObj.getProductDetails()[2]);
+				prg1.setProgramCode(superObj.getProductDetails()[2]);
+				if(superObj.getManufactureDetails() != null){
+					logger.info("Manufacture code:" + superObj.getManufactureDetails()[0]);
+					paymentBean.setManufacturerCode(superObj.getManufactureDetails()[0]);
+				}
+				prg[0] = prg1;
+				paymentBean.getEmiObject().setProgramObject(prg);
+				paymentBean.getEmiObject().setImieNumber(input.getIMIENumber());
+				// CALLING SALE SERVICE 
+				paymentBean = saleService.service(paymentBean);
+				try {
+					if(!Constants.TCH_SUCCESS_RESPONSE.equals(paymentBean.getResponseCode())) {
+						// call unblock if response is not successful.
+						unblockSerialNumber(input);
+					}
+				}  catch (TCHQueryException | TCHServiceException e) {
+					logger.error("Could not unblock Serial number.");
+				}
+				}else{
+					throw new TCHServiceException("BR-03", "INVALID SELECTION");
+				}
+			}catch(TCHServiceException e){
+				throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+			}catch(Exception e){
+				logger.debug("Exception in setting paymentBean",e);
+				throw new TCHServiceException("BR-09", "DATA ISSUE");
+			}
+			logger.info("Copying value in response");
+			BeanUtils.copyProperties(paymentBean, input);
+			logger.debug("data print object" + emiObj.toString());
+			
+			
+			logger.debug("Saving details in kalkulas table");
+			saveBrandEmiDetails(input);
+			logger.debug("Clearing cache for : " + input.getTerminalSerialNumber()); 
+			input.setMobileNumber(null);
+			input.setIMIENumber(null);
+			AbstractBrandEmiAdaptor.brandEmiFinalCache.remove(input.getTerminalSerialNumber());
+			logger.debug("Cache cleared for : " + input.getTerminalSerialNumber());
+	}
+	
+	
+	private void saveBrandEmiDetails(final SuperMenuObject input) {
+		// TODO Auto-generated method stub
+		BrandEMIDTO brandEmiDto  = new BrandEMIDTO(); 
+		SuperMenuObject superObj = AbstractBrandEmiAdaptor.brandEmiFinalCache.get(input.getTerminalSerialNumber());
+		brandEmiDto.setBrandName(superObj.getMenuObject()[1].getDisplayName());
+		//brandEmiDto.setCashBackAmount(superObj.getTenureMap().get(superObj.getTenure()).getCashBackFinalAmt());
+		//brandEmiDto.setCashbackPercent(superObj.getTenureMap().get(superObj.getTenure()).getCashBackFinalPer());
+		brandEmiDto.setCategory(superObj.getMenuObject()[2].getDisplayName());
+		brandEmiDto.setCustomerName(superObj.getCustomerName());
+		brandEmiDto.setInvoiceNumber(input.getInvoiceNumber());
+		brandEmiDto.setMerchantId(input.getMerchantId());
+		brandEmiDto.setMobileNumber(superObj.getMobileNumber());
+		brandEmiDto.setOrgAmount(input.getOriginalAmount());
+		if(superObj.getValidationParameter().getNumberOfDays() != null)
+			brandEmiDto.setNumberOfDays(Integer.parseInt(superObj.getValidationParameter().getNumberOfDays()));
+	
+		brandEmiDto.setProductCategory(superObj.getMenuObject()[0].getDisplayName());
+		brandEmiDto.setReferenceValue(input.getReferenceValue());
+		brandEmiDto.setSerialNumber(input.getIMIENumber());
+		brandEmiDto.setSkuCode(superObj.getSkuCode());
+		brandEmiDto.setSubCategory(superObj.getMenuObject()[3].getDisplayName());
+		brandEmiDto.setStatus(superObj.getEmiValidateSerial());
+		
+		brandEmiDto.setRrn(input.getRetrivalRefNumber());
+		brandEmiDto.setSubventionAmt(superObj.getTenureMap().get(superObj.getTenure()).getSubventionFinalAmt());
+		brandEmiDto.setSubventionPercent(superObj.getTenureMap().get(superObj.getTenure()).getSubventionFinalPer());
+		brandEmiDto.setTerminalSerialNumber(input.getTerminalSerialNumber());
+		if(superObj.getTenureMap().get(superObj.getTenure()).getSubventionAmtMfg() != null || superObj.getTenureMap().get(superObj.getTenure()).getCashBackAmtMfg() != null){
+			brandEmiDto.setSubventionType("MANUFACTURE");
+			brandEmiDto.setSubventionAmt(superObj.getTenureMap().get(superObj.getTenure()).getSubventionAmtMfg());
+			brandEmiDto.setSubventionPercent(superObj.getTenureMap().get(superObj.getTenure()).getSubventionPerMfg());
+			brandEmiDto.setCashBackAmount(superObj.getTenureMap().get(superObj.getTenure()).getCashBackAmtMfg());
+			brandEmiDto.setCashbackPercent(superObj.getTenureMap().get(superObj.getTenure()).getCashBackPerMfg());
+			String finalMsg = setMessageInDTO(brandEmiDto.getCashbackPercent(),brandEmiDto.getCashBackAmount(),brandEmiDto.getNumberOfDays());
+			brandEmiDto.setMessage(finalMsg);
+			kalkulaDao.save(brandEmiDto, kalkulasJdbcTemplate);	
+		}
+		
+		if(superObj.getTenureMap().get(superObj.getTenure()).getSubventionAmtMID() != null){
+			brandEmiDto.setSubventionType("MID");
+			brandEmiDto.setSubventionAmt(superObj.getTenureMap().get(superObj.getTenure()).getSubventionAmtMID());
+			brandEmiDto.setSubventionPercent(superObj.getTenureMap().get(superObj.getTenure()).getSubventionPerMID());
+			brandEmiDto.setCashBackAmount(superObj.getTenureMap().get(superObj.getTenure()).getCashBackAmtMID());
+			brandEmiDto.setCashbackPercent(superObj.getTenureMap().get(superObj.getTenure()).getCashBackPerMID());
+			String finalMsg = setMessageInDTO(brandEmiDto.getCashbackPercent(),brandEmiDto.getCashBackAmount(),brandEmiDto.getNumberOfDays());
+			brandEmiDto.setMessage(finalMsg);
+			kalkulaDao.save(brandEmiDto, kalkulasJdbcTemplate);
+		}
+		if(superObj.getTenureMap().get(superObj.getTenure()).getSubventionAmtIssuer() != null){
+			brandEmiDto.setSubventionType("ISSUER");
+			brandEmiDto.setSubventionAmt(superObj.getTenureMap().get(superObj.getTenure()).getSubventionAmtIssuer());
+			brandEmiDto.setSubventionPercent(superObj.getTenureMap().get(superObj.getTenure()).getSubventionPerIssuer());
+			brandEmiDto.setCashBackAmount(superObj.getTenureMap().get(superObj.getTenure()).getCashBackAmtIssuer());
+			brandEmiDto.setCashbackPercent(superObj.getTenureMap().get(superObj.getTenure()).getCashBackPerIssuer());
+			String finalMsg = setMessageInDTO(brandEmiDto.getCashbackPercent(),brandEmiDto.getCashBackAmount(),brandEmiDto.getNumberOfDays());
+			brandEmiDto.setMessage(finalMsg);
+			kalkulaDao.save(brandEmiDto, kalkulasJdbcTemplate);
+		}
+		
+		// setting final values to store in tch emi table
+		brandEmiDto.setSubventionAmt(superObj.getTenureMap().get(superObj.getTenure()).getSubventionFinalAmt());
+		brandEmiDto.setSubventionPercent(superObj.getTenureMap().get(superObj.getTenure()).getSubventionFinalPer());
+		
+		brandEmiSerial.save(brandEmiDto);
+	}
+
+	private String setMessageInDTO(String cashBackPer, String cashBackAmt, int velocityDays){
+		String message = AppConfigMaster.getConfigValue(Constants.TCH_DISCLAIMER_UTILITY, Constants.TCH_BRD_DESC);
+		String[] value_split = null;
+		String finalMsg = null;
+		if(message != null){
+			value_split = message.split("\\|");
+		}
+		if(value_split != null){
+			StringBuilder strBuilder = new StringBuilder();
+			strBuilder.append(value_split[0]);
+			strBuilder.append(cashBackPer);
+			strBuilder.append(value_split[1]);
+			strBuilder.append(cashBackAmt);
+			strBuilder.append(value_split[2]);
+			strBuilder.append(velocityDays);
+			strBuilder.append(value_split[3]);
+			finalMsg = strBuilder.toString();
+			logger.debug("Final message :" + finalMsg);
+		}
+		return finalMsg;
+	}
+	
+	/**
+	 * @throws TCHQueryException 
+	 * @throws MalformedURLException 
+	 * To check whether validation for the given product 
+	 * need to be done online or offline
+	 * @param param
+	 * @param input
+	 * @throws TCHServiceException
+	 * @author ashish.bhavsar
+	 * @throws 	 
+	 */
+	private void validateForSerialNumber(ValidationParameter param,final SuperMenuObject input,final SuperMenuObject superObj) throws TCHServiceException, TCHQueryException{
+		logger.debug("Validation check flag["+param.getValidationType()+"]");
+		
+		BrandEMIDTO emiValidate = setValues(input, param);
+		if(Constants.TCH_BRAND_EMI_REALTIME.equals(param.getValidationType())){
+			if(input.getMenuObject() != null){
+				blockSerialNumber(input);
+				emiValidate.setStatus("S");
+				superObj.setEmiValidateSerial("S");
+				//brandEmiSerial.save(emiValidate);
+			} else{
+				throw new TCHServiceException("BR-11", "INVALID SKU CODE");
+			}
+		}else if(Constants.TCH_BRAND_EMI_OFFLINE.equals(param.getValidationType())){
+			logger.debug("Saving information for brand emi");
+			emiValidate.setStatus("P");
+			superObj.setEmiValidateSerial("P");
+			//brandEmiSerial.save(emiValidate);
+		}
+	}
+	
+	/**
+	 * Block serial number associated with brand and its product
+	 * 
+	 * @param input
+	 * @throws TCHServiceException
+	 * @throws TCHQueryException
+	 */
+	
+	private void blockSerialNumber(final SuperMenuObject input) throws TCHServiceException, TCHQueryException{
+		String response = null;
+		String brandName = null;
+		if(brandEmiFinalCache.get(input.getTerminalSerialNumber()) != null) {
+			if(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject() != null)
+			{
+				brandName = brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[1].getDisplayName().toUpperCase();
+			}
+		}
+		HashMap<String, String> appValue = enquiryDaoImpl.getUtilityInfo(brandName);
+		try {
+			response = "true";
+			logger.debug("brand name [" +brandName+ "]"+"appValue ["+ appValue.values()+"] IMIE ["+input.getIMIENumber()+"] sku code["+
+					input.getMenuObject()[0].getDisplayName() +"product category "+brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[0].getDisplayName().toUpperCase());
+			String valueProductCategory = brdEmiMapping.get(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[0].getDisplayName().toUpperCase()).toString();
+			response  = brandEmiservice.blockSerialNumber(brandName,appValue,input.getIMIENumber(),input.getMenuObject()[0].getDisplayName(),valueProductCategory);
+			response = Constants.TCH_BRAND_TRUE;
+			logger.debug("Reponse :" + response);
+		} catch (MalformedURLException e) {
+			logger.debug("Exception while updating serial number"+e);
+			throw new TCHServiceException("BR-12", "INVALID URL");
+		}
+		if(response != null){
+			if(response.toUpperCase().contains(Constants.TCH_BRAND_TRUE)){
+				logger.debug("Serial number ["+input.getIMIENumber()+"] is blocked");
+				brandDao.validationConfirmMark(input);
+			}else{
+				if(response.toUpperCase().contains(Constants.TCH_BRAND_FALSE)){
+					logger.debug("Serial number ["+input.getIMIENumber()+"] is not blocked");
+					throw new TCHServiceException("BR-12", response,"99");
+				}
+			}
+		}
+	}
+	
+	
+	//Changes made by Saloni Jindal on 6-09-2017
+	/**
+	 * Offline block serial number associated with brand and its product
+	 * @param input
+	 * @throws TCHServiceException
+	 * @throws TCHQueryException
+	 */
+	
+	private void offlineBlockSerialNumber(final SuperMenuObject input) throws TCHServiceException, TCHQueryException{
+		String response = null;
+		HashMap<String, String> appValue = enquiryDaoImpl.getUtilityInfo(input.getBrandName());
+		try {
+			response = Constants.TCH_BRAND_TRUE;
+			logger.debug("brand name [" +input.getBrandName()+ "]"+"appValue ["+ appValue.values()+"] IMIE ["+input.getIMIENumber()+"] sku code["+
+					input.getSkuCode());
+			response  = brandEmiservice.blockSerialNumber(input.getBrandName(),appValue,input.getIMIENumber(),input.getSkuCode());
+			response = Constants.TCH_BRAND_TRUE;
+			logger.debug("Reponse :" + response);
+		} catch (MalformedURLException e) {
+			logger.debug("Exception while updating serial number"+e);
+			throw new TCHServiceException("BR-12", "INVALID URL");
+		}
+		if(response != null){
+			if(response.toUpperCase().contains(Constants.TCH_BRAND_TRUE)){
+				logger.debug("Serial number ["+input.getIMIENumber()+"] is blocked");
+				
+			}else{
+				if(response.toUpperCase().contains(Constants.TCH_BRAND_FALSE)){
+					logger.debug("Serial number ["+input.getIMIENumber()+"] is not blocked");
+					throw new TCHServiceException("BR-12", response,"99");
+				}
+			}
+		}
+		
+	}
+	/*
+	 * End of changes
+	 */
+	
+	/**
+	 * unblock serial number associated with brand and its product
+	 * @param input
+	 * @throws TCHServiceException
+	 * @throws TCHQueryException
+	 */
+	public void unblockSerialNumber(final SuperMenuObject input) throws TCHServiceException, TCHQueryException{
+		String response = null;
+		String brandName = null;
+		if(brandEmiFinalCache.get(input.getTerminalSerialNumber()) != null)
+			brandName = brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[1].getDisplayName().toUpperCase();
+		HashMap<String, String> appValue = enquiryDaoImpl.getUtilityInfo(brandName);
+		try {
+			response = "true";
+			logger.debug("brand name [" +brandName+ "]"+"appValue ["+ appValue.values()+"] IMIE ["+input.getIMIENumber()+"] sku code["+
+					input.getMenuObject()[0].getDisplayName() +"product category "+brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[0].getDisplayName().toUpperCase());
+			String valueProductCategory = brdEmiMapping.get(brandEmiFinalCache.get(input.getTerminalSerialNumber()).getMenuObject()[0].getDisplayName().toUpperCase()).toString();
+			response  = brandEmiservice.unblockSerialNumber(brandName,appValue,input.getIMIENumber(),"",valueProductCategory);
+			logger.debug("Reponse :" + response);
+		} catch (MalformedURLException e) {
+			logger.debug("Exception while updating serial number"+e);
+			throw new TCHServiceException("BR-12", "INVALID URL");
+		} catch (Exception e){
+			logger.debug("Exception while updating serial number"+e);
+			throw new TCHServiceException("BR-13", "INTERNAL ERROR");
+		}
+		if(response != null){
+			if(response.toUpperCase().contains(Constants.TCH_BRAND_TRUE)){
+				
+				logger.debug("Serial number ["+input.getIMIENumber()+"] is blocked");
+			}else{
+				if(response.toUpperCase().contains(Constants.TCH_BRAND_FALSE)){
+					logger.debug("Serial number ["+input.getIMIENumber()+"] is not blocked");
+					throw new TCHServiceException("BR-12", response);
+				}
+			}
+		}
+	}
+	
+	// Method needed in case of reversal when cache is not available
+	public void unblockSerialNumberNonCache(final SuperMenuObject input) throws TCHServiceException, TCHQueryException{
+		String response = null;
+		List<Map<String, Object>> emiDetails = brandEmiSerial.getEmiDetails(input);
+		SkuObject skuObj =null;
+		if(emiDetails != null && !emiDetails.isEmpty() )
+		{
+			if (emiDetails.size()==1){
+				Map<String, Object> row =emiDetails.get(0);
+				skuObj = new SkuObject();
+				skuObj.setSkucode((String) row.get("B_SKU_CODE"));
+				skuObj.setBrandName((String) row.get("B_BRAND_NAME"));
+				skuObj.setProductCategory((String) row.get("B_PROUCT_CATEGORY"));
+			}else{
+				logger.debug("Row size is [ " +emiDetails.size()+ " ]");
+			}
+		}
+		try {
+			if (null != skuObj ){
+				String brandName =skuObj.getBrandName().toUpperCase();
+				String productCategory =skuObj.getProductCategory().toUpperCase();
+				HashMap<String, String> appValue = enquiryDaoImpl.getUtilityInfo(brandName);
+				response = "true";
+				logger.debug("brand name [" +brandName+ "]"+"appValue ["+ appValue.values()+"] IMIE ["+input.getIMIENumber()+"] sku code["+
+						skuObj.getSkucode()+"product category "+productCategory);
+				String valueProductCategory = brdEmiMapping.get(productCategory).toString();
+				response  = brandEmiservice.unblockSerialNumber(brandName,appValue,input.getIMIENumber(),"",valueProductCategory);
+				logger.debug("Reponse :" + response);
+			}
+		} catch (MalformedURLException e) {
+			logger.debug("Exception while updating serial number"+e);
+			throw new TCHServiceException("BR-12", "INVALID URL");
+		} catch (Exception e){
+			logger.debug("Exception while updating serial number",e);
+			throw new TCHServiceException("BR-13", "INTERNAL ERROR");
+		}
+		if(response != null){
+			if(response.toUpperCase().contains(Constants.TCH_BRAND_TRUE)){
+
+				logger.debug("Serial number ["+input.getIMIENumber()+"] is blocked");
+			}else{
+				if(response.toUpperCase().contains(Constants.TCH_BRAND_FALSE)){
+					logger.debug("Serial number ["+input.getIMIENumber()+"] is not blocked");
+					throw new TCHServiceException("BR-12", response);
+				}
+			}
+		}
+	}
+	
+	/*
+	 * Changes made by Saloni Jindal on 6-09-2017
+	 */
+
+	@Override
+	public SuperMenuObject getEnquiry(SuperMenuObject input) throws TCHServiceException {
+		try {
+			logger.debug("In Get Enquiry Method");
+			if(input.getSkuCodes() == null){
+				input = brandEmiSerial.getEmiSerialValidateData(input);
+				offlineEnq.put(input.getTerminalSerialNumber(), input);
+			} else{
+				if(input.getIMIENumber() != null && !input.getIMIENumber().isEmpty()){
+					String imeiNo= input.getIMIENumber();
+					logger.debug("Blocking serial number");
+					input = offlineEnq.get(input.getTerminalSerialNumber());
+					
+					Set<DataPrintObject> listPrntObj = new HashSet<DataPrintObject>();
+					DataPrintObject prtObj = null;
+					for(SkuObject sku : input.getSkuCodes()){
+						if(sku.getSkucode().equals(input.getSkuCodes()[0].getSkucode())){
+							prtObj = new DataPrintObject();
+							prtObj.setPrintLabel("Brand Name :");
+							prtObj.setPrintVal(sku.getBrandName());
+							listPrntObj.add(prtObj);
+							
+							prtObj = new DataPrintObject();
+							prtObj.setPrintLabel("Sku Code :");
+							prtObj.setPrintVal(sku.getSkucode());
+							listPrntObj.add(prtObj);
+							
+							prtObj = new DataPrintObject();
+							prtObj.setPrintLabel("Product category");
+							prtObj.setPrintVal(sku.getProductCategory());
+							listPrntObj.add(prtObj);
+							
+							prtObj = new DataPrintObject();
+							prtObj.setPrintLabel("Category :");
+							prtObj.setPrintVal(sku.getCategory());
+							listPrntObj.add(prtObj);
+							
+							prtObj = new DataPrintObject();
+							prtObj.setPrintLabel("Merchant Invoice number:");
+							prtObj.setPrintVal(input.getReferenceValue());
+							listPrntObj.add(prtObj);
+							
+							prtObj = new DataPrintObject();
+							prtObj.setPrintLabel("IMEI number:");
+							prtObj.setPrintVal(imeiNo);
+							listPrntObj.add(prtObj);
+							input.setBrandName(sku.getBrandName());
+							input.setSkuCode(sku.getSkucode());
+						}
+					}
+					logger.debug("Sku code selected :" +input.getSkuCode());
+					logger.debug("brand name :" +input.getBrandName());
+					offlineBlockSerialNumber(input);
+					if(listPrntObj != null){
+						logger.debug("Value for list :"+ listPrntObj.size());
+						input.setDataPrintObject(listPrntObj.toArray(new DataPrintObject[listPrntObj.size()]));
+					}
+				}else{
+					throw new TCHServiceException("BR-16", "INVALID INPUT");
+				}
+			}
+		} catch (TCHQueryException e) {
+			throw new TCHServiceException("BR-15", "RECORD NOT FOUND");
+		}
+		return input;
+	 }
+	/*
+	 * End of changes
+	 */
+	
+}
+
+	

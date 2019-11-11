@@ -1,0 +1,4 @@
+jdbc_kalkulus.driverClassName=oracle.jdbc.driver.OracleDriver
+jdbc_kalkulus.url=jdbc:oracle:thin:@10.10.11.103:1521:dbtest1
+jdbc_kalkulus.username=kalkulus_sit
+jdbc_kalkulus.password=kalkulus_sit

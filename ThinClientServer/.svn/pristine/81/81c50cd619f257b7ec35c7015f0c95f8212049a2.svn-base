@@ -1,0 +1,15 @@
+maxThreadPoolSize=300
+magnusIp=10.10.11.162
+magnusPort=4433
+magnusReadTimeout=8
+serverPort=9001
+threadKeepAliveTime=2
+coreThreadPoolSize=250
+allowCoreThreadTimeOut=true
+incommingMsgBuffer=4096
+enableMonitor=false
+timeBetweenMonitorThreadRuns=3
+showSql=true
+delay=1
+count_cap=3
+enviroment=SIT

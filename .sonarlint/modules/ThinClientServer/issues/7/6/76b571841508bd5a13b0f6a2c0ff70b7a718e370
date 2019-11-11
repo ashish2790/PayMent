@@ -1,0 +1,97 @@
+
+squid:S2629ş"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(”àÏÃÿÿÿÿÿH¸ªRMAJORZ
+CODE_SMELL
+squid:S2629•"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(”àÏÃÿÿÿÿÿH¹ªRMAJORZ
+CODE_SMELL
+squid:S2629µ"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(÷æƒûÿÿÿÿHºªRMAJORZ
+CODE_SMELL
+squid:S2629¶"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(õ§®ƒùÿÿÿÿH»ªRMAJORZ
+CODE_SMELL
+—squid:S1192¾"`Define a constant instead of duplicating this literal "Exception in fetching details :" 3 times.(ş³ŞÿÿÿÿÿH¼ªRCRITICALZ
+CODE_SMELL
+]squid:S1066f"/Merge this if statement with the enclosing one.(˜™®—H½ªRMAJORZ
+CODE_SMELL
+]squid:S1066r"/Merge this if statement with the enclosing one.(éÙ«œH¾ªRMAJORZ
+CODE_SMELL
+^squid:S1066‡"/Merge this if statement with the enclosing one.(‚îıH¿ªRMAJORZ
+CODE_SMELL
+csquid:S1066í"/Merge this if statement with the enclosing one.(éÈˆùÿÿÿÿHÀªRMAJORZ
+CODE_SMELL
+csquid:S1066Î"/Merge this if statement with the enclosing one.(„š‚ìÿÿÿÿÿHÁªRMAJORZ
+CODE_SMELL
+squid:S2293™"YReplace the type specification in this constructor call with the diamond operator ("<>").(…ş‡ÅùÿÿÿÿHÂªRMINORZ
+CODE_SMELL
+‰squid:S3973‡"WUse curly braces or indentation to denote the code conditionally executed by this "if".(‚îıHÃªRCRITICALZ
+CODE_SMELL
+~squid:CommentedOutCodeLineC"<This block of commented-out lines of code should be removed.(ãá´ÅúÿÿÿÿHÄªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine"<This block of commented-out lines of code should be removed.(€úÎîHÅªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine¨"<This block of commented-out lines of code should be removed.(Œ«—®HÆªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine¸"<This block of commented-out lines of code should be removed.(Ñšœ™ıÿÿÿÿHÇªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineÜ"<This block of commented-out lines of code should be removed.(•šHÈªRMAJORZ
+CODE_SMELL
+šsquid:S1488¸"fImmediately return this expression instead of assigning it to the temporary variable "finalExtraInfo".(ÜñÏøøÿÿÿÿHÉªRMINORZ
+CODE_SMELL
+isquid:S1141£"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿHÊªRMAJORZ
+CODE_SMELL
+ˆsquid:S3776S"RRefactor this method to reduce its Cognitive Complexity from 83 to the 15 allowed.(ç²®úÿÿÿÿHËªRCRITICALZ
+CODE_SMELL
+‰squid:S3776®"RRefactor this method to reduce its Cognitive Complexity from 78 to the 15 allowed.(šİƒ—úÿÿÿÿHÌªRCRITICALZ
+CODE_SMELL
+„squid:S3776”"RRefactor this method to reduce its Cognitive Complexity from 39 to the 15 allowed.(èÀ…ÓHÍªRCRITICALZ
+CODE_SMELL
+ƒsquid:S1858ı"O"getLastFourDigitValue" returns a string, there's no need to call "toString()".(ãšÓİşÿÿÿÿHÎªRMINORZ
+CODE_SMELL
+wsquid:S1858»"C"substring" returns a string, there's no need to call "toString()".(„Ä«îûÿÿÿÿHÏªRMINORZ
+CODE_SMELL
+tsquid:S3457m"AFormat specifiers should be used instead of string concatenation.(Æ¹ÆñûÿÿÿÿHĞªRMAJORZ
+CODE_SMELL
+usquid:S3457“"AFormat specifiers should be used instead of string concatenation.(¬ÛÑ¯úÿÿÿÿHÑªRMAJORZ
+CODE_SMELL
+psquid:S3457â"AFormat specifiers should be used instead of string concatenation.(½İ®HÒªRMAJORZ
+CODE_SMELL
+usquid:S3457ş"AFormat specifiers should be used instead of string concatenation.(”àÏÃÿÿÿÿÿHÓªRMAJORZ
+CODE_SMELL
+usquid:S3457ÿ"AFormat specifiers should be used instead of string concatenation.(¿ŒÌÍûÿÿÿÿHÔªRMAJORZ
+CODE_SMELL
+psquid:S3457‚"AFormat specifiers should be used instead of string concatenation.(«—ÁâHÕªRMAJORZ
+CODE_SMELL
+psquid:S3457‰"AFormat specifiers should be used instead of string concatenation.(êÁŒèHÖªRMAJORZ
+CODE_SMELL
+usquid:S3457"AFormat specifiers should be used instead of string concatenation.(âå‰ÿşÿÿÿÿH×ªRMAJORZ
+CODE_SMELL
+usquid:S3457•"AFormat specifiers should be used instead of string concatenation.(”àÏÃÿÿÿÿÿHØªRMAJORZ
+CODE_SMELL
+usquid:S3457–"AFormat specifiers should be used instead of string concatenation.(¿ŒÌÍûÿÿÿÿHÙªRMAJORZ
+CODE_SMELL
+psquid:S3457™"AFormat specifiers should be used instead of string concatenation.(«—ÁâHÚªRMAJORZ
+CODE_SMELL
+usquid:S3457 "AFormat specifiers should be used instead of string concatenation.(©±ËÃøÿÿÿÿHÛªRMAJORZ
+CODE_SMELL
+usquid:S3457ª"AFormat specifiers should be used instead of string concatenation.(âå‰ÿşÿÿÿÿHÜªRMAJORZ
+CODE_SMELL
+usquid:S3457¾"AFormat specifiers should be used instead of string concatenation.(ş³ŞÿÿÿÿÿHİªRMAJORZ
+CODE_SMELL
+usquid:S3457Å"AFormat specifiers should be used instead of string concatenation.(ş³ŞÿÿÿÿÿHŞªRMAJORZ
+CODE_SMELL
+usquid:S3457æ"AFormat specifiers should be used instead of string concatenation.(ş³ŞÿÿÿÿÿHßªRMAJORZ
+CODE_SMELL
+usquid:S3457ş"AFormat specifiers should be used instead of string concatenation.(§°ŸÎøÿÿÿÿHàªRMAJORZ
+CODE_SMELL
+psquid:S3457×"AFormat specifiers should be used instead of string concatenation.(ùÄú–HáªRMAJORZ
+CODE_SMELL
+usquid:S3457ƒ"AFormat specifiers should be used instead of string concatenation.(½é‹‰ıÿÿÿÿHâªRMAJORZ
+CODE_SMELL
+usquid:S3457„"AFormat specifiers should be used instead of string concatenation.(Ê»°©şÿÿÿÿHãªRMAJORZ
+CODE_SMELL
+usquid:S3457‰"AFormat specifiers should be used instead of string concatenation.(ÉÌˆªıÿÿÿÿHäªRMAJORZ
+CODE_SMELL
+usquid:S3457Œ"AFormat specifiers should be used instead of string concatenation.(Ùı³¦ùÿÿÿÿHåªRMAJORZ
+CODE_SMELL
+usquid:S3457µ"AFormat specifiers should be used instead of string concatenation.(÷æƒûÿÿÿÿHæªRMAJORZ
+CODE_SMELL
+usquid:S3457¶"AFormat specifiers should be used instead of string concatenation.(õ§®ƒùÿÿÿÿHçªRMAJORZ
+CODE_SMELL

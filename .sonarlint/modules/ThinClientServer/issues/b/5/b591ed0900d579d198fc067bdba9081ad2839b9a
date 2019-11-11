@@ -1,0 +1,73 @@
+
+jsquid:S2629&"7Use the built-in formatting to construct this argument.(ÏÈšñùÿÿÿÿHö¿RMAJORZ
+CODE_SMELL
+esquid:S26294"7Use the built-in formatting to construct this argument.(Æ ¢H÷¿RMAJORZ
+CODE_SMELL
+esquid:S2629_"7Use the built-in formatting to construct this argument.(â›ÑHø¿RMAJORZ
+CODE_SMELL
+jsquid:S2629a"7Use the built-in formatting to construct this argument.(è©×«ÿÿÿÿÿHù¿RMAJORZ
+CODE_SMELL
+jsquid:S2629l"7Use the built-in formatting to construct this argument.(Ş™œ¼øÿÿÿÿHú¿RMAJORZ
+CODE_SMELL
+esquid:S2629|"7Use the built-in formatting to construct this argument.(¢»óøHû¿RMAJORZ
+CODE_SMELL
+esquid:S2629}"7Use the built-in formatting to construct this argument.(ø¾‡öHü¿RMAJORZ
+CODE_SMELL
+squid:S1192+"KDefine a constant instead of duplicating this literal "ISO-8859-1" 4 times.(Ó¥äüÿÿÿÿHı¿RCRITICALZ
+CODE_SMELL
+’squid:S1192="aDefine a constant instead of duplicating this literal "Exception in send of TcpClient :" 5 times.(¥×©¡Hş¿RCRITICALZ
+CODE_SMELL
+squid:CommentedOutCodeLine¤"<This block of commented-out lines of code should be removed.(¿íúÿÿÿÿHÿ¿RMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine¦"<This block of commented-out lines of code should be removed.(‚¶–›H€ÀRMAJORZ
+CODE_SMELL
+esquid:S1135Å"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHÀRINFOZ
+CODE_SMELL
+esquid:S1135É"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH‚ÀRINFOZ
+CODE_SMELL
+esquid:S1135Î"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHƒÀRINFOZ
+CODE_SMELL
+esquid:S1135Ú"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH„ÀRINFOZ
+CODE_SMELL
+wsquid:S2147E"DCombine this catch with the one at line 66, which has the same body.(ñ“Š±üÿÿÿÿH…ÀRMINORZ
+CODE_SMELL
+tsquid:S2147‘"ECombine this catch with the one at line 142, which has the same body.(”ı¾H†ÀRMINORZ
+CODE_SMELL
+„squid:S00116"URename this field "IP_ADDRESS" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(éÿ®ÃH‡ÀRMINORZ
+CODE_SMELL
+ƒsquid:S00116"ORename this field "PORT" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(²”ƒ÷şÿÿÿÿHˆÀRMINORZ
+CODE_SMELL
+`squid:S1143K"4Remove this throw statement from this finally block.(¼ÌäõÿÿÿÿÿH‰ÀRMAJORZBUG
+[squid:S1143—"4Remove this throw statement from this finally block.(±Ğ§xHŠÀRMAJORZBUG
+ssquid:S1163K"=Refactor this code to not throw exceptions in finally blocks.(¼ÌäõÿÿÿÿÿH‹ÀRCRITICALZ
+CODE_SMELL
+nsquid:S1163—"=Refactor this code to not throw exceptions in finally blocks.(±Ğ§xHŒÀRCRITICALZ
+CODE_SMELL
+tsquid:S3457&"AFormat specifiers should be used instead of string concatenation.(ÏÈšñùÿÿÿÿHÀRMAJORZ
+CODE_SMELL
+osquid:S34574"AFormat specifiers should be used instead of string concatenation.(Æ ¢HÀRMAJORZ
+CODE_SMELL
+Ssquid:S3457="%String contains no format specifiers.(¥×©¡HÀRMAJORZ
+CODE_SMELL
+Xsquid:S3457C"%String contains no format specifiers.(ÍşÒŒùÿÿÿÿHÀRMAJORZ
+CODE_SMELL
+Xsquid:S3457F"%String contains no format specifiers.(ÍşÒŒùÿÿÿÿH‘ÀRMAJORZ
+CODE_SMELL
+Xsquid:S3457O"%String contains no format specifiers.(ì›µùÿÿÿÿH’ÀRMAJORZ
+CODE_SMELL
+osquid:S3457_"AFormat specifiers should be used instead of string concatenation.(â›ÑH“ÀRMAJORZ
+CODE_SMELL
+tsquid:S3457a"AFormat specifiers should be used instead of string concatenation.(è©×«ÿÿÿÿÿH”ÀRMAJORZ
+CODE_SMELL
+tsquid:S3457l"AFormat specifiers should be used instead of string concatenation.(Ş™œ¼øÿÿÿÿH•ÀRMAJORZ
+CODE_SMELL
+osquid:S3457|"AFormat specifiers should be used instead of string concatenation.(¢»óøH–ÀRMAJORZ
+CODE_SMELL
+osquid:S3457}"AFormat specifiers should be used instead of string concatenation.(ø¾‡öH—ÀRMAJORZ
+CODE_SMELL
+Ysquid:S3457"%String contains no format specifiers.(ÍşÒŒùÿÿÿÿH˜ÀRMAJORZ
+CODE_SMELL
+Ysquid:S3457’"%String contains no format specifiers.(ÍşÒŒùÿÿÿÿH™ÀRMAJORZ
+CODE_SMELL
+Tsquid:S3457›"%String contains no format specifiers.(ÑçäHšÀRMAJORZ
+CODE_SMELL

@@ -1,0 +1,143 @@
+package com.awl.tch.model;
+
+import java.io.Serializable;
+
+import com.google.gson.annotations.SerializedName;
+
+@SuppressWarnings("serial")
+public class GBSSRequest implements Serializable{
+	
+	@SerializedName("MID")
+	private String merchantId;
+	
+	@SerializedName("TID")
+	private String TerminalId;
+	
+	@SerializedName("CHLN_NO")
+	private String challenNumber;
+	
+	@SerializedName("Pay_Mode")
+	private String pyamentMode;
+	
+	@SerializedName("Tran_ID")
+	private String transactionId;
+	
+	@SerializedName("CUST_NAME")
+	private String customerName;
+	
+	@SerializedName("Txn_Amount")
+	private String amount;
+	
+	@SerializedName("")
+	
+
+	/**
+	 * @return the merchantId
+	 */
+	public String getMerchantId() {
+		return merchantId;
+	}
+
+	/**
+	 * @param merchantId the merchantId to set
+	 */
+	public void setMerchantId(String merchantId) {
+		this.merchantId = merchantId;
+	}
+
+	/**
+	 * @return the terminalId
+	 */
+	public String getTerminalId() {
+		return TerminalId;
+	}
+
+	/**
+	 * @param terminalId the terminalId to set
+	 */
+	public void setTerminalId(String terminalId) {
+		TerminalId = terminalId;
+	}
+
+	/**
+	 * @return the challenNumber
+	 */
+	public String getChallenNumber() {
+		return challenNumber;
+	}
+
+	/**
+	 * @param challenNumber the challenNumber to set
+	 */
+	public void setChallenNumber(String challenNumber) {
+		this.challenNumber = challenNumber;
+	}
+
+	/**
+	 * @return the pyamentMode
+	 */
+	public String getPyamentMode() {
+		return pyamentMode;
+	}
+
+	/**
+	 * @param pyamentMode the pyamentMode to set
+	 */
+	public void setPyamentMode(String pyamentMode) {
+		this.pyamentMode = pyamentMode;
+	}
+
+	/**
+	 * @return the transactionId
+	 */
+	public String getTransactionId() {
+		return transactionId;
+	}
+
+	/**
+	 * @param transactionId the transactionId to set
+	 */
+	public void setTransactionId(String transactionId) {
+		this.transactionId = transactionId;
+	}
+
+	/**
+	 * @return the customerName
+	 */
+	public String getCustomerName() {
+		return customerName;
+	}
+
+	/**
+	 * @param customerName the customerName to set
+	 */
+	public void setCustomerName(String customerName) {
+		this.customerName = customerName;
+	}
+
+	/**
+	 * @return the amount
+	 */
+	public String getAmount() {
+		return amount;
+	}
+
+	/**
+	 * @param amount the amount to set
+	 */
+	public void setAmount(String amount) {
+		this.amount = amount;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "GBSSRequest [merchantId=" + merchantId + ", TerminalId="
+				+ TerminalId + ", challenNumber=" + challenNumber
+				+ ", pyamentMode=" + pyamentMode + ", transactionId="
+				+ transactionId + ", customerName=" + customerName
+				+ ", amount=" + amount + "]";
+	}
+}

@@ -1,0 +1,446 @@
+package com.awl.tch.dao;
+
+import java.math.BigDecimal;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.ColumnMapRowMapper;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Repository;
+
+import com.awl.tch.bean.DetailReport;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.DetailReportDTO;
+import com.awl.tch.server.TcpServer;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.TerminalParameterCacheMaster;
+import com.awl.tch.util.UtilityHelper;
+
+import oracle.jdbc.OracleTypes;
+
+
+@Repository("detailReportDao")
+public class DetailReportDaoImpl extends GenericDaoImpl<DetailReportDTO> implements DetailReportDao{
+	
+	private static final Logger logger =  LoggerFactory.getLogger(DetailReportDaoImpl.class);
+	@Override
+	public void getDetailReport(DetailReport input) throws TCHQueryException {
+		
+		logger.debug("Inside getDetailReport");
+		
+		// setting offset
+		Integer	offset = 0;
+		if(input.getPacketNumber() != null){
+			offset = Integer.valueOf(input.getPacketNumber()) * 10;
+		}
+		String descParam = "0";
+		if(input.getDecisionFlag() != null && Constants.TCH_DET_ACK.equals(input.getDecisionFlag())){
+			descParam = "1";
+		}
+		SqlParameter inTerminalSerialNumber = new SqlParameter("I_TERMINAL_SERIAL_NUMBER", Types.VARCHAR);
+		SqlParameter inOffset = new SqlParameter("I_OFFSET", Types.VARCHAR);
+		SqlParameter inDesParam = new SqlParameter("I_DESC_PARAM", Types.VARCHAR);
+		SqlParameter outTerminalId = new SqlOutParameter("O_TERMINAL_ID", Types.VARCHAR);
+		SqlParameter outSqlCode = new SqlOutParameter("O_SQL_CODE", Types.VARCHAR);
+		SqlParameter outAppErrorCode = new SqlOutParameter("O_APP_ERROR_CODE", Types.VARCHAR);
+		SqlParameter outDebugPoint = new SqlOutParameter("O_DEBUG_POINT", Types.VARCHAR);
+		SqlParameter outBatchNumber = new SqlOutParameter("O_BATCH_NUMBER", Types.VARCHAR);
+		SqlParameter outMerchantId= new SqlOutParameter("O_MERCHANT_ID", Types.VARCHAR);
+		SqlParameter outTotalCount= new SqlOutParameter("O_TOTAL_COUNT", Types.VARCHAR);
+		
+		SqlParameter cursorDetailReportData = new SqlOutParameter("C_DETAIL_REPORT_DATA", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		SqlParameter cursorSummaryReportData = new SqlOutParameter("C_SUMMARY_REPORT_DATA", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		SqlParameter cursorSummaryReportScheme = new SqlOutParameter("C_SUMMARY_REPORT_SCHEME", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		SqlParameter cursorDetailReportTable = new SqlOutParameter("C_DETAIL_REPORT_TABLE_DATA", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		
+		DataSource ds = (DataSource) TcpServer.getContext().getBean("dataSource");
+		SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(ds);
+		
+		simpleJdbcCall.withProcedureName("TCH_DETAIL_REPORT_PROC")
+		.declareParameters(inTerminalSerialNumber,inOffset,inDesParam,outMerchantId,outTerminalId, outSqlCode, outAppErrorCode, outBatchNumber, outDebugPoint, outTotalCount, cursorDetailReportData,cursorSummaryReportData,cursorSummaryReportScheme,cursorDetailReportTable)
+		.withoutProcedureColumnMetaDataAccess()
+		.compile();
+		
+		logger.info("I_TERMINAL_SERIAL_NUMBER: [" + input.getTerminalSerialNumber()  +"]" );
+		logger.info("I_OFFSET: [" + offset  +"]" );
+		
+		SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("I_OFFSET", offset.toString())
+				.addValue("I_TERMINAL_SERIAL_NUMBER",input.getTerminalSerialNumber().trim())
+				.addValue("I_DESC_PARAM", descParam);
+	
+		logger.info("Calling store procedure for sale TCH_DETAIL_REPORT_PROC");
+		
+		Map<String,Object> output = simpleJdbcCall.execute(parameterSource);
+		
+		String sqlCode = (String) output.get("O_SQL_CODE");
+		String appErrorCode = (String) output.get("O_APP_ERROR_CODE");
+		String oDebugPoint = (String) output.get("O_DEBUG_POINT");
+		String oTotalCount = (String) output.get("O_TOTAL_COUNT");
+		
+		logger.info("SqlCode from Sp :" + sqlCode);
+		logger.info("App Error Code from SP :" + appErrorCode);
+		logger.info("Debug Point from SP :" + oDebugPoint);
+		logger.info("Total count from SP :" + oTotalCount);
+		
+		if(appErrorCode != null && appErrorCode.equals(ErrorConstants.TCH_D403)){
+			input.setDiplayMessage("No of transctions more than 50");
+			return;
+		}
+		if(appErrorCode != null){
+			throw new TCHQueryException(appErrorCode, ErrorMaster.get(appErrorCode));
+		}
+		if(!"2".equalsIgnoreCase(oDebugPoint))
+			throw new TCHQueryException(ErrorConstants.TCH_D416, ErrorMaster.get(ErrorConstants.TCH_D416));
+		
+		input.setBatchNumber( (String) output.get("O_BATCH_NUMBER"));
+		input.setMerchantId( (String) output.get("O_MERCHANT_ID"));
+		input.setTerminalId( (String) output.get("O_TERMINAL_ID"));
+		
+		if("1".equals(oTotalCount)){
+			input.setDecisionFlag("CONT");
+		}else{
+			input.setDecisionFlag(null);
+		}
+		
+		@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> rows = (List<HashMap<String,Object>>) output.get(Constants.TCH_C_DETAIL_REPORT_TABLE_DATA);
+		StringBuilder sb = new StringBuilder("");
+		StringBuilder sb1 = new StringBuilder("");
+		for(HashMap<String,Object> map : rows){
+			sb.append((String) map.get("D_DISPLAY_MSG_PARAM")).append(",");
+			sb1.append((String) map.get("D_COLUMN_NAME")).append(",");
+		}
+		
+		input.setHeaderValue(sb.toString().substring(0, sb.length()-1));
+		String[] strColumnNames = sb1.toString().substring(0, sb1.length()-1).split(","); 
+		@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> rowsDetailTable = (List<HashMap<String,Object>>) output.get(Constants.TCH_C_DETAIL_REPORT_DATA);
+		
+		String[] s = new String[rowsDetailTable.size()];
+		int count = 0;
+		for(HashMap<String,Object> map : rowsDetailTable){
+			sb = new StringBuilder("");
+			if("1".equals((String) map.get(Constants.TCH_P_TIP_APPROVED))){
+				sb.append(Constants.TCH_TIPADJUST).append(",");
+			}else if(Constants.TCH_CONVERTTOINR.equals((String) map.get(Constants.TCH_P_SESSION_KEY))){
+				sb.append(Constants.TCH_SALE_C).append(",");
+			}else{
+				sb.append((String) map.get(strColumnNames[0])).append(",");
+			}
+			for(int i = 1; i < strColumnNames.length ; i++){
+				if(Constants.TCH_P_ORIGINAL_AMOUNT.equals(strColumnNames[i])){
+					/*if((String) map.get(Constants.TCH_P_DCC_AMOUNT) != null)
+						sb.append(getPrecisionInAmount(((BigDecimal) map.get(Constants.TCH_P_DCC_AMOUNT)).toPlainString())).append(","); // for displaying dcc amount
+					else*/
+						sb.append(getPrecisionInAmount((String) map.get(strColumnNames[i]))).append(",");
+				}else if(Constants.TCH_P_LAST_FOUR_DIGIT.equals(strColumnNames[i])){
+					String str = (String) map.get(strColumnNames[i]);
+					if(str != null)
+						sb.append(String.format("%1$16s",str).replace(' ', 'x')).append(",");
+					else
+						sb.append("-").append(",");
+				}else if(Constants.TCH_P_EXPIRYDATE.equals(strColumnNames[i])){
+					String str = (String) map.get(strColumnNames[i]);
+					if(str != null){
+						if(str.length() >= 2)
+							str=new StringBuilder(str).insert(str.length()-2, '/').toString();
+						sb.append(str).append(",");
+					}else{
+						sb.append("-").append(",");
+					}
+				}else{					
+					sb.append((String) map.get(strColumnNames[i])).append(",");
+				}
+				
+			}
+			s[count++] = sb.toString().substring(0, sb.length()-1);
+			//input.setHeaderValue(sb.toString().substring(0, sb.length()-1));
+		}
+		input.setTransactionValue(s);
+		
+		/*@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> rows1 = (List<HashMap<String,Object>>) output.get("C_SETTLEMENT_DATA_SCHEME");
+		
+		if(rows != null){
+			for(Map<String, Object> row : rows1){
+				amount = 0l;
+				printObject  = new PrintObject();
+				printObject.setPrintValueName((String) row.get("SHEME_NAME"));
+				printObject.setPrintValueCount((String.valueOf(((BigDecimal) row.get("COUNT_VAL")).toPlainString())));
+				amount  = amount + Long.valueOf(((BigDecimal) row.get("TOTAL_AMOUNT")).toPlainString());
+				if((BigDecimal) row.get("TOTAL_REFUND_AMOUNT") != null){	
+					Long refundAmount = Long.valueOf(((BigDecimal) row.get("TOTAL_REFUND_AMOUNT")).toPlainString());
+					amount  = amount - (2 * refundAmount); // delete 2 times as result got refund amount add in it
+				}
+				printObject.setPrintValueData((new BigDecimal(amount.toString()).movePointLeft(2)).toString());
+					listPrintObject.add(printObject);
+			}
+		}*/
+		
+		
+		logger.debug("Exiting getDetailReport");
+	}
+	
+	
+	
+	
+	
+	private static String getPrecisionInAmount(String amount){
+		if(amount != null && !amount.isEmpty())
+			return (new BigDecimal(amount).movePointLeft(2)).toString();
+		else{
+			return amount;
+		}
+	}
+	
+	@Override
+	public void getDetailReportNew(DetailReport input) throws TCHQueryException {
+		
+		logger.debug("Get details report dao, get mid and tid list");
+		
+		String midtid[] = getMidTids(input.getTerminalSerialNumber(),input.getHostId());
+		if(midtid != null && midtid.length > 0){
+			input.setMerchantId(midtid[0]);
+			input.setTerminalId(midtid[1]);
+		}
+		Integer	offset = 0;
+		if(input.getPacketNumber() != null){
+			offset = Integer.valueOf(input.getPacketNumber()) * 20;
+		}
+		String descParam = "0";
+		if(input.getDecisionFlag() != null && Constants.TCH_DET_ACK.equals(input.getDecisionFlag())){
+			descParam = "1";
+		}
+		
+		SqlParameter inTerminalSerialNumber = new SqlParameter("I_TERMINAL_SERIAL_NUMBER", Types.VARCHAR);
+		SqlParameter inTID = new SqlParameter("I_TID", Types.VARCHAR);
+		SqlParameter inMID = new SqlParameter("I_MID", Types.VARCHAR);
+		SqlParameter inHostId = new SqlParameter("I_HOST_ID", Types.VARCHAR);
+		SqlParameter inBatchNumber = new SqlParameter("I_BATCH_NUMBER", Types.VARCHAR);
+		SqlParameter inOffset = new SqlParameter("I_OFFSET", Types.VARCHAR);
+		SqlParameter inDesParam = new SqlParameter("I_DESC_PARAM", Types.VARCHAR);
+		SqlParameter outSqlCode = new SqlOutParameter("O_SQL_CODE", Types.VARCHAR);
+		SqlParameter outAppErrorCode = new SqlOutParameter("O_APP_ERROR_CODE", Types.VARCHAR);
+		SqlParameter outDebugPoint = new SqlOutParameter("O_DEBUG_POINT", Types.VARCHAR);
+		SqlParameter outBatchNumber = new SqlOutParameter("O_BATCH_NUMBER", Types.VARCHAR);
+		SqlParameter outTotalCount= new SqlOutParameter("O_TOTAL_COUNT", Types.VARCHAR);
+		SqlParameter outFinalCount= new SqlOutParameter("O_FINAL_COUNT", Types.VARCHAR);
+		SqlParameter cursorDetailReportData = new SqlOutParameter("C_DETAIL_REPORT_DATA", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		SqlParameter cursorDetailReportTable = new SqlOutParameter("C_DETAIL_REPORT_TABLE_DATA", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		
+		DataSource ds = (DataSource) TcpServer.getContext().getBean("dataSource");
+		SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(ds);
+		SqlParameterSource parameterSource;
+		
+		if(input.getBatchNumber() != null){
+			simpleJdbcCall.withProcedureName("TCH_DETAIL_BTH_REPORT_PROC1")
+			.declareParameters(inTerminalSerialNumber,inTID,inMID,inHostId,inBatchNumber,inOffset,inDesParam,outBatchNumber, outSqlCode, outAppErrorCode , outDebugPoint, 
+					outTotalCount, outFinalCount,cursorDetailReportData,cursorDetailReportTable)
+			.withoutProcedureColumnMetaDataAccess()
+			.compile();
+			
+			logger.info("I_TERMINAL_SERIAL_NUMBER: [" + input.getTerminalSerialNumber()  +"]" );
+			logger.info("I_OFFSET: [" + offset  +"]" );
+			logger.info("I_MID: [" + input.getMerchantId()  +"]" );
+			logger.info("I_TID: [" + input.getTerminalId() +"]" );
+			logger.info("I_HOST_ID: [" + input.getHostId() +"]" );
+			logger.info("I_BATCH_NUMBER: [" + input.getBatchNumber() +"]" );
+			
+			parameterSource = new MapSqlParameterSource().addValue("I_OFFSET", offset.toString())
+					.addValue("I_TERMINAL_SERIAL_NUMBER",input.getTerminalSerialNumber().trim())
+					.addValue("I_DESC_PARAM", descParam)
+					.addValue("I_MID", input.getMerchantId())
+					.addValue("I_TID", input.getTerminalId())
+					.addValue("I_HOST_ID", input.getHostId())
+					.addValue("I_BATCH_NUMBER", input.getBatchNumber());
+			
+			logger.info("Calling store procedure for sale TCH_DETAIL_BTH_REPORT_PROC1");
+		}else{
+			simpleJdbcCall.withProcedureName("TCH_DETAIL_REPORT_PROC1")
+			.declareParameters(inTerminalSerialNumber,inTID,inMID,inHostId,inOffset,inDesParam,outBatchNumber, outSqlCode, outAppErrorCode , outDebugPoint, 
+					outTotalCount, outFinalCount,cursorDetailReportData,cursorDetailReportTable)
+			.withoutProcedureColumnMetaDataAccess()
+			.compile();
+			
+			logger.info("I_TERMINAL_SERIAL_NUMBER: [" + input.getTerminalSerialNumber()  +"]" );
+			logger.info("I_OFFSET: [" + offset  +"]" );
+			logger.info("I_MID: [" + input.getMerchantId()  +"]" );
+			logger.info("I_TID: [" + input.getTerminalId() +"]" );
+			logger.info("I_HOST_ID: [" + input.getHostId() +"]" );
+			
+			parameterSource = new MapSqlParameterSource().addValue("I_OFFSET", offset.toString())
+					.addValue("I_TERMINAL_SERIAL_NUMBER",input.getTerminalSerialNumber().trim())
+					.addValue("I_DESC_PARAM", descParam)
+					.addValue("I_MID", input.getMerchantId())
+					.addValue("I_TID", input.getTerminalId())
+					.addValue("I_HOST_ID", input.getHostId());
+			logger.info("Calling store procedure for sale TCH_DETAIL_REPORT_PROC1");
+		}
+		logger.debug("Parameter values :" + parameterSource.getValue("I_TERMINAL_SERIAL_NUMBER") +"|"+ 
+		parameterSource.getValue("I_DESC_PARAM") +"|"+parameterSource.getValue("I_MID") +"|"+ parameterSource.getValue("I_TID") +"|"+
+		parameterSource.getValue("I_HOST_ID"));
+		Map<String,Object> output = simpleJdbcCall.execute(parameterSource);
+		
+		String sqlCode = (String) output.get("O_SQL_CODE");
+		String appErrorCode = (String) output.get("O_APP_ERROR_CODE");
+		String oDebugPoint = (String) output.get("O_DEBUG_POINT");
+		String oTotalCount = (String) output.get("O_TOTAL_COUNT");
+		String oFinalCount = (String) output.get("O_FINAL_COUNT");
+		
+		logger.info("SqlCode from Sp :" + sqlCode);
+		logger.info("App Error Code from SP :" + appErrorCode);
+		logger.info("Debug Point from SP :" + oDebugPoint);
+		logger.info("Total count from SP :" + oTotalCount);
+		logger.info("Final from SP :" + oFinalCount);
+		
+		if(appErrorCode != null && appErrorCode.equals(ErrorConstants.TCH_D403)){
+			input.setDiplayMessage("No of transctions more than 50");
+			return;
+		}
+		if(appErrorCode != null){
+			if(oFinalCount != null && "0".equals(oFinalCount)){
+				if(input.getHostId() != null){
+					throw new TCHQueryException(appErrorCode, input.getHostId()+" "+ErrorMaster.get(appErrorCode));
+				}else{
+					throw new TCHQueryException(appErrorCode, ErrorMaster.get(appErrorCode));
+				}
+			}else{
+				throw new TCHQueryException(appErrorCode, ErrorMaster.get(appErrorCode));
+			}
+		}
+		if(!"2".equalsIgnoreCase(oDebugPoint)){
+			throw new TCHQueryException(ErrorConstants.TCH_D416, ErrorMaster.get(ErrorConstants.TCH_D416));
+		}
+		
+		input.setBatchNumber((String) output.get("O_BATCH_NUMBER"));
+		
+		@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> rowsDetailTable = (List<HashMap<String,Object>>) output.get(Constants.TCH_C_DETAIL_REPORT_DATA);
+		if(rowsDetailTable != null && rowsDetailTable.size() > 0){
+			logger.debug("Size of rows :" + rowsDetailTable.size());
+			setValues(output,rowsDetailTable,input);
+		}
+		
+		// if flow is from settlement then skip to send amex,CUG,DCC
+		if(Constants.TCH_Y.equals(input.getSettlementDetail())){
+			if("1".equals(oTotalCount)){
+				input.setDecisionFlag(Constants.TCH_CONT);
+			}else{
+				input.setDecisionFlag(Constants.TCH_END);
+			}
+		}else{
+			// check condition for setting continuity flag and host id
+			if("1".equals(oTotalCount)){ // check condition for continuity for normal mid and tid
+				input.setDecisionFlag(Constants.TCH_CONT);
+			}else{
+				if(TerminalParameterCacheMaster.terminalParameterCache.get(input.getTerminalSerialNumber()) != null){
+					if(TerminalParameterCacheMaster.terminalParameterCache.get(input.getTerminalSerialNumber()).isAmexFlag()	&& input.getHostId() == null){			// check condition for amex
+						input.setHostId(Constants.TCH_AMEX);
+						input.setDecisionFlag(Constants.TCH_DETREP);
+					}else if(TerminalParameterCacheMaster.terminalParameterCache.get(input.getTerminalSerialNumber()).isDccFlag()
+							&& input.getHostId().equals(Constants.TCH_AMEX)){ // check condition for dcc
+						input.setHostId(Constants.TCH_DCC);
+						input.setDecisionFlag(Constants.TCH_END);
+					}else{
+						if(input.getHostId() != null)
+							input.setDecisionFlag(Constants.TCH_END);
+						else
+							input.setDecisionFlag(null);
+					}
+				}else{
+					input.setDecisionFlag(Constants.TCH_END);
+				}
+			}
+		}
+		
+		logger.debug("Exiting getDetailReport");
+		
+	}
+	
+	/**
+	 * @param output
+	 * @param rowsDetailTable
+	 * @param input
+	 */
+	private void setValues(Map<String,Object> output, List<HashMap<String,Object>> rowsDetailTable,final DetailReport input){
+		
+		@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> rows = (List<HashMap<String,Object>>) output.get(Constants.TCH_C_DETAIL_REPORT_TABLE_DATA);
+		StringBuilder sb = new StringBuilder("");
+		StringBuilder sb1 = new StringBuilder("");
+		for(HashMap<String,Object> map : rows){
+			sb.append((String) map.get("D_DISPLAY_MSG_PARAM")).append(",");
+			sb1.append((String) map.get("D_COLUMN_NAME")).append(",");
+		}
+		
+		input.setHeaderValue(sb.toString().substring(0, sb.length()-1));
+		String[] strColumnNames = sb1.toString().substring(0, sb1.length()-1).split(",");
+		
+		String[] s = new String[rowsDetailTable.size()];
+		int count = 0;
+		for(HashMap<String,Object> map : rowsDetailTable){
+			sb = new StringBuilder("");
+			if("1".equals((String) map.get(Constants.TCH_P_TIP_APPROVED))){
+				sb.append(Constants.TCH_TIPADJUST).append(",");
+			}else if(Constants.TCH_CONVERTTOINR.equals((String) map.get(Constants.TCH_P_SESSION_KEY))){
+				sb.append(Constants.TCH_SALE_C).append(",");
+			}else{
+				sb.append((String) map.get(strColumnNames[0])).append(",");
+			}
+			for(int i = 1; i < strColumnNames.length ; i++){
+				if(Constants.TCH_P_ORIGINAL_AMOUNT.equals(strColumnNames[i])){
+					/*if((String) map.get(Constants.TCH_P_DCC_AMOUNT) != null)
+						sb.append(getPrecisionInAmount(((BigDecimal) map.get(Constants.TCH_P_DCC_AMOUNT)).toPlainString())).append(","); // for displaying dcc amount
+					else*/
+						sb.append(getPrecisionInAmount((String) map.get(strColumnNames[i]))).append(",");
+				}else if(Constants.TCH_P_LAST_FOUR_DIGIT.equals(strColumnNames[i])){
+					String str = (String) map.get(strColumnNames[i]);
+					if(str != null){
+						if (str.length()==10){
+							sb.append(UtilityHelper.maskedMobileNumber(str)).append(",");
+						}else{
+							sb.append(String.format("%1$16s",str).replace(' ', 'x')).append(",");
+						}
+					}	
+					else
+						sb.append("-").append(",");
+				}else if(Constants.TCH_P_EXPIRYDATE.equals(strColumnNames[i])){
+					String str = (String) map.get(strColumnNames[i]);
+					if(str != null){
+						if(str.length() >= 2)
+							str=new StringBuilder(str).insert(str.length()-2, '/').toString();
+						sb.append(str).append(",");
+					}else{
+						sb.append("-").append(",");
+					}
+				}else if(Constants.TCH_P_AUTH_ID.equals(strColumnNames[i])){
+					String str = (String) map.get(strColumnNames[i]);
+					if(str != null){
+						sb.append(str).append(",");
+					}else{
+						sb.append("-").append(",");
+					}
+				}else{		
+					sb.append((String) map.get(strColumnNames[i])).append(",");
+				}
+				
+			}
+			s[count++] = sb.toString().substring(0, sb.length()-1);
+			//input.setHeaderValue(sb.toString().substring(0, sb.length()-1));
+		}
+		input.setTransactionValue(s);
+	}
+	
+}

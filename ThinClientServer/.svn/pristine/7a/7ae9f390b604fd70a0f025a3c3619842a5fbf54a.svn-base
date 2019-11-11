@@ -1,0 +1,74 @@
+package com.awl.tch.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.exceptions.TCHServiceException;
+//import com.awl.tch.dao.IrctcDaoImpl;
+/*import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.service.IrctcSaleConfirmSerivceImpl;
+import com.awl.tch.irctc.service.IrctcSaleEnqServiceImpl;*/
+//import com.awl.tch.model.IrctcDTO;
+//import com.tch.irctc.model.SaleConfirm;
+//import com.tch.irctc.model.SaleEnquiry;
+
+
+@Service("enquiryACKServiceImpl")
+public class EnquiryACKServiceImpl extends AbstractServiceImpl implements TCHService<Payment>{
+
+	private static Logger logger = LoggerFactory.getLogger(EnquiryACKServiceImpl.class);
+	
+	/*@Autowired
+	@Qualifier(Constants.TCH_IRCTC_DAO)
+	IrctcDaoImpl irctcDao;*/
+	
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+		logger.info("Inside service enq ack");
+		String appName = input.getAppName().trim();
+		logger.debug("App name :[" + appName+"]");
+		logger.debug("Reference value :["+input.getReferenceValue()+"]");
+		logger.debug("RRN :[" + input.getRetrivalRefNumber() +"]");
+		setProxy(appName);
+		switch(appName){
+		case Constants.TCH_AAB:
+			input = aabService.updateStatus(input);
+			break;
+		case Constants.TCH_EGRAS:
+			input = egrasService.updateStatus(input);
+			break;
+		case Constants.TCH_SBIEPAY :
+			input = epayService.updateStatus(input);
+			break;
+	
+		case Constants.TCH_MPOS:
+			input = mopsService.updateStatus(input);
+			break;
+			
+		case Constants.TCH_IRCTC :
+		    input = irctcService.updateStatus(input);
+			break;
+
+			
+		case Constants.TCH_AXIS_EPAY:
+			input = axisEpayService.updateStatus(input);
+			break;
+			
+		case Constants.TCH_GBSS:
+			input = gbssService.updateStatus(input);
+			break;
+		
+
+		default :
+			break;
+		}
+	
+		logger.debug("Exiting service enq ack");
+		return input;
+	}
+	
+	
+}

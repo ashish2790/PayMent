@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy element &apos;database_kalkulas.properties&apos; to &apos;BrandEMI/src/main/resources&apos;&#x0D;&#x0A;- Original project: &apos;ThinClientServer&apos;&#x0D;&#x0A;- Destination element: &apos;BrandEMI/src/main/resources&apos;&#x0D;&#x0A;- Original element: &apos;database_kalkulas.properties&apos;" description="Copy file" destination="=BrandEMI/src\/main\/resources" element1="src/main/resources/database_kalkulas.properties" files="1" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1512463041229" units="0" version="1.0"/>
+</session>

@@ -1,0 +1,555 @@
+package com.awl.tch.service;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.ParseException;
+import java.util.Map;
+
+import org.apache.axis.utils.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+import com.awl.tch.adaptor.brandemi.BrandEmiAdaptorImpl;
+import com.awl.tch.adaptor.wallet.WalletAdaptor;
+/*import com.awl.tch.adaptor.AbstractFatoryExternalEntity;
+import com.awl.tch.adaptor.ExternalEntityService;*/
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternlaEntityInterface;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.constant.Tags;
+import com.awl.tch.dao.BrandEmiDaoImpl;
+import com.awl.tch.dao.BrandEmiSerialNumberDaoImpl;
+import com.awl.tch.dao.EnquiryDaoImpl;
+import com.awl.tch.dao.IrctcDaoImpl;
+import com.awl.tch.dao.PreAuthDaoImpl;
+import com.awl.tch.dao.ReportDaoImpl;
+import com.awl.tch.dao.SaleAmexDaoImpl;
+import com.awl.tch.dao.SaleDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.externalentityImpl.AxisEpayBridgeServiceImpl;
+import com.awl.tch.externalentityImpl.IrctcBridgeServiceImpl;
+import com.awl.tch.iso8583.ISOPaymentPG;
+import com.awl.tch.iso8583.ISOdccSale;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.mpos.service.MOPSService;
+import com.awl.tch.tcp.TcpClient;
+import com.awl.tch.util.AppConfigMaster;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.UtilityHelper;
+
+@Component("serviceImpl")
+public abstract class AbstractServiceImpl {
+
+	public static Long batchNumber = 1L; 
+	
+	private static final Logger logger = LoggerFactory.getLogger(AbstractServiceImpl.class);
+	public  static BigInteger ONE_HUNDRED = new BigInteger("100");
+	public  static BigDecimal HUNDRED = new BigDecimal("100");
+	@Autowired
+	public TcpClient tcpClient;
+	
+	@Autowired
+	@Qualifier("preAuthDaoImpl")
+	PreAuthDaoImpl preAuthDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_PAYMENT_AMEX_DAO)
+	public SaleAmexDaoImpl paymentAmexDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_IRCTC_DAO)
+	IrctcDaoImpl irctcDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_BRAND_EMI_DAO)
+	BrandEmiDaoImpl brandDao;
+	
+	@Autowired
+	@Qualifier("paymentSaleDao")
+	public SaleDaoImpl paymentSaleDao;
+	
+	@Autowired
+	@Qualifier("enquiryDaoImpl")
+	public EnquiryDaoImpl enquiryDaoImpl;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_REPORT_DAO)
+	public ReportDaoImpl sbiEpayDao;
+	
+
+	@Autowired
+	@Qualifier(Constants.TCH_AAB_BRDGE)
+	ExternlaEntityInterface<Payment> aabService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_GBSS_BRIDGE)
+	ExternlaEntityInterface<Payment> gbssService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_EPAY_BRIDGE)
+	ExternlaEntityInterface<Payment> epayService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_MOP_BRIDGE)
+	ExternlaEntityInterface<Payment> mopsService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_AXIS_EPAY_BRIDGE)
+	public AxisEpayBridgeServiceImpl axisEpayService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_IRCTC_BRIDGE)
+	protected IrctcBridgeServiceImpl irctcService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_SBI_SERVICEIMPL)
+	MOPSService mopService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_BRIDGE)
+	ExternlaEntityInterface<Payment> egrasService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_BRAND_EMI_ADAPTOR)
+	BrandEmiAdaptorImpl brandEmiAdaptor;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_BRAND_EMI_SERIAL_DAO)
+	BrandEmiSerialNumberDaoImpl brandEmiSerialNumberImpl;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_FCWALLET_ADAPTOR)
+	protected WalletAdaptor fcWalletAdaptor;
+	
+	/**
+	 * Check for PCR flag based on the terminal serial number
+	 * if PCR flag is yes then send error code ErrorConstants.TCH_S999 to initiate handshake
+	 * @param input 
+	 * @throws TCHServiceException
+	 */
+	public void checkForPcrFlag(Payment input) throws TCHServiceException{
+		// First check for PCR flag is yes or not and then proceed further for actual transaction.
+				try {
+					if("Y".equalsIgnoreCase(paymentSaleDao.getPCRFlag(input.getTerminalSerialNumber().trim()))){
+						input.setDecisionFlag(ErrorConstants.TCH_S999);
+						//throw new TCHServiceException(ErrorConstants.TCH_S999, ErrorMaster.get(ErrorConstants.TCH_S999));
+					}
+				} catch (TCHQueryException e1) {
+					logger.debug("Exception in fetching pcr flag :" + e1.getMessage());
+					throw new TCHServiceException(e1.getErrorCode(),e1.getErrorMessage(),"99");	// SENDING RESPONSE CODE FOR TERMINAL LEVEL EXCEPTION HANDLING
+				}
+	}
+	
+	public void checkSU99(Payment input) throws TCHServiceException{
+		if(isNewVersionPresent(input.getTerminalSerialNumber())){
+			try {
+				if(ErrorConstants.TCH_SU99.equalsIgnoreCase(paymentSaleDao.checkSU99(input.getTerminalSerialNumber().trim()))){
+					throw new TCHServiceException(ErrorConstants.TCH_SU99, ErrorMaster.get(ErrorConstants.TCH_SU99));
+				}
+			} catch (TCHQueryException e1) {
+				logger.debug("Exception in fetching pcr flag :" + e1.getMessage());
+				throw new TCHServiceException(e1.getErrorCode(),e1.getErrorMessage());	
+			}
+		}
+	}
+	
+	public Map<String, String> getEMIDCCFlag(String termSerialNumber) throws TCHServiceException{
+		// First check for PCR flag is yes or not and then proceed further for actual transaction.
+				try {
+					return paymentSaleDao.getEMIDCCFlag(termSerialNumber);
+				} catch (TCHQueryException e1) {
+					logger.debug("Exception in fetching pcr flag :" + e1.getMessage());
+					throw new TCHServiceException(e1.getErrorCode(),e1.getErrorMessage());
+				}
+	}
+	
+	/**
+	 * Get version number 
+	 * @param termNumber
+	 * @return
+	 */
+	public String getVersionNumber(String termNumber){
+		
+		try {
+			return paymentSaleDao.getVersionNumber(termNumber);
+		} catch (Exception e1) {
+			logger.debug("Exception in fetching pcr flag :" + e1.getMessage());
+		}
+		return null;
+	}
+	
+	/**
+	 * Add precision to original amount and move it two digit left 
+	 * @param input
+	 */
+	public void getOriginalAmountInPrecision(final Payment input){
+		/*if(input.getOriginalAmount() != null){
+			String orgAmount = input.getOriginalAmount().trim();
+			input.setOriginalAmount((new BigDecimal(orgAmount).movePointLeft(2)).toString());
+		}*/
+	}
+	
+	/**
+	 * Add precision to additional amount and move it two digit left 
+	 * @param input
+	 */
+	public void getAdditionalAmountInPrecision(final Payment input){
+		/*if(input.getAdditionalAmount() != null){
+			String addAmount = input.getAdditionalAmount().trim();
+			input.setAdditionalAmount((new BigDecimal(addAmount).movePointLeft(2)).toString());
+		}*/
+	}
+	
+	/**
+	 * Add precision to dcc amount and move it two digit left 
+	 * @param input
+	 */
+	public void getDccAmountInPrecision(final Payment input){
+		/*if(input.getDccAmount() != null){
+			String addAmount = input.getDccAmount().trim();
+			input.setDccAmount((new BigDecimal(addAmount).movePointLeft(2)).toString());
+		}*/
+	}
+	
+	/**
+	 * Setting null values for the not required field to eliminate them from response parameter
+	 * @param input payment bean
+	 */
+	public void setNull(final Payment input){
+		
+		if(input.getDate() != null && input.getDate().length() == 4){
+			String actualDate = input.getDate();
+			logger.debug("Date received :" + actualDate);
+			input.setDate(UtilityHelper.MMYY().substring(2) + actualDate);
+		}
+		input.setPanNumber(null);
+		input.setBinNumber(null);
+		//input.setCardEntryMode(null);
+		input.setTrack2(null);	
+		//input.setCurrencyCode(null);
+		input.setAccountType(null);
+		input.setSessionKey(null);
+		input.setField55(null);
+		input.setPinBlock(null);
+		//input.setReferenceValue(null);
+		input.setExpiryDate(null);
+		input.setNoOfCount(null);
+		input.setPinBypass(null);
+		input.setMobileNumber(null);
+		input.setCustomerName(null);
+		input.setExtraInfo(null);
+		input.setExtraDataObject(null);
+		setCardLabel(input);
+		input.setHundredTxn(null);
+		//input.setEmiObject(null);
+	}
+	
+	/**
+	 * Set card label as RUPAY for JCB
+	 * @param input
+	 */
+	public void setCardLabel(final Payment input){
+		if(input != null){
+			if(input.getCardLabel() != null){
+				if(input.getCardLabel().contains("JCB")){
+					input.setCardLabel("RUPAY");
+				}
+			}
+		}
+	}
+	
+	/**
+	 * @param input
+	 * Set card entry mode as per ISO specification 
+	 * 
+	 */
+	public void getCardEntryMode(final Payment input){
+		
+		if(input.getCardEntryMode() != null){
+			String cardEntryMode = input.getCardEntryMode().trim(); 
+			switch(cardEntryMode){
+			case Constants.TCH_KEYENTER:
+					input.setCardEntryMode(Payment.CardEntryMode.KEYENTER.toString());
+				break;
+			case Constants.TCH_SWIPE:
+					input.setCardEntryMode(Payment.CardEntryMode.SWIPE.toString());
+				break;
+			case Constants.TCH_EMV:
+					input.setCardEntryMode(Payment.CardEntryMode.EMV.toString());
+				break;
+			case Constants.TCH_EMVFALLBK:
+					input.setCardEntryMode(Payment.CardEntryMode.EMVFALLBK.toString());
+				break;
+			case Constants.TCH_CTLS:
+					input.setCardEntryMode(Payment.CardEntryMode.CTLS.toString());
+				break;
+			case Constants.TCH_CTLSW:
+					input.setCardEntryMode(Payment.CardEntryMode.CTLSSWIPE.toString());
+					break;
+			case Constants.TCH_CTLC:
+					input.setCardEntryMode(Payment.CardEntryMode.CTLSSWIPE.toString());
+					break;
+			default :
+					input.setCardEntryMode("21");
+					break;
+			}
+		}else{
+				input.setCardEntryMode("21");
+		}
+		
+	}
+	
+	
+	/**
+	 * @param input
+	 * Set REVERSE OF card entry mode as per ISO specification 
+	 * 
+	 */
+	public void getCardEntryModeReverse(final Payment input){
+		
+		if(input.getCardEntryMode() != null){
+			String cardEntryMode = input.getCardEntryMode().trim(); 
+			switch(cardEntryMode){
+			case "11":
+					input.setCardEntryMode(Payment.CardEntryMode.KEYENTER.name());
+				break;
+			case "21":
+					input.setCardEntryMode(Payment.CardEntryMode.SWIPE.name());
+				break;
+			case "51":
+					input.setCardEntryMode(Payment.CardEntryMode.EMV.name());
+				break;
+			case "801":
+					input.setCardEntryMode(Payment.CardEntryMode.EMVFALLBK.name());
+				break;
+			case "71":
+					input.setCardEntryMode(Payment.CardEntryMode.CTLS.name());
+				break;
+			case "911":
+					input.setCardEntryMode(Payment.CardEntryMode.CTLSSWIPE.name());
+					break;
+			default :
+					input.setCardEntryMode("SWIPE");
+					break;
+			}
+		}else{
+				input.setCardEntryMode("SWIPE");
+		}
+		
+	}
+	
+	/**
+	 * Set account type as per ISO specification
+	 * @param input payment bean contain information related to accountTypw
+	 */
+	public void getAccountType(final Payment input){
+		
+		if(input.getAccountType() != null){
+			String accountType = input.getAccountType().trim();
+			
+			switch(accountType){
+			case Constants.TCH_SAVING:
+				input.setAccountType(Payment.AccountType.SAVING.toString()); //001000
+					break;
+			case Constants.TCH_CHECKING:
+				input.setAccountType(Payment.AccountType.CHECKING.toString()); // 00200
+				break;
+			case Constants.TCH_CREDIT_FACILIT:
+				input.setAccountType(Payment.AccountType.CREDIT_FACILIT.toString()); // 003000
+				break;
+			case Constants.TCH_UNIVERSAL_ACC:
+				input.setAccountType(Payment.AccountType.UNIVERSAL_ACC.toString()); // 004000
+				break;
+			default :
+				input.setAccountType("0000");
+				break;
+			}
+		}else{
+			input.setAccountType("0000");
+		}
+		
+		
+	}
+	
+	/**
+	 * Get the external entity service impl class
+	 * @param appName
+	 * @return Service Impl class
+	 *//*
+	public ExternalEntityService<?> getExternalEntityService(String appName){
+		logger.debug("Inside getExternalEntityService");
+		AbstractFatoryExternalEntity abstractFac =  ExternalEntityFactoryCreator.getFactory(appName);
+		return abstractFac.getService(appName);
+	}*/
+	
+	/**
+	 * @author ashish.bhavsar
+	 * @param input
+	 * @throws TCHServiceException
+	 */
+	public void error82(final Payment input) throws TCHServiceException{
+		if("82".equals(input.getResponseCode())){
+			throw new TCHServiceException(ErrorConstants.TCH_S82, "INITIATE KEY EXCHANGE");
+		}
+	}
+	
+	/**
+	 * Send request to switch 
+	 * @param input payment bean 
+	 * @param requestType type of request
+	 * @throws TCHServiceException 
+	 */
+	public void sendToSwitch(final Payment input,final String requestType) throws TCHServiceException{
+		String str = "";
+		str = this.tcpClient.send(ISOPaymentPG.createISOMessage(input, requestType),input.getBankCode());
+		ISOPaymentPG.parseIsoMessage(str, input, requestType);
+		//input.setResponseCode("00");
+		
+	}
+	
+	/**
+	 * Check whether RRN is present or not for currrent refund transaction
+	 * @param input
+	 * @return
+	 * @throws TCHServiceException
+	 */
+	public boolean checkRRNPresent(final Payment input) throws TCHServiceException{
+		if(input.getCardLabel() != null){
+			if(input.getCardLabel().contains(Constants.TCH_RUPAY)){
+				if(input.getReferenceValue() == null){
+					throw new TCHServiceException(ErrorConstants.TCH_R14,ErrorMaster.get(ErrorConstants.TCH_R14));
+				}
+			}
+		}
+		return true;
+	}
+	
+	
+	/**
+	 * Check if original amount is in multiple of 100 or not
+	 * @param input
+	 * @param multiple
+	 * @return
+	 * @throws TCHServiceException 
+	 */
+	public void checkForMultipleOf100(final Payment input, int multiple) throws TCHServiceException{
+		BigInteger amount = null;
+		if(input.getOriginalAmount() != null){
+			amount = new BigInteger(input.getAdditionalAmount());
+			amount = amount.divide(ONE_HUNDRED);
+			if((amount.intValue() % 100) != 0 && Constants.TCH_SBIBANKCODE.equals(input.getBankCode())){
+				throw new TCHServiceException(ErrorConstants.TCH_S302,ErrorMaster.get(ErrorConstants.TCH_S302)); 
+			}
+		}
+	}
+	
+	/**
+	 * Check for valid version number for backward compatibility
+	 * @param termSerialNumber
+	 * @return boolean true : if version greater than or equal to 141117 else false
+	 */
+	public boolean isNewVersionPresent(String termSerialNumber){
+		String versionNumber = getVersionNumber(termSerialNumber);
+		if(versionNumber != null){
+			try {
+				if(UtilityHelper.isVersionGreaterThan14Nov(versionNumber)){
+					logger.debug("Older version before 141117");
+					return true;
+				}
+			} catch (ParseException e) {
+				logger.debug("Exception inparsing",e);
+			}
+		}else{
+			logger.debug("Version number absent");
+		}
+		return false;
+	}
+	
+	
+	/**
+	 * Get card label with international indicator in it
+	 * @param input
+	 * @return label with indicator
+	 */
+	public String getCardLabelWithInternationalInd(final Payment input){
+		logger.debug("Setting card label with international flag.." + input.getInternationalFlag());
+		if(input.getInternationalFlag() != null)
+			input.setCardLabel(input.getCardLabel() + " " + input.getInternationalFlag());
+		return input.getCardLabel();
+	}
+	
+	
+	/**
+	 * Get conversion enquiry
+	 * @param input
+	 * @return
+	 * @throws TCHServiceException
+	 */
+	public Payment getConversionEnquiryInfo(final Payment input) throws TCHServiceException{
+		String terSerNum = input.getTerminalSerialNumber().substring(input.getTerminalSerialNumber().length()-8);
+		if(terSerNum.length() < 10)	
+			terSerNum =  UtilityHelper.leftPad(terSerNum,10);
+		input.setTempSerialNumber(terSerNum);
+		StringBuilder field63 = new StringBuilder("")
+		.append(Tags.DCCtransactionIndicatorTagLength+"D") // DCC INDICATOR
+		.append(Tags.amountInLocalCurrencyTagLength+ String.format("%012d", Long.parseLong(input.getOriginalAmount())))
+		
+		.append(Tags.hardwareserialnumberTagLength + String.format("%015d", Integer.parseInt(input.getTempSerialNumber()))+Tags.currencyCodeTagLength + input.getCurrencyCode()); // AMOUNT IN INR
+	
+		
+		/*.append(Tags.exchangeRateTagLength+ String.format("%08d", 12))// EXCHANGE RATE
+		.append(Tags.markupPercentTagLength+ String.format("%04d", 12))// MARKUP
+		.append(Tags.DCCTransactioncurrencycodeTagLength + input.getCurrencyCode())
+		.append(Tags.transactionCurrencyName + input.getCurrencyName())
+		.append(Tags.numberOfDecimalForDccAmount + "2");*/ 
+		
+		input.setField63(field63.toString());
+		sendForEnquiry(input);
+		if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode()) && !Constants.TCH_RESP_84.equals(input.getResponseCode())){
+			throw new TCHServiceException(ErrorConstants.TCH_D001, ErrorMaster.get(ErrorConstants.TCH_D001) + "["+input.getResponseCode()+"]");
+		}
+		if(Constants.TCH_RESP_84.equals(input.getResponseCode())){
+			input.setDecisionFlag(null);
+			input.setRetrivalRefNumber(null);
+		}
+		setNull(input);
+		return input;
+		
+	}
+	
+	/**
+	 * Send request for getting conversion information
+	 * @param input
+	 * @throws TCHServiceException
+	 */
+	public void sendForEnquiry(final Payment input) throws TCHServiceException{
+		String resp = tcpClient.send(ISOdccSale.createISOProgramEnquiry(input),input.getBankCode());
+		ISOdccSale.parseDccConversionEnquiry(input, resp);
+	}
+
+	public void setProxy(String appName) {
+		UtilityDTO utilityDetailInfo = AppConfigMaster.getUtilInfoValue(appName);
+		if (null != utilityDetailInfo){
+			String ipAddressProxy = utilityDetailInfo.getIpAddress();
+			String portNumberProxy = utilityDetailInfo.getPortNumber();
+			if (!StringUtils.isEmpty(ipAddressProxy) && !StringUtils.isEmpty(portNumberProxy)){
+
+				System.setProperty(Constants.TCH_HTTPPROXYHOST,ipAddressProxy);
+				System.setProperty(Constants.TCH_HTTPPROXYPORT,portNumberProxy);
+				logger.debug("Setting proxy details to : " + ipAddressProxy +":" +portNumberProxy);
+			}else{
+				logger.debug("No proxy setting " );
+				System.clearProperty(Constants.TCH_HTTPPROXYHOST);
+				System.clearProperty(Constants.TCH_HTTPPROXYPORT);
+			}
+		}else{
+			logger.debug("Cannot get util info details for app : "+appName);
+		}
+	}
+
+}

@@ -1,0 +1,222 @@
+package com.awl.tch.externalentityImpl;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternalEntityBridge;
+import com.awl.tch.bridge.ExternlaEntityInterface;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.dao.GBSSDaoImpl;
+import com.awl.tch.exception.GBSSException;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.GBSSDto;
+import com.awl.tch.model.GBSSRequest;
+import com.awl.tch.model.GBSSResponse;
+
+@Service(Constants.TCH_GBSS_BRIDGE)
+public class GBSSBridgeServiceImpl extends ExternalEntityBridge implements ExternlaEntityInterface<Payment> {
+
+	private static Logger logger = LoggerFactory.getLogger(GBSSBridgeServiceImpl.class);
+	
+	@Autowired
+	@Qualifier(Constants.TCH_GBSS_DAO)
+	GBSSDaoImpl gbssDao;
+	
+	@Override
+	public Payment updateStatus(Payment input) throws TCHServiceException {
+		
+		logger.debug("challen number :"  + input.getReferenceValue());
+		Map<String, String> utilityInfo = getUtilityInfo(input);
+		GBSSRequest request = new GBSSRequest();
+		GBSSDto gbssDto = new GBSSDto();
+		try{
+			 String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+			 input.setMerchantId(arr[0]);
+			 input.setTerminalId(arr[1]);
+			}catch(TCHQueryException e){
+				throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+			}
+		gbssDto.setChallenNumber(input.getReferenceValue());
+		try{
+			gbssDto = gbssDao.getGBSSinfo(gbssDto.getChallenNumber());
+		}catch(TCHQueryException e){
+			logger.debug("Exception.." , e);
+			gbssDto.setCustomerName("dummyname");
+		}
+		request.setMerchantId(input.getMerchantId());
+		request.setTerminalId(input.getTerminalId());
+		request.setChallenNumber(input.getReferenceValue());
+		request.setCustomerName(gbssDto.getCustomerName());
+		String amount = new BigDecimal(gbssDto.getAmount()).movePointLeft(2).stripTrailingZeros().toPlainString();
+		logger.debug("Amount send.. "+amount);
+		request.setAmount(amount);
+		request.setPyamentMode("1"); // for pos it is 1
+		request.setTransactionId(input.getRetrivalRefNumber());
+		
+		String url = new StringBuilder(utilityInfo.get(Constants.TCH_URL)).append(Constants.TCH_GBSS_UPDATESTATUS).toString();
+		
+		GBSSResponse response;
+		try {
+			response = gbssService.updateAmount(request, url);
+		} catch (GBSSException e) {
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+		gbssDto.setChallenNumber(input.getReferenceValue());
+		gbssDto.setPaymentMode("1"); // as per document
+		gbssDto.setMid(input.getMerchantId()); 
+		gbssDto.setTid(input.getTerminalId());
+		gbssDto.setTransactionId(input.getRetrivalRefNumber());
+		gbssDto.setStatus(response.getTransactionStatus());
+		gbssDto.setTransactionDate(response.getTransactionDate());
+		gbssDto.setTransactionTime(response.getTransactionTime());
+		gbssDto.setResponseStatus(response.getResponseStatus());
+		gbssDto.setErrorDescription(response.getErrorDescription());
+		logger.debug("Saving data in db");
+		gbssDao.update(gbssDto);
+		return input;
+	}
+
+	@Override
+	public Payment getAmount(Payment input) throws TCHServiceException {
+		Map<String, String> utilityInfo = getUtilityInfo(input);
+		GBSSRequest request = new GBSSRequest();
+		
+		try{
+		 String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+		 input.setMerchantId(arr[0]);
+		 input.setTerminalId(arr[1]);
+		}catch(TCHQueryException e){
+			throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+		}
+		request.setMerchantId(input.getMerchantId());
+		request.setTerminalId(input.getTerminalId());
+		request.setChallenNumber(input.getReferenceValue());
+		String url = new StringBuilder(utilityInfo.get(Constants.TCH_URL)).append(Constants.TCH_GBSS_GETAMOUNT).toString();
+		GBSSResponse response;
+		try {
+			response = gbssService.getAmount(request, url);
+		} catch (GBSSException e) {
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+		BigDecimal amountVal = null;
+		if(response != null){
+			if(response.getAmount() != null && "0".equals(response.getResponseStatus())){
+				logger.debug("Amount value from service :" + response.getAmount());
+				 amountVal = new BigDecimal(response.getAmount()).multiply(HUNDRED_VAL);
+				logger.debug("Amount value after conversion  :" + amountVal);
+			}else{
+				logger.debug("Amount :" + response.getAmount() + " response status :" + response.getResponseStatus());
+				if(response.getErrorDescription() == null)
+					throw new TCHServiceException("GB-10", response.getTransactionStatus());
+				else
+					throw new TCHServiceException("GB-10", response.getErrorDescription());
+			}
+			
+			
+			String orgAmt = amountVal.toPlainString();
+			input.setOriginalAmount(amountVal.toPlainString());			
+			/*
+			 *  Changes to add convenience fee by ashish
+			 */
+			
+			if(input.getBinNumber() != null){
+				try{
+					gbssDao.calculateConvFee(input); // add convenince fee and cgst and sgst tax value
+				}catch(TCHQueryException e){
+					throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+				}
+			}else{
+				logger.debug("Bin number not present..");
+				throw new TCHServiceException("GB-11","INVALID BIN");
+			}
+			
+			List<BillingObj> lstBillingSBIEapy = new ArrayList<BillingObj>();
+			BillingObj gbssBlg = new BillingObj();
+			gbssBlg.setLabelName(utilityInfo.get(Constants.TCH_GBSS_LABEL1)); // Customer name
+			gbssBlg.setLabelValue(response.getCustomerName());
+			lstBillingSBIEapy.add(gbssBlg);
+			
+			gbssBlg = new BillingObj();
+			gbssBlg.setLabelName(utilityInfo.get(Constants.TCH_GBSS_LABEL2) + " " +Constants.INR_CURR_NAME);// Amt :
+			gbssBlg.setLabelValue(amountVal.movePointLeft(2).toPlainString());
+			lstBillingSBIEapy.add(gbssBlg);
+			
+			if(input.getFeePer() != null){
+				gbssBlg = new BillingObj();
+				gbssBlg.setLabelName(utilityInfo.get(Constants.TCH_GBSS_LABEL3) + input.getFeePer() + "%) :"+" " +Constants.INR_CURR_NAME); // Conv fee:
+				gbssBlg.setLabelValue(new BigDecimal(input.getFeeValue()).movePointLeft(2).toPlainString());
+				lstBillingSBIEapy.add(gbssBlg);
+			}
+			
+			if(input.getCgsttax() != null){
+				gbssBlg = new BillingObj();
+				gbssBlg.setLabelName(utilityInfo.get(Constants.TCH_GBSS_LABEL4) + input.getCgstPer() + "%) :"+ " " +Constants.INR_CURR_NAME); // cgst %
+				gbssBlg.setLabelValue(new BigDecimal(input.getCgsttax()).movePointLeft(2).toPlainString());
+				lstBillingSBIEapy.add(gbssBlg);
+			}
+			
+			if(input.getIgsttax() != null){
+				gbssBlg = new BillingObj();
+				gbssBlg.setLabelName(utilityInfo.get(Constants.TCH_GBSS_LABEL5) + input.getSgstPer() + "%) :"+ " " +Constants.INR_CURR_NAME); //sgst %
+				gbssBlg.setLabelValue(new BigDecimal(input.getIgsttax()).movePointLeft(2).toPlainString());
+				lstBillingSBIEapy.add(gbssBlg);
+			}
+			
+			if(input.getTotalValue() != null){
+				gbssBlg = new BillingObj();
+				gbssBlg.setLabelName(utilityInfo.get(Constants.TCH_GBSS_LABEL6)+ " " +Constants.INR_CURR_NAME); //total amt
+				gbssBlg.setLabelValue(new BigDecimal(input.getTotalValue()).movePointLeft(2).toPlainString());
+				lstBillingSBIEapy.add(gbssBlg);
+			}
+			
+			BillingObj[] blgObjArr1 = new BillingObj[lstBillingSBIEapy.size()];
+			input.setBillingObject(lstBillingSBIEapy.toArray(blgObjArr1)); // set billing object
+			
+			GBSSDto gbssDto = new GBSSDto();
+			gbssDto.setChallenNumber(input.getReferenceValue());
+			gbssDto.setCustomerName(response.getCustomerName());
+			gbssDto.setAmount(orgAmt);
+			gbssDto.setPaymentMode(response.getPyamentMode());
+			gbssDto.setMid(input.getMerchantId()); 
+			gbssDto.setTid(input.getTerminalId());
+			gbssDto.setStatus(response.getTransactionStatus());
+			gbssDto.setTransactionDate(response.getTransactionDate());
+			gbssDto.setTransactionTime(response.getTransactionTime());
+			gbssDto.setResponseStatus(response.getResponseStatus());
+			gbssDto.setTax1(input.getCgsttax());
+			gbssDto.setTax2(input.getIgsttax());
+			gbssDto.setFee(input.getFeeValue());
+			gbssDto.setTax1Per(input.getCgstPer());
+			gbssDto.setTax2Per(input.getSgstPer());
+			gbssDto.setFeePer(input.getFeePer());
+			logger.debug("Saving data in db");
+			gbssDao.save(gbssDto);
+			/*
+			 * end of Changes to add convenience fee by ashish
+			 */
+			
+			input.setOriginalAmount(input.getTotalValue()); // SETTING FINAL AMOUNT TO SEND TO TERMINAL
+			input.setTrack2(null);
+			input.setExpiryDate(null);
+			input.setPanNumber(null);
+			input.setPinBlock(null);
+			input.setField55(null);
+			
+		}else{
+			throw new TCHServiceException("G-003", "INVALID RESPONSE");
+		}
+		return input;
+	}
+	
+}

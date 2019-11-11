@@ -1,0 +1,151 @@
+package com.awl.tch.externalentityImpl;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternalEntityBridge;
+import com.awl.tch.bridge.ExternlaEntityInterface;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.dao.GBSSDaoImpl;
+import com.awl.tch.exception.GBSSException;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.GBSSDto;
+import com.awl.tch.model.GBSSRequest;
+import com.awl.tch.model.GBSSResponse;
+
+@Service(Constants.TCH_GBSS_BRIDGE)
+public class GBSSBridgeServiceImpl extends ExternalEntityBridge implements ExternlaEntityInterface<Payment> {
+
+	private static Logger logger = LoggerFactory.getLogger(GBSSBridgeServiceImpl.class);
+	
+	@Autowired
+	@Qualifier(Constants.TCH_GBSS_DAO)
+	GBSSDaoImpl gbssDao;
+	
+	@Override
+	public Payment updateStatus(Payment input) throws TCHServiceException {
+		
+		logger.debug("challen number :"  + input.getReferenceValue());
+		Map<String, String> utilityInfo = getUtilityInfo(input);
+		GBSSRequest request = new GBSSRequest();
+		GBSSDto gbssDto = new GBSSDto();
+		
+		try{
+			 String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+			 input.setMerchantId(arr[0]);
+			 input.setTerminalId(arr[1]);
+			}catch(TCHQueryException e){
+				throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+			}
+		gbssDto.setChallenNumber(input.getReferenceValue());
+		try{
+			gbssDto = gbssDao.getGBSSinfo(gbssDto);
+		}catch(TCHQueryException e){
+			logger.debug("Exception.." , e);
+			gbssDto.setCustomerName("dummyname");
+		}
+		request.setMerchantId(input.getMerchantId());
+		request.setTerminalId(input.getTerminalId());
+		request.setChallenNumber(input.getReferenceValue());
+		request.setCustomerName(gbssDto.getCustomerName());
+		request.setAmount(gbssDto.getAmount());
+		request.setPyamentMode("1"); // for pos it is 1
+		request.setTransactionId(input.getRetrivalRefNumber());
+		
+		String url = new StringBuilder(utilityInfo.get(Constants.TCH_URL)).append(Constants.TCH_GBSS_UPDATESTATUS).toString();
+		
+		GBSSResponse response;
+		try {
+			response = gbssService.updateAmount(request, url);
+		} catch (GBSSException e) {
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+		gbssDto.setChallenNumber(input.getReferenceValue());
+		gbssDto.setAmount(input.getOriginalAmount());
+		gbssDto.setPaymentMode("1"); // as per document
+		gbssDto.setCustomerName(request.getCustomerName());
+		gbssDto.setMid(input.getMerchantId()); 
+		gbssDto.setTid(input.getTerminalId());
+		gbssDto.setStatus(response.getTransactionStatus());
+		gbssDto.setTransactionDate(response.getTransactionDate());
+		gbssDto.setTransactionTime(response.getTransactionTime());
+		logger.debug("Saving data in db");
+		gbssDao.update(gbssDto);
+		return input;
+	}
+
+	@Override
+	public Payment getAmount(Payment input) throws TCHServiceException {
+		Map<String, String> utilityInfo = getUtilityInfo(input);
+		GBSSRequest request = new GBSSRequest();
+		
+		try{
+		 String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+		 input.setMerchantId(arr[0]);
+		 input.setTerminalId(arr[1]);
+		}catch(TCHQueryException e){
+			throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+		}
+		request.setMerchantId(input.getMerchantId());
+		request.setTerminalId(input.getTerminalId());
+		request.setChallenNumber(input.getReferenceValue());
+		String url = new StringBuilder(utilityInfo.get(Constants.TCH_URL)).append(Constants.TCH_GBSS_GETAMOUNT).toString();
+		GBSSResponse response;
+		try {
+			response = gbssService.getAmount(request, url);
+		} catch (GBSSException e) {
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+		BigInteger amountVal = null;
+		if(response != null){
+			logger.debug("Amount value from service :" + response.getAmount());
+			 amountVal = new BigInteger(response.getAmount());
+			logger.debug("Amount value after conversion  :" + amountVal);
+			
+			List<BillingObj> lstBillingSBIEapy = new ArrayList<BillingObj>();
+			BillingObj gbssBlg = new BillingObj();
+			gbssBlg.setLabelName(getUtilityInfo(input).get(Constants.TCH_GBSS_LABEL1));
+			gbssBlg.setLabelValue(response.getCustomerName());
+			lstBillingSBIEapy.add(gbssBlg);
+			gbssBlg = new BillingObj();
+			
+			gbssBlg.setLabelName(getUtilityInfo(input).get(Constants.TCH_GBSS_LABEL2));
+			gbssBlg.setLabelValue(amountVal.toString());
+			lstBillingSBIEapy.add(gbssBlg);
+			BillingObj[] blgObjArr1 = new BillingObj[lstBillingSBIEapy.size()];
+			input.setBillingObject(lstBillingSBIEapy.toArray(blgObjArr1)); // set billing object
+			
+			input.setOriginalAmount(amountVal.toString());
+			
+			GBSSDto gbssDto = new GBSSDto();
+			gbssDto.setChallenNumber(input.getReferenceValue());
+			gbssDto.setCustomerName(response.getCustomerName());
+			gbssDto.setAmount(input.getOriginalAmount());
+			gbssDto.setPaymentMode(response.getPyamentMode());
+			gbssDto.setMid(input.getMerchantId()); 
+			gbssDto.setTid(input.getTerminalId());
+			gbssDto.setStatus(response.getTransactionStatus());
+			gbssDto.setTransactionDate(response.getTransactionDate());
+			gbssDto.setTransactionTime(response.getTransactionTime());
+			gbssDto.setResponseStatus(response.getResponseStatus());
+			logger.debug("Saving data in db");
+			gbssDao.save(gbssDto);
+		}else{
+			throw new TCHServiceException("G-003", "INVALID RESPONSE");
+		}
+		return input;
+	}
+
+	
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CommitComments>	<CommitComment>changes related to send currency name</CommitComment>
+	<CommitComment>change to set date format..but reverting changes as it is handled at terminal end</CommitComment>
+	<CommitComment>changes to change access  modifier to use date method outside</CommitComment>
+	<CommitComment>removing logger</CommitComment>
+	<CommitComment>changes to check skcode without bin</CommitComment>
+	<CommitComment>sku details with manufacutre check</CommitComment>
+	<CommitComment>change tp store merchant vpa and customer vpa</CommitComment>
+	<CommitComment>changes to set primary key id annotation</CommitComment>
+	<CommitComment>changes to get amex mid and tid in reversal</CommitComment>
+	<CommitComment>change for error code</CommitComment>
+</CommitComments>

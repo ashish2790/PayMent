@@ -1,0 +1,15 @@
+com\awl\tch\wallet\fc\service\FcService.class
+com\awl\tch\wallet\fc\service\FcSaleEnqServiceImpl.class
+com\awl\tch\wallet\fc\utility\SequenceGenerator.class
+com\awl\tch\wallet\fc\utility\HelperUtil.class
+com\awl\tch\wallet\fc\service\FcReverseServiceImpl.class
+com\awl\tch\wallet\common\AbstractWalletService.class
+com\awl\tch\wallet\common\WalletException.class
+com\awl\tch\wallet\fc\service\FcRefundServiceImpl.class
+com\awl\tch\wallet\common\HttpsClient.class
+com\awl\tch\wallet\common\HttpsClient$2.class
+com\awl\tch\wallet\common\HttpsClient$1.class
+com\awl\tch\wallet\fc\model\FcWalletRequest.class
+com\awl\tch\wallet\fc\constant\FcConstant.class
+com\awl\tch\wallet\fc\bean\WalletResponseBean.class
+com\awl\tch\wallet\fc\bean\AdditinalInfo.class

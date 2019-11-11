@@ -1,0 +1,33 @@
+package com.awl.tch.axisepay.constant;
+
+public interface AXISepayConstant {
+
+	
+	final String TCH_AXIS_CHECKSUM = "axis";
+	
+	final String TCH_AXIS_SUCCESS_CODE_000 = "000";
+	
+	final String TCH_AXIS_SUCCESS_CODE_101 = "101";
+	
+	final String TCH_AXISEPAY_PARAMETER_VALUE ="i=";
+	
+	//final String TCH_AXIS_TRANSACTION_DETAILS ="/easypay2.0/frontend/pos/enquiry";
+	//Production URL
+	final String TCH_AXIS_TRANSACTION_DETAILS ="/index.php/pos/enquiry";
+	
+	final String TCH_AXIS_SALE_COMPELETION ="/easypay2.0/frontend/pos/confirmation";
+	index.php/pos/confirmation
+	
+	final String TCH_AXIS_SALE_DECLINE ="/easypay2.0/frontend/pos/fail";
+	index.php/pos/fail
+	
+	final String TCH_AXIS_TRANSACTION_ENQ ="/easypay2.0/frontend/pos/tranenq";
+	index.php/pos/tranenq
+	
+	final String TCH_AXISEPAY_BOOKED = "BOOKED";
+	
+	final String TCH_AXISEPAY_EXPIRED = "EXPIRED";
+	
+	final String TCH_AXISEPAY_PROCESSED = "PROCESSED";
+	
+}

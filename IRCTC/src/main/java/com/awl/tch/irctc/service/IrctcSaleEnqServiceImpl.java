@@ -1,0 +1,122 @@
+package com.awl.tch.irctc.service;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Modifier;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.irctc.constant.IrctcConstant;
+import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.utility.HttpsClient;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.tch.irctc.encryption.AES;
+//import com.tch.irctc.model.SaleEnqResponse;
+import com.tch.irctc.model.SaleEnquiry;
+
+@Service(IrctcConstant.TCH_IRCTC_SALE_SERVICE)
+public class IrctcSaleEnqServiceImpl extends AbstractIrctcService implements IrctcSaleService{
+	
+	private static Logger logger = LoggerFactory.getLogger(IrctcSaleEnqServiceImpl.class);
+	
+	@Override
+	public SaleEnquiry cosumeWS(Map<String, String> input, SaleEnquiry type) throws IRCTCException {
+		logger.debug("Entering web service for sale enquiry");
+		Gson g = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		String encryptedText = " ";
+		String plainText = g.toJson(type);
+		logger.debug("Plain Text [" +plainText+"]");
+		
+		try {
+			logger.debug("Entering in try");
+			encryptedText = AES.Encrypt(plainText, input.get("KEY"));
+			logger.debug(encryptedText);
+		} catch (Exception e1) {
+			logger.debug("Exception in ecryption :",e1);
+			throw new IRCTCException("IR-01","NOT VALID KEY");
+		}
+			
+		try {
+			encryptedText = URLEncoder.encode(encryptedText, "UTF-8");
+		} catch (UnsupportedEncodingException e2) {
+			logger.debug("Exception in encoding :",e2);
+			throw new IRCTCException("IR-03", "ENCODING FAILED");
+		}
+		 logger.debug("Encoded Text ["+encryptedText+"]");
+		 
+		String url = new StringBuilder(input.get("URL")).append(IrctcConstant.TCH_IRCTC_SALE_ENQ)
+					.append(IrctcConstant.TCH_IRCTC_APPCODE)
+					.append(encryptedText)
+					.toString();
+		logger.debug("URL ["+url+"]");
+		 String encData=new StringBuilder(IrctcConstant.TCH_IRCTC_APPCODE).append(encryptedText).toString();
+		 logger.debug("URL ["+encData+"]");
+		
+		
+		//String result = rest.postForObject(url, setHttpEntity(input.get("USERNAME"), input.get("PASSWORD")), String.class);
+	
+        HashMap<String,String> headerMap = new HashMap<String,String>(4);
+
+        headerMap.put("Content-Type","application/x-www-form-urlencoded");
+        String str = input.get("USERNAME")+":"+input.get("PASSWORD");
+        logger.debug("username and password :" + str);
+        String base64Convesion = new String(Base64.encodeBase64(str.getBytes()));
+        logger.debug("Base 64 encoding :" + base64Convesion);
+        headerMap.put("Authorization","Basic "+ base64Convesion);
+        //headerMap.put("Authorization", "Basic YWRtaW46YWRtaW4=");
+        
+        String responseJson = HttpsClient.send(url, encData, headerMap);
+
+       logger.debug("Result ["+responseJson+"]");
+		//get the response and decrypt it
+		type = (SaleEnquiry) parseGson(IrctcConstant.TCH_IRCTC_SALE_SERVICE, responseJson);
+		try {
+			String decStr = AES.Decrypt(type.getEncdata(), input.get("KEY"));
+			logger.debug("DEcrypted string :" + decStr);
+			SaleEnquiry decData = (SaleEnquiry)parseGson(IrctcConstant.TCH_IRCTC_SALE_SERVICE,decStr);
+			if(decData.getStatus() != null && decData.getStatus().equalsIgnoreCase("F"))
+			{
+				throw new IRCTCException("IR-02",decData.getMessage());
+			}else
+			{
+			type = (SaleEnquiry) parseGson(IrctcConstant.TCH_IRCTC_SALE_SERVICE, decStr);
+			}
+			logger.debug("Type ["+type+"]");	
+		}catch(IRCTCException e1){
+			throw new IRCTCException(e1.getErrorCode(),e1.getErrorMessage());
+		}
+		catch (Exception e) {
+			logger.debug("Exception in ecryption :",e);
+			throw new IRCTCException("IR-01","NOT VALID KEY");
+		}
+		logger.debug("Exiting web service for sale enquiry");
+		return type;
+	}
+	
+	public static void main(String[] args) throws IRCTCException {
+		Map<String,String> map  =new HashMap<String, String>();
+		map.put("KEY", "S33lk7YaWtwNK2HXG8UUpQ==");
+		map.put("URL", "https://testcpg.irctc.co.in/cpg/service/pos");
+		SaleEnquiry type = new SaleEnquiry();
+		type.setAssetSrNo("17067WL25866508");
+		type.setTid("27001649");
+		type.setTimeStamp(new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date()));
+		type.setServiceProvider("WL");
+		type.setBankCode("SB");
+		
+		IrctcSaleEnqServiceImpl s = new IrctcSaleEnqServiceImpl();
+		s.cosumeWS(map, type);
+				
+		
+			
+	}
+}
+

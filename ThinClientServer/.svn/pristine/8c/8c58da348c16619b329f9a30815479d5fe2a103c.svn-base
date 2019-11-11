@@ -1,0 +1,72 @@
+package com.awl.tch.bridge;
+
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.dao.EgrasDaoImpl;
+import com.awl.tch.dao.EnquiryDaoImpl;
+import com.awl.tch.dao.IrctcDaoImpl;
+import com.awl.tch.dao.MposDaoImpl;
+import com.awl.tch.dao.ReportDaoImpl;
+import com.awl.tch.egras.EgrasAdptor;
+import com.awl.tch.model.EnqAckDTO;
+import com.awl.tch.mpos.service.MOPSService;
+import com.awl.tch.util.AppConfigMaster;
+import com.egras.constant.EgrasEnumConstant;
+
+public abstract class ExternalEntityBridge {
+
+	@Autowired
+	@Qualifier(Constants.TCH_SBI_SERVICEIMPL)
+	protected MOPSService mopService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_MPOS_DAO)
+	protected MposDaoImpl mopDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_REPORT_DAO)
+	protected ReportDaoImpl epayDao;
+	
+	@Autowired
+	@Qualifier(EgrasEnumConstant.EGRAS_ADPTOR)
+	protected EgrasAdptor egrasAdaptor;
+
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_DAO)
+	protected EgrasDaoImpl egrasDao;
+	
+	@Autowired
+	@Qualifier("enquiryDaoImpl")
+	protected EnquiryDaoImpl enquiryDaoImpl;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_DAO)
+	protected EgrasDaoImpl egrasdao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_IRCTC_DAO)
+	protected IrctcDaoImpl irctcDao;
+	
+	public static Map<String,String> getUtilityInfo(Payment input){
+		return AppConfigMaster.getConfigValue(input.getAppName());
+	}
+	
+	public void saveEnqAck(Payment input, String status){
+		EnqAckDTO dto  = new EnqAckDTO();
+		dto.setAmount(input.getOriginalAmount());
+		dto.setAppName(input.getAppName());
+		dto.setBinNumber(input.getBinNumber());
+		dto.setLastFourDigit(input.getLastFourDigitValue());
+		dto.setRrn(input.getRetrivalRefNumber());
+		dto.setTerminalSernumber(input.getTerminalSerialNumber());
+		dto.setTransId(input.getReferenceValue());
+		dto.setUniqueId(input.getBranchCode());
+		dto.setStatus(status);
+		enquiryDaoImpl.save(dto);
+	}
+}

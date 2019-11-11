@@ -1,0 +1,101 @@
+package com.awl.tch.irctc.service;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Modifier;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import com.awl.tch.irctc.constant.IrctcConstant;
+import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.utility.HttpsClient;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.tch.irctc.encryption.AES;
+import com.tch.irctc.model.SaleConfirm;
+import com.tch.irctc.model.SaleEnquiry;
+
+@Service(IrctcConstant.TCH_IRCTC_SALE_CONF_SERVICE)
+public class IrctcSaleConfirmSerivceImpl extends AbstractIrctcService implements IrctcSaleConfService{
+
+	private static Logger logger = LoggerFactory.getLogger(IrctcSaleConfirmSerivceImpl.class);
+	
+	@Override
+	public SaleConfirm cosumeWS(Map<String, String> input, SaleConfirm type) throws IRCTCException {
+
+		logger.debug("Entering web service for sale confirm");
+		Gson g = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		RestTemplate rest = new RestTemplate();
+		String encryptedText = "";
+		String plainText = g.toJson(type);
+logger.debug("Plain Text [" +plainText+"]");
+		
+		try {
+			System.out.println("Entering in try");
+			encryptedText = AES.Encrypt(plainText, input.get("KEY"));
+			System.out.println(encryptedText);
+		} catch (Exception e1) {
+			logger.debug("Exception in ecryption :",e1);
+			throw new IRCTCException("IR-01","NOT VALID KEY");
+		}
+			
+		try {
+			encryptedText = URLEncoder.encode(encryptedText, "UTF-8");
+		} catch (UnsupportedEncodingException e2) {
+			logger.debug("Exception in encoding :",e2);
+			throw new IRCTCException("IR-03", "ENCODING FAILED");
+		}
+		 logger.debug("Encoded Text ["+encryptedText+"]");
+		 
+		 
+		String url = new StringBuilder(input.get("URL"))
+					.append(IrctcConstant.TCH_IRCTC_SALE_CONF)
+					.append(IrctcConstant.TCH_IRCTC_APPCODE)
+					.append(encryptedText).toString();
+		logger.debug("URL ["+url+"]");
+		 String encData=new StringBuilder(IrctcConstant.TCH_IRCTC_APPCODE).append(encryptedText).toString();
+		 logger.debug("URL ["+encData+"]");
+		
+		// String result = rest.postForObject(url, setHttpEntity(input.get("USERNAME"), input.get("PASSWORD")), String.class);
+		//get the response and decrypt it
+		
+		 HashMap<String,String> headerMap = new HashMap<String,String>(4);
+
+	        headerMap.put("Content-Type","application/x-www-form-urlencoded");
+	        headerMap.put("Authorization", "Basic YWRtaW46YWRtaW4=");
+	        
+	        String responseJson = HttpsClient.send(url, encData, headerMap);
+	        logger.debug("Result ["+responseJson+"]");
+	        
+	        logger.debug("Result ["+responseJson+"]");
+			//get the response and decrypt it
+			type = (SaleConfirm) parseGson(IrctcConstant.TCH_IRCTC_SALE_CONF_SERVICE, responseJson);
+			try {
+				String decStr = AES.Decrypt(type.getEncdata(), input.get("KEY"));
+				SaleEnquiry decData = (SaleEnquiry)parseGson(IrctcConstant.TCH_IRCTC_SALE_SERVICE,decStr);
+				if(decData.getStatus() != null && decData.getStatus().equalsIgnoreCase("F"))
+				{
+					throw new IRCTCException("IR-02",decData.getMessage());
+				}else
+				{
+				type = (SaleConfirm) parseGson(IrctcConstant.TCH_IRCTC_SALE_CONF_SERVICE, decStr);
+				}
+				logger.debug("Type ["+type+"]");	
+			}catch(IRCTCException e1){
+				throw new IRCTCException(e1.getErrorCode(),e1.getErrorMessage());
+			}
+			catch (Exception e) {
+				logger.debug("Exception in ecryption :",e);
+				throw new IRCTCException("IR-01","NOT VALID KEY");
+			}
+	        
+		logger.debug("Exiting web service for sale confirm");
+		return type;
+	}
+}

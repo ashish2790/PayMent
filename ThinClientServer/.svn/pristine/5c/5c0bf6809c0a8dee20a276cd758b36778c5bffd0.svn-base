@@ -1,0 +1,157 @@
+package com.awl.tch.service;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.MenuObject;
+import com.awl.tch.dao.MenuObjectDao;
+
+/**
+ * @author kunal.surana
+ *
+ */
+@Service("menuObjectService")
+public class MenuObjectServiceImpl {
+
+	private static final Logger logger = LoggerFactory.getLogger(MenuObjectServiceImpl.class);
+
+	@Autowired
+	private MenuObjectDao menuObjectDao;
+
+	private static ConcurrentHashMap<String, List<MenuObject>> menuMap = new ConcurrentHashMap<>();;
+
+	/**
+	 * 
+	 * Must be used to initialized menuList of this service. Method can be used to reload the list from DB when reload is required.
+	 */
+	public void init()
+	{
+		if(menuMap.size() == 0){
+			List<MenuObject> menuList = getMenus();
+			//logger.debug("Menu Object ["+menuList+"]");
+			List<MenuObject> menuHierarchy = null;
+			for(MenuObject menuObject :  menuList)
+			{
+				if(menuObject.getCurrentTableCode() == 0)
+				{
+					menuHierarchy = new ArrayList<>();
+					menuMap.put(menuObject.getMenuFlag(), menuHierarchy);
+				}
+				menuHierarchy.add(menuObject);
+				//logger.debug("Menu Hierarchy :"+menuMap);
+			}
+		}
+	}
+
+
+
+	/**
+	 * this method will get menuobject array for particular request type like SALE, REFUND, VOID, etc
+	 * @param requestType requestType is various root menu like SALE, REFUND, VOID, etc
+	 * @param enabledMenu enable options under root menu like QR 
+	 * @return
+	 */
+	public MenuObject[] getMenuList(String requestType, String[] enabledMenu){
+		init();
+		logger.debug("Request type :"+requestType);
+		List<MenuObject> mList = menuMap.get(requestType);
+		logger.debug("menuFlag :"+Arrays.toString(enabledMenu));
+		Arrays.sort(enabledMenu);
+		List<MenuObject> returnList = new ArrayList<>(); 
+		if(mList!=null && mList.size() > 0)
+		{
+			for(MenuObject menu : mList)
+			{
+				if(menu.getTableNumber() == 0)
+				{
+					returnList.add(menu);
+				}
+				else
+				{
+					if(menu.getTableNumber() == 1)
+					{
+						if("CARD".equals(menu.getMenuFlag()))
+						{
+							returnList.add(menu);
+						}
+						else
+						{
+							int ret = Arrays.binarySearch(enabledMenu, menu.getMenuFlag());
+							if(ret >= 0)
+							{
+								returnList.add(menu);
+								for(MenuObject subMenu : mList)
+								{
+//									logger.debug("menu root id :"+menu.getRootId()+"|" + subMenu.getRootId());
+	//								logger.debug("next | current :"+menu.getNextTableCode()+"|" + subMenu.getCurrentTableCode());
+									if(menu.getNextTableCode() == subMenu.getCurrentTableCode())
+									{
+										returnList.add(subMenu);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			MenuObject[] menuArray = new MenuObject[returnList.size()];
+			return returnList.toArray(menuArray);
+		}
+		else
+			return null;		
+	}
+
+	/**
+	 * this method checks whether the menuobject is present for first level menu like SALE,REFUND,VOID,etc
+	 * @param requestType request type like SALE,REFUND,VOID,etc
+	 * @return return true if menu is present in TCH else false
+	 */
+	public boolean isMenuPresent(String requestType){
+		init();
+		List<MenuObject> mList = menuMap.get(requestType);		
+		if(mList!=null && mList.size() > 0)
+			return true;
+		else 
+			return false;
+	}
+
+	
+	/**
+	 * This method  Value which can be used for that specific leaf menu as per business logic.
+	 * @param requestType this is request type i.e. first level menu like SALE, REFUND, VOID
+	 * @param selectedMenu selected menu array that comes from terminal
+	 * @return returns the String which is value associated with that menu. Value can be any String which can be used for that specific leaf menu as per business logic
+	 * @throws Exception throws exception is selected menu is not found
+	 */
+	public String getMenuObjectValue(String requestType, MenuObject[] selectedMenu) throws Exception{
+		init();
+		List<MenuObject> mList = menuMap.get(requestType);
+		logger.debug("Menu list from map"+ mList);
+		MenuObject leafObject = selectedMenu[selectedMenu.length - 1];
+		logger.debug("leaf object "+ leafObject);
+		int index = mList.indexOf(leafObject);
+		if(index != -1)		
+			return mList.get(index).getValue();
+		else
+			throw new Exception("Selected menu not found");
+	}
+
+
+	/**
+	 * Must be used to initialized menuList of this service
+	 * @return list of menuobject from database. 
+	 */
+	private List<MenuObject> getMenus(){
+		return menuObjectDao.getMenus();
+	}
+
+}

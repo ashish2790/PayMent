@@ -1,0 +1,80 @@
+
+Ê%squid:RedundantThrowsDeclarationCheckp"}Remove the declaration of thrown exception 'java.io.UnsupportedEncodingException', as it cannot be thrown from method's body.(ßûäùÿÿÿÿHÍ­RMINORZ
+CODE_SMELL
+esquid:S2629"7Use the built-in formatting to construct this argument.(”ş—ßHÎ­RMAJORZ
+CODE_SMELL
+esquid:S2629""7Use the built-in formatting to construct this argument.(òåİÿHĞ­RMAJORZ
+CODE_SMELL
+jsquid:S26293"7Use the built-in formatting to construct this argument.(µáÎüÿÿÿÿHÒ­RMAJORZ
+CODE_SMELL
+jsquid:S26299"7Use the built-in formatting to construct this argument.(ıÎÂ ûÿÿÿÿHÔ­RMAJORZ
+CODE_SMELL
+jsquid:S2629J"7Use the built-in formatting to construct this argument.(éÁù™ÿÿÿÿÿHÖ­RMAJORZ
+CODE_SMELL
+jsquid:S2629P"7Use the built-in formatting to construct this argument.(ıÎÂ ûÿÿÿÿHÚ­RMAJORZ
+CODE_SMELL
+jsquid:S2629_"7Use the built-in formatting to construct this argument.(éÁù™ÿÿÿÿÿHÜ­RMAJORZ
+CODE_SMELL
+jsquid:S2629e"7Use the built-in formatting to construct this argument.(ıÎÂ ûÿÿÿÿHŞ­RMAJORZ
+CODE_SMELL
+jsquid:S2629q"7Use the built-in formatting to construct this argument.(Œô¹ÁûÿÿÿÿHà­RMAJORZ
+CODE_SMELL
+esquid:S2629t"7Use the built-in formatting to construct this argument.(‘¿æíHâ­RMAJORZ
+CODE_SMELL
+Ysquid:S1659"&Declare "response" on a separate line.(åñ»­ùÿÿÿÿHä­RMINORZ
+CODE_SMELL
+Ysquid:S16590"&Declare "response" on a separate line.(åñ»­ùÿÿÿÿHæ­RMINORZ
+CODE_SMELL
+Ysquid:S1659G"&Declare "response" on a separate line.(åñ»­ùÿÿÿÿHè­RMINORZ
+CODE_SMELL
+Ysquid:S1659\"&Declare "response" on a separate line.(åñ»­ùÿÿÿÿHê­RMINORZ
+CODE_SMELL
+wsquid:S1192)"FDefine a constant instead of duplicating this literal "AB-01" 4 times.(©›‹¡Hë­RCRITICALZ
+CODE_SMELL
+wsquid:S1192"FDefine a constant instead of duplicating this literal "AB-05" 4 times.(šıÚÓHì­RCRITICALZ
+CODE_SMELL
+ squid:S1192""jDefine a constant instead of duplicating this literal "Reponse from axis pay after decryptions :" 4 times.(ıÎÂ ûÿÿÿÿHî­RCRITICALZ
+CODE_SMELL
+Šsquid:S1192&"YDefine a constant instead of duplicating this literal "Status for transaction :" 4 times.(…¿´ÍHğ­RCRITICALZ
+CODE_SMELL
+‡squid:S1192"QDefine a constant instead of duplicating this literal "request string :" 4 times.(éÁù™ÿÿÿÿÿHò­RCRITICALZ
+CODE_SMELL
+‚squid:S1192"QDefine a constant instead of duplicating this literal "ENCODING PROBLEM" 4 times.(šıÚÓHô­RCRITICALZ
+CODE_SMELL
+‡squid:S2293z"YReplace the type specification in this constructor call with the diamond operator ("<>").(Ã­™ÈHö­RMINORZ
+CODE_SMELL
+squid:CommentedOutCodeLine“"<This block of commented-out lines of code should be removed.(†üËùÿÿÿÿHø­RMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine•"<This block of commented-out lines of code should be removed.(’ìŒàøÿÿÿÿHÿ­RMAJORZ
+CODE_SMELL
+šsquid:S1319€"kThe type of the "map" object should be an interface such as "Map" rather than the implementation "HashMap".(¨ª“ØH®RMINORZ
+CODE_SMELL
+Zsquid:S1148—"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHƒ®RMINORZVULNERABILITY
+tsquid:S3457"AFormat specifiers should be used instead of string concatenation.(éÁù™ÿÿÿÿÿH…®RMAJORZ
+CODE_SMELL
+tsquid:S3457""AFormat specifiers should be used instead of string concatenation.(ıÎÂ ûÿÿÿÿH‡®RMAJORZ
+CODE_SMELL
+osquid:S3457&"AFormat specifiers should be used instead of string concatenation.(…¿´ÍH‰®RMAJORZ
+CODE_SMELL
+tsquid:S34573"AFormat specifiers should be used instead of string concatenation.(éÁù™ÿÿÿÿÿH®RMAJORZ
+CODE_SMELL
+tsquid:S34579"AFormat specifiers should be used instead of string concatenation.(ıÎÂ ûÿÿÿÿH®RMAJORZ
+CODE_SMELL
+osquid:S3457<"AFormat specifiers should be used instead of string concatenation.(…¿´ÍH’®RMAJORZ
+CODE_SMELL
+tsquid:S3457J"AFormat specifiers should be used instead of string concatenation.(éÁù™ÿÿÿÿÿH”®RMAJORZ
+CODE_SMELL
+tsquid:S3457P"AFormat specifiers should be used instead of string concatenation.(ıÎÂ ûÿÿÿÿH•®RMAJORZ
+CODE_SMELL
+osquid:S3457S"AFormat specifiers should be used instead of string concatenation.(…¿´ÍH–®RMAJORZ
+CODE_SMELL
+tsquid:S3457_"AFormat specifiers should be used instead of string concatenation.(éÁù™ÿÿÿÿÿH—®RMAJORZ
+CODE_SMELL
+tsquid:S3457e"AFormat specifiers should be used instead of string concatenation.(ıÎÂ ûÿÿÿÿH˜®RMAJORZ
+CODE_SMELL
+osquid:S3457h"AFormat specifiers should be used instead of string concatenation.(…¿´ÍH™®RMAJORZ
+CODE_SMELL
+tsquid:S3457q"AFormat specifiers should be used instead of string concatenation.(Œô¹ÁûÿÿÿÿHš®RMAJORZ
+CODE_SMELL
+osquid:S3457t"AFormat specifiers should be used instead of string concatenation.(‘¿æíH›®RMAJORZ
+CODE_SMELL

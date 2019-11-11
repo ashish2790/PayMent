@@ -1,0 +1,410 @@
+package com.awl.tch.constant;
+
+
+public interface ErrorConstants {
+
+	//S-999
+	public static final String TCH_S999 = "S-999";
+	
+	//A-001
+	final String TCH_A001 = "A-001";
+		
+	//A-002
+	final String TCH_A002 = "A-002";
+	
+	//A-003
+	final String TCH_A003 = "A-003";
+	
+	//A-004
+	final String TCH_A004 = "A-004";
+	
+	//A-005	
+	final String TCH_A005 = "A-005";
+	
+	//B-001
+	final String TCH_B001 = "B-001";
+	
+	//B-002
+	final String TCH_B002 = "B-002";
+	
+	//B-003
+	final String TCH_B003 = "B-003";
+	
+	//B-101
+	final String TCH_B101 = "B-101";
+	
+	//C-001
+	final String TCH_C001 = "C-001";
+	
+	//C-003
+	final String TCH_C003 = "C-003";
+		
+	//C-004
+	final String TCH_C004 = "C-004";
+	
+	//C-101
+	final String TCH_C101 = "C-101";
+	
+	//CD-001
+	final String TCH_CD001 = "CD-001";
+	
+	//D-001
+	final String TCH_D001 = "D-001";
+	
+	//D-403
+	final String TCH_D403 = "D-403";
+	
+	//D-416
+	final String TCH_D416 = "D-416";
+	
+	//E-001
+	final String TCH_E001 = "E-001";
+	
+	//E-002
+	final String TCH_E002 = "E-002";
+	
+	//E-003
+	final String TCH_E003 = "E-003";
+	
+	//E-004
+	final String TCH_E004 = "E-004";
+	
+	//E-005
+	final String TCH_E005 = "E-005";
+	
+	//E-011
+	final String TCH_E011 = "E-011";
+	
+	//EM-002
+	final String TCH_EM002 = "EM-002";
+	
+	//EX-001
+	final String TCH_EX001 = "EX-001";
+	
+	//EX-002
+	final String TCH_EX002 = "EX-002";
+	
+	//H-001
+	final String TCH_H001 = "H-001";
+		
+	//H-002
+	final String TCH_H002 = "H-002";
+		
+	//H-003
+	final String TCH_H003 = "H-003";
+	
+	//P-001
+	final String TCH_P001 = "P-001";
+	
+	//P-001
+	final String TCH_P002 = "P-002";
+		
+	//P-001
+	final String TCH_P003 = "P-003";
+		
+	//P-004
+	final String TCH_P004 = "P-004";
+	
+	//P-005
+	final String TCH_P005 = "P-005";
+	
+	//P-001
+	final String TCH_P008 = "P-008";
+		
+	//P-007
+	final String TCH_P007 = "P-007";
+	
+	//P-001
+	final String TCH_P009 = "P-009";
+		
+	//P-001
+	final String TCH_P010 = "P-010";
+	
+	//P-013
+	final String TCH_P013 = "P-013";
+	
+	//P-200
+	final String TCH_P200 = "P-200";
+	
+	//Q-001
+	final String TCH_Q001 = "Q-001";
+	
+	//R-001
+	final String TCH_R001 = "R-001";
+	
+	//R-002
+	final String TCH_R002 = "R-002";
+	
+	//R-002
+	final String TCH_R003 = "R-003";
+	
+	//R-007
+	final String TCH_R007 = "R-007";
+	
+	//R-005
+	final String TCH_R005 = "R-005";
+	
+	//R-008
+	final String TCH_R008 = "R-008";
+	
+	//R-009
+	final String TCH_R009 = "R-009";
+	
+	//R-010
+	final String TCH_R010 = "R-010";
+	
+	//R-011
+	final String TCH_R011 = "R-011";
+	
+	//R-012
+	final String TCH_R012 = "R-012";
+	
+	//R-013
+	final String TCH_R013 = "R-013";
+	
+	//R-101
+	final String TCH_R101 = "R-101";
+	
+	//R-201
+	final String TCH_R201 = "R-201";
+	
+	//R-12
+	final String TCH_R12 = "R-012";
+	
+	//R-014
+	final String TCH_R14 = "R-014";
+	
+	//S-82
+	final String TCH_S82 = "S-82";
+	
+	//S-001
+	final String TCH_S001 = "S-001";
+	
+	//S-009
+	final String TCH_S009 = "S-009";
+	
+	//S-011
+	final String TCH_S011 = "S-011";
+	
+	//S-012
+	final String TCH_S012 = "S-012";
+	
+	//S-013
+	final String TCH_S013 = "S-013";
+	
+	//S-014
+	final String TCH_S014 = "S-014";
+	
+	//S-015
+	final String TCH_S015 = "S-015";
+	
+	//S-016
+	final String TCH_S016 = "S-016";
+	
+	//S-017
+	final String TCH_S017 = "S-017";
+	
+	//S-018
+	final String TCH_S018 = "S-018";
+	
+	final String TCH_S019 = "S-019";
+	
+	final String TCH_S020 = "S-020";
+	
+	//S-100
+	final String TCH_S100 = "S-100";
+	
+	//S-111
+	final String TCH_S111 = "S-111";
+	
+	//S-200
+	final String TCH_S200 = "S-200";
+	
+	//S-500
+	final String TCH_S500 = "S-500";
+	
+	//S-501
+	final String TCH_S501 = "S-501";
+	
+	//S-601
+	final String TCH_S601 = "S-601";
+	
+	//S-604
+	final String TCH_S604 = "S-604";
+	
+	//S-611
+	final String TCH_S611 = "S-611";
+	
+	//S-616
+	final String TCH_S616 = "S-616";
+	
+	//S-802
+	final String TCH_S802 = "S-802";
+		
+	//S-803
+	final String TCH_S803 = "S-803";
+	
+	//S-804
+	final String TCH_S804 = "S-804";
+	
+	//SQ-001
+	final String TCH_SQ001 = "SQ-001";
+	
+	//T-001
+	final String TCH_T001 = "T-001";
+	
+	//T-002
+	final String TCH_T002 = "T-002";
+	
+	//T-003
+	final String TCH_T003 = "T-003";
+	
+	//T-004
+	final String TCH_T004 = "T-004";
+	
+	//T-005
+	final String TCH_T005 = "T-005";
+	
+	//T-006
+	final String TCH_T006 = "T-006";
+	
+	//T-007
+	final String TCH_T007 = "T-007";
+	
+	//T-008
+	final String TCH_T008 = "T-008";
+	
+	//U-001
+	final String TCH_U001 = "U-001";
+	
+	//V-001
+	final String TCH_V001 = "V-001";
+	
+	//V-003
+	final String TCH_V003 = "V-003";
+	
+	//V-004
+	final String TCH_V004 = "V-004";
+	
+	//V-005
+	final String TCH_V005 = "V-005";
+	
+	//V-004
+	final String TCH_V006 = "V-006";
+	
+	//V-007
+	final String TCH_V007 = "V-007";
+	
+	//Z-001
+	final String TCH_Z001 = "Z-001";
+	
+	//Z-002
+	String TCH_Z002 = "Z-002";
+	
+	//Z-003
+	final String TCH_Z003 = "Z-003";
+	
+	//Z-500
+	final String TCH_Z500 = "Z-500";
+	
+	final String TCH_V008 = "V-008";
+	
+	//BR-02
+	final String TCH_BR02 = "BR-02";
+	
+	//BR-03
+	final String TCH_BR03 = "BR-03";
+	
+	//BR-04
+	final String TCH_BR04 = "BR-04";
+	
+	//BR-05
+	final String TCH_BR05 = "BR-05";
+	
+	//BR-06
+	final String TCH_BR06 = "BR-06";
+	
+	//BR-07
+	final String TCH_BR07 = "BR-07";
+	
+	//BR-08
+	final String TCH_BR08 = "BR-08";
+	
+	//BR-09
+	final String TCH_BR09 = "BR-09";
+	
+	//BR-10
+	final String TCH_BR10 = "BR-10";
+
+	//BR-11
+	final String TCH_BR11 = "BR-11";
+	
+	//BR-12
+	final String TCH_BR12 = "BR-12";
+	
+	//BR-13
+	final String TCH_BR13 = "BR-13";
+	
+	//BR-14
+	final String TCH_BR14 = "BR-14";
+	
+	//BR-15
+	final String TCH_BR15 = "BR-15";
+		
+	//BR-16
+	final String TCH_BR16 = "BR-16";
+	
+	//BR-21
+	final String TCH_BR21 = "BR-21";
+	
+	//BR-22
+	final String TCH_BR22 = "BR-22";
+	
+	//U-002
+	final String TCH_Q002 = "Q-002";
+	
+	final String TCH_Q003 = "Q-003";
+	
+	final String TCH_Q004 = "Q-004";
+	
+	final String TCH_Q005 = "Q-005";
+	
+	final String TCH_S302 = "S-302";
+	
+	final String TCH_V009 = "V-009";
+	
+	final String TCH_T009 = "T-009";
+	
+	final String TCH_S021 = "S-021";
+	
+	final String TCH_D402 = "D-402";
+	
+	final String TCH_SU99 = "SU-99";
+	
+	final String TCH_V10 = "V-010";
+	
+	final String TCH_R202 = "R-202";
+	
+	final String TCH_W104 = "W-104";
+
+	
+	final String TCH_FRSET = "FRSET";
+	
+	final String TCH_S888 = "S-888";
+	
+	final String TCH_99 = "99";
+	
+	final String TCH_W101 = "W-101";
+	
+	final String TCH_W102 = "W-102";
+
+	final String TCH_W103 = "W-103";
+	
+	final String TCH_SB05 = "SB-05";
+			
+	final String TCH_SB06 = "SB-06";
+	
+	final String TCH_SB07 = "SB-07";
+
+}
+

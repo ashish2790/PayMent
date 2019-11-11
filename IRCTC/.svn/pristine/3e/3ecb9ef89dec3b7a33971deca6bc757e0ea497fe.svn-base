@@ -1,0 +1,100 @@
+package com.awl.tch.irctc.service;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Modifier;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.awl.tch.irctc.constant.IrctcConstant;
+import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.utility.HttpsClient;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.tch.irctc.encryption.AES;
+import com.tch.irctc.model.SaleEnquiry;
+import com.tch.irctc.model.VoidTxn;
+
+@Service(IrctcConstant.TCH_IRCTC_SALE_VOID_SERVICE)
+public class IrctcVoidServiceImpl extends AbstractIrctcService implements IrctcVoidService{
+	
+	private static Logger logger = LoggerFactory.getLogger(IrctcVoidServiceImpl.class);
+
+	@Override
+	public VoidTxn cosumeWS(Map<String, String> input, VoidTxn type) throws IRCTCException{
+		logger.debug("Entering web service for void Sale Transaction");
+		Gson g = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		RestTemplate rest = new RestTemplate();
+		String encryptedText =" ";
+		String plainText = g.toJson(type);
+logger.debug("Plain Text [" +plainText+"]");
+		
+		try {
+			System.out.println("Entering in try");
+			encryptedText = AES.Encrypt(plainText, input.get("KEY"));
+			System.out.println(encryptedText);
+		} catch (Exception e1) {
+			logger.debug("Exception in ecryption :",e1);
+			throw new IRCTCException("IR-01","NOT VALID KEY");
+		}
+			
+		try {
+			encryptedText = URLEncoder.encode(encryptedText, "UTF-8");
+		} catch (UnsupportedEncodingException e2) {
+			logger.debug("Exception in encoding :",e2);
+			throw new IRCTCException("IR-03", "ENCODING FAILED");
+		}
+		 logger.debug("Encoded Text ["+encryptedText+"]");
+		
+		String url = new StringBuilder(input.get("URL")).append(IrctcConstant.TCH_IRCTC_VOID)
+					.append(IrctcConstant.TCH_IRCTC_APPCODE)
+					.append(encryptedText)
+					.toString();
+		logger.debug("URL ["+url+"]");
+		 String encData=new StringBuilder(IrctcConstant.TCH_IRCTC_APPCODE).append(encryptedText).toString();
+		 logger.debug("URL ["+encData+"]");
+		
+		//url= UriComponentsBuilder.fromHttpUrl(url).build().issuerComponents.toUriString();	
+		//String result = rest.postForObject(url, setHttpEntity(input.get("USERNAME"), input.get("PASSWORD")), String.class);
+	
+        HashMap<String,String> headerMap = new HashMap<String,String>(4);
+
+        headerMap.put("Content-Type","application/x-www-form-urlencoded");
+        headerMap.put("Authorization", "Basic YWRtaW46YWRtaW4=");
+        
+         // String encData="?appcode=SBWL&encdata=P7q11X%2FXJNfDt1zESVjpBnecKvhgJmgve1IloieiMj67QXV%2FIEdU5BotaU5fZi1E2ZIO6dNhzlfEl+Ow3Ua4N%2BTVPOaHialZjFm3HI0W7UQALzadjdBR35Uw%2FzoJ03ydP6YhKnhS8jrfpDY41d4G+RsiV5%2Btckl938DiLYzH7SfUH0enepY1WhaMRXmKaUxQBpt9p2Xk63iaM7PFzrldRJeSAVjpf+V72M3TWK%2Bf6LXlI3Ir18GU0JLgU7I7MtqaEacpYEeFkf7wmhnvSVLC8tvDKto6cLKmlmBHl+uMTr1tTzRh%2B69fnYBwdnZB5YHoqOImPYXyvuzZeq7W0ap81rHMv1MD6tsaVH8CMCAefR+4luSFktHV3um5WhwZvMe6%2BK0baUaOmDJDrgTcmKYMxyGR%2BdURpqsppdD4Y%2B8eiK5kH+%2BEk%3D";
+
+        String responseJson = HttpsClient.send(url, encData, headerMap);
+
+       logger.debug("Result ["+responseJson+"]");
+		//get the response and decrypt it
+       type = (VoidTxn) parseGson(IrctcConstant.TCH_IRCTC_SALE_VOID_SERVICE, responseJson);;
+		try {
+			String decStr = AES.Decrypt(type.getEncdata(), input.get("KEY"));
+			SaleEnquiry decData = (SaleEnquiry)parseGson(IrctcConstant.TCH_IRCTC_SALE_SERVICE,decStr);
+			if(decData.getStatus() != null && decData.getStatus().equalsIgnoreCase("F"))
+			{
+				throw new IRCTCException("IR-02",decData.getMessage());
+			}else
+			{
+			type = (VoidTxn) parseGson(IrctcConstant.TCH_IRCTC_SALE_VOID_SERVICE, decStr);
+			}
+			logger.debug("Type ["+type+"]");	
+		}catch(IRCTCException e1){
+			throw new IRCTCException(e1.getErrorCode(),e1.getErrorMessage());
+		}
+		catch (Exception e) {
+			logger.debug("Exception in ecryption :",e);
+			throw new IRCTCException("IR-01","NOT VALID KEY");
+		}
+		
+		logger.debug("Exiting web service for void sale Transaction");
+		return type;
+	}
+
+}

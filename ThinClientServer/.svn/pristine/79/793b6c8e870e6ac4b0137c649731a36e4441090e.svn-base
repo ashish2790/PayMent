@@ -1,0 +1,245 @@
+package com.awl.tch.dao;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ColumnMapRowMapper;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Repository;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.constant.TchProcConstant;
+import com.awl.tch.dao.GenericDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.WalletDTO;
+import com.awl.tch.server.TcpServer;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.Property;
+import com.awl.tch.wallet.fc.constant.FcConstant;
+import com.awl.tch.wallet.fc.model.FcWalletRequest;
+
+import oracle.jdbc.internal.OracleTypes;
+
+@Repository(FcConstant.TCH_FC_SERVICE_DAO)
+public class WalletDaoImpl extends GenericDaoImpl<WalletDTO> implements WalletDao{
+
+	private static Logger logger = LoggerFactory.getLogger(WalletDaoImpl.class);
+
+	@Override
+	public WalletDTO getExistingWalletDetails(String txnRefNumber)throws TCHQueryException {
+		String sql = "select W_AUTH_TOKEN,W_RESPONSE_CODE, W_RESPONSE_DESC,W_TXN_REF_ID, W_ADDITIONAL_INFO from TCH_WALLET_TXN "
+				+ "where W_TXN_REF_ID = ?"  ;
+		
+		if(Property.isShowSql()){
+			logger.debug("Query [" + sql + "]");
+		}
+		
+		WalletDTO result = null;
+		result = getJdbcTemplate().query(sql,new String[]{txnRefNumber} , new ResultSetExtractor<WalletDTO>(){
+		    @Override
+		    public WalletDTO extractData(ResultSet rs) throws SQLException, DataAccessException {
+		    	WalletDTO walletDto = new WalletDTO();
+		        while(rs.next()){
+		        	walletDto.setAuthToken(rs.getString("W_AUTH_TOKEN"));
+		        	walletDto.setResponseCode(rs.getString("W_RESPONSE_CODE"));
+		        	walletDto.setResponseDesc(rs.getString("W_RESPONSE_DESC"));
+		        	walletDto.setTxnRefId(rs.getString("W_TXN_REF_ID"));
+		        	walletDto.setAdditionalInfo(rs.getString("W_ADDITIONAL_INFO"));
+		        }
+		        return walletDto;
+		    }
+		});
+		if(result == null){
+			throw new TCHQueryException(ErrorConstants.TCH_Q001 + "Exception occured while fetching values for txnRefNumber : " + txnRefNumber);
+		}
+		return result;
+	}
+	
+
+
+	@Override
+	public FcWalletRequest getDetailsByInvoiceNumber(String invoiceNumber) throws TCHQueryException {
+		String sql = "select W_MID, W_TID, W_INV_NUMBER, W_TXN_AMOUNT, W_TXN_REF_ID, W_TXN_DATENTIME, W_PROC_CODE, W_AUTH_TOKEN, W_REQUEST_TYPE from TCH_WALLET_TXN "
+				+ "where W_INV_NUMBER = ?"  ;
+	
+		if(Property.isShowSql()){
+			logger.debug("Query [" + sql + "]");
+		}
+		logger.debug("W_INV_NUMBER [" + invoiceNumber + "]");
+		FcWalletRequest result = null;
+		result = getJdbcTemplate().query(sql,new String[]{invoiceNumber} , new ResultSetExtractor<FcWalletRequest>(){
+		    @Override
+		    public FcWalletRequest extractData(ResultSet rs) throws SQLException, DataAccessException {
+		    	FcWalletRequest walletDto = new FcWalletRequest();
+		        while(rs.next()){
+		        	walletDto.setMerchantId(rs.getString("W_MID"));
+		        	walletDto.setTerminalId(rs.getString("W_TID"));
+		        	walletDto.setTransactionRefNumber(rs.getString("W_INV_NUMBER"));
+		        	walletDto.setTxnAmount(rs.getString("W_TXN_AMOUNT"));
+		        	walletDto.setTransactionRefNumber(rs.getString("W_TXN_REF_ID"));
+		        	walletDto.setTxnDatenTime(rs.getString("W_TXN_DATENTIME"));
+		        	walletDto.setProcCode(rs.getString("W_PROC_CODE"));
+		        	walletDto.setAuthToken(rs.getString("W_AUTH_TOKEN"));
+		        	walletDto.setRequestType(rs.getString("W_REQUEST_TYPE"));
+		        }
+		        return walletDto;
+		    }
+		});
+		if(result == null){
+			throw new TCHQueryException(ErrorConstants.TCH_Q001 + "Exception occured while fetching values for rrn : " + invoiceNumber);
+		}
+		return result;
+	}
+	
+	@Override
+	public WalletDTO getDetailsByRequestType(String requestType, String txnRefNumber) throws TCHQueryException {
+		String sql = "select W_MID, W_TID, W_INV_NUMBER, W_TXN_AMOUNT, W_TXN_DATENTIME, W_PROC_CODE, W_AUTH_TOKEN from TCH_WALLET_TXN "
+				+ "where W_REQUEST_TYPE = ? and W_TXN_REF_ID = ?"  ;
+	
+		if(Property.isShowSql()){
+			logger.debug("Query [" + sql + "]");
+		}
+		logger.debug("W_REQUEST_TYPE [" + requestType + "]");
+		logger.debug("W_TXN_REF_ID [" + txnRefNumber + "]");
+		WalletDTO result = null;
+		result = getJdbcTemplate().query(sql,new String[]{requestType} , new ResultSetExtractor<WalletDTO>(){
+		    @Override
+		    public WalletDTO extractData(ResultSet rs) throws SQLException, DataAccessException {
+		    	WalletDTO walletDto = new WalletDTO();
+		        while(rs.next()){
+		        	walletDto.setMid(rs.getString("W_MID"));
+		        	walletDto.setTid(rs.getString("W_TID"));
+		        	walletDto.setInvNumber(rs.getString("W_INV_NUMBER"));
+		        	walletDto.setTxnAmount(rs.getString("W_TXN_AMOUNT"));
+		        	walletDto.setTxnDateNTime(rs.getString("W_TXN_DATENTIME"));
+		        	walletDto.setProcCode(rs.getString("W_PROC_CODE"));
+		        	walletDto.setAuthToken(rs.getString("W_AUTH_TOKEN"));
+		        	walletDto.setReqType(rs.getString("W_REQUEST_TYPE"));
+		        	walletDto.setTxnRefId(rs.getString("W_TXN_REF_ID"));
+		        }
+		        return walletDto;
+		    }
+		});
+		if(result == null){
+			throw new TCHQueryException(ErrorConstants.TCH_Q001 + "Exception occured while fetching values for requestType : " + requestType + " and txnRefNumber : " + txnRefNumber);
+		}
+		return result;
+	}
+	
+	/**
+	 * Count wallet transactions in daily transaction limit
+	 */
+
+	@Override
+	public void getBatchNumber(Payment input) throws TCHQueryException {
+		
+		SqlParameter inTerminalSerialNumber = new SqlParameter("I_TERMINAL_SERIAL_NUMBER", Types.VARCHAR);
+		
+		SqlParameter outMerchantId = new SqlOutParameter("O_MERCHANT_ID", Types.VARCHAR);
+		SqlParameter outTxnCount = new SqlOutParameter("O_TXN_COUNT", Types.VARCHAR);
+		SqlParameter outTerminalId = new SqlOutParameter("O_TERMINAL_ID", Types.VARCHAR);
+		SqlParameter outSqlCode = new SqlOutParameter("O_SQL_CODE", Types.VARCHAR);
+		SqlParameter outAppErrorCode = new SqlOutParameter("O_APP_ERROR_CODE", Types.VARCHAR);
+		SqlParameter outDebugPoint = new SqlOutParameter("O_DEBUG_POINT", Types.VARCHAR);
+		SqlParameter outBatchNumber = new SqlOutParameter("O_BATCH_NUMBER", Types.VARCHAR);
+		SqlParameter outDailyLimit = new SqlOutParameter("O_DAILY_LIMIT", Types.VARCHAR);
+		SqlParameter oSummFlag = new SqlOutParameter("O_SUMM_FLAG", Types.VARCHAR);
+		SqlParameter cursorAppConfig = new SqlOutParameter("C_APP_CONFIG", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		
+		DataSource ds = (DataSource) TcpServer.getContext().getBean("dataSource");
+		SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(ds);
+		
+		simpleJdbcCall.withProcedureName(TchProcConstant.TCH_PAYMENT_WALLET_PROC)
+		.declareParameters(inTerminalSerialNumber,outMerchantId,outTerminalId,outBatchNumber,outSqlCode,
+				outAppErrorCode,outDebugPoint,outTxnCount,outDailyLimit,oSummFlag,cursorAppConfig)
+		.withoutProcedureColumnMetaDataAccess()
+		.compile();
+		
+		logger.info("I_TERMINAL_SERIAL_NUMBER: [" + input.getTerminalSerialNumber().trim()  +"]" );
+		logger.info("Calling store procedure for sale " + TchProcConstant.TCH_PAYMENT_WALLET_PROC);
+		
+		SqlParameterSource parameterSource = new MapSqlParameterSource()
+				.addValue("I_TERMINAL_SERIAL_NUMBER",input.getTerminalSerialNumber().trim());
+		
+		Map<String,Object> output = simpleJdbcCall.execute(parameterSource);
+		String mid = (String) output.get("O_MERCHANT_ID");
+		String tid = (String) output.get("O_TERMINAL_ID");
+		String sqlCode = (String) output.get("O_SQL_CODE");
+		String appErrorCode = (String) output.get("O_APP_ERROR_CODE");
+		String oDebugPoint = (String) output.get("O_DEBUG_POINT");
+		String oBatchNumber = (String) output.get("O_BATCH_NUMBER");
+		Integer oTxnCount = 0;
+		Integer dailyLimit = 10;
+		if((String) output.get("O_TXN_COUNT") != null)
+			oTxnCount = Integer.valueOf((String) output.get("O_TXN_COUNT"));
+		if((String) output.get("O_DAILY_LIMIT") != null)
+		dailyLimit = Integer.valueOf((String) output.get("O_DAILY_LIMIT"));
+		String summaryFlag = (String) output.get("O_SUMM_FLAG");
+		
+		logger.info("MID from SP :" + mid);
+		logger.info("TID from SP :" + tid);
+		logger.info("Batch number :" + oBatchNumber);
+		logger.info("SqlCode from Sp :" + sqlCode);
+		logger.info("App Error Code from SP :" + appErrorCode);
+		logger.info("Debug Point from SP :" + oDebugPoint);
+		logger.info("Txn count :" + oTxnCount);
+		logger.debug("Summary flag :" + summaryFlag);
+		input.setMerchantId(mid);
+		input.setTerminalId(tid);
+		input.setStanNumber(input.getStanNumber());
+		input.setBatchNumber(oBatchNumber);
+		
+		// set summary flag to print summary report only before settling the batch
+		
+		if(Constants.TCH_1.equals(summaryFlag) && !(Constants.TCH_EMI_SALE.equals(input.getDecisionFlag()) || Constants.TCH_BRDSALE.equals(input.getDecisionFlag()))){
+			input.setDecisionFlag(Constants.TCH_SUMMARY_REPORT);
+			//input.setHundredTxn(Constants.TCH_Y);
+		}else if(Constants.TCH_2.equals(summaryFlag)){
+			if(isNewVersionPresent(input.getTerminalSerialNumber()))
+				throw new TCHQueryException(ErrorConstants.TCH_FRSET, ErrorMaster.get(ErrorConstants.TCH_FRSET));
+		}
+		if(appErrorCode != null){
+			throw new TCHQueryException(appErrorCode,ErrorMaster.get(appErrorCode));
+		}
+		
+		if(!"1D".equalsIgnoreCase(oDebugPoint)){
+			throw new TCHQueryException(ErrorConstants.TCH_S200,ErrorMaster.get(ErrorConstants.TCH_S200));
+		}
+		
+		@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> appConfRows = (List<HashMap<String,Object>>) output.get("C_APP_CONFIG");
+		
+		for(Map<String,Object> row : appConfRows){
+			if((String) row.get("AC_NAME") != null){
+				if(Constants.TCH_BINRANGE.endsWith((String) row.get("AC_NAME")))
+					input.setBinRangeValue(Integer.parseInt((String) row.get("AC_VALUE")));
+				if(Constants.TCH_DSPMSG80.equals((String) row.get("AC_NAME")) && oTxnCount > (dailyLimit - 10) && oTxnCount < dailyLimit){
+					String dspMsg = "SETTLELMENT INITIATED AFTER "+(dailyLimit - oTxnCount)+ " TXN";
+					input.setDisplayMessage(dspMsg);
+				}
+				if(Constants.TCH_DSPMSG100.equals((String) row.get("AC_NAME")) && oTxnCount == dailyLimit){
+					input.setDisplayMessage("BATCH SETTLEMENT WILL BE INTIATED");
+				}
+			}
+		}
+		
+	  }
+
+	
+}

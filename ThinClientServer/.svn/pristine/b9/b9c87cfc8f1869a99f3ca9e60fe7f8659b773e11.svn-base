@@ -1,0 +1,415 @@
+package com.awl.tch.dao;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+
+import com.awl.tch.bean.DataPrintObject;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bean.SummaryReport;
+import com.awl.tch.bean.TerminalParameter;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.Property;
+import com.awl.tch.util.TerminalParameterCacheMaster;
+import com.awl.tch.util.UtilityHelper;
+/**
+ * Consists of all useful methods which are going to use through out the application
+ * @author ashish.bhavsar
+ *
+ * @param <T>
+ */
+public abstract class AbstractGenericDao<T> implements GenericDao<T>{
+	
+	private static final Logger logger  = LoggerFactory.getLogger(AbstractGenericDao.class);
+	public static final ConcurrentHashMap<String, LinkedHashSet<String>> midTidsFrDetail = new ConcurrentHashMap<String, LinkedHashSet<String>>();
+	public static final ConcurrentHashMap<String, LinkedHashSet<String>> midTidsFrBatch = new ConcurrentHashMap<String, LinkedHashSet<String>>();
+	public static final ConcurrentHashMap<String, LinkedHashSet<String>> midTidsFrSummaryBatch = new ConcurrentHashMap<String, LinkedHashSet<String>>();
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+	private SimpleJdbcCall simpleJdbcCall;
+	
+    @Autowired
+    public void setDataSource(DataSource dataSource) {
+       this.simpleJdbcCall = new SimpleJdbcCall(dataSource);
+    }
+    
+	public SimpleJdbcCall getSimpleJdbcCall() {
+		return simpleJdbcCall;
+	}
+
+
+	public JdbcTemplate getJdbcTemplate() {
+		return jdbcTemplate;
+	}
+
+	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+		this.jdbcTemplate = jdbcTemplate;
+	}
+	
+	public String getISOHeader(String terminalSerialNumber) throws TCHQueryException{
+		
+		String sql = "select distinct(b.tpdu) from tc_tid_hwsr_mapping a, tc_term_parameter b where a.mid = b.mid and a.tid = b.tid and a.hwsrno= ?";
+		Integer tpdu  = null;
+		
+		logger.debug("Terminal serial number :" + terminalSerialNumber);
+		if(Property.isShowSql()){
+			logger.debug("SQL for getting tpdu :[" + sql +"]");
+		}
+		
+		try {
+			tpdu = jdbcTemplate.queryForObject(sql, Integer.class, new Object[]{terminalSerialNumber});
+		}catch(DataAccessException dae){
+			logger.debug("Exception while fetching data :" + dae
+					.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}catch (Exception e){
+			logger.debug("Exception while fetching data :" + e.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}
+		
+		if(tpdu != null)
+			return tpdu.toString();
+		else 
+			throw new TCHQueryException("Require tpdu is not present for  termminal serial number : "  + terminalSerialNumber);
+	}
+	
+	public String getPCRFlag(String terminalSerialNumber) throws TCHQueryException{
+		
+		String sql = "select a.OPENPCRFLAG from tc_tid_hwsr_mapping a, TC_ME_PARAMETER b where a.mid = b.mid and a.hwsrno= ? and a.status = 'A'";
+		String openPCR  = "";
+		
+		
+		if(Property.isShowSql())
+			logger.debug("Query for getting pcr flag value :" + sql + "[" + terminalSerialNumber +"]");
+		
+		try {
+			openPCR = jdbcTemplate.queryForObject(sql, String.class, new Object[]{terminalSerialNumber});
+		}catch(DataAccessException dae){
+			dae.getStackTrace();
+			logger.debug("Exception in fetching data : " +dae.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}catch (Exception e){
+			logger.debug("Exception while fetching data :" + e.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}
+		
+		return openPCR;
+	}
+	
+	public String checkSU99(String terminalSerialNumber) throws TCHQueryException{
+
+		
+		String sql = "select H_FIRST_TXN_CHK from TCH_HANDSHAKES WHERE H_TERMINAL_SERIAL_NUMBER = ?";
+		String message  = "";
+		
+		
+		if(Property.isShowSql())
+			logger.debug("Query :" + sql + "[" + terminalSerialNumber +"]");
+		
+		try {
+			message = jdbcTemplate.queryForObject(sql, String.class, new Object[]{terminalSerialNumber});
+		}catch(DataAccessException dae){
+			dae.getStackTrace();
+			logger.debug("Exception in fetching data : " +dae.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}catch (Exception e){
+			logger.debug("Exception while fetching data :" + e.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}
+		
+		return message;
+	
+	}
+	
+	// update is Active flag in hwsrnomapping table
+	public String updateHwsrNo(String terminalSerialNumber, String edcAppversion) throws TCHQueryException{
+		logger.debug("Updating EDC App version and terminal active status." );
+		String sql = "update TC_TID_HWSR_MAPPING set edc_app_version = ? ,isactive ='Y' where HWSRNO = ?";
+		String message  = "";
+		if(Property.isShowSql())
+			logger.debug("Query :" + sql + "[" + terminalSerialNumber +"]");
+		try {
+			message = jdbcTemplate.queryForObject(sql, String.class, new Object[]{edcAppversion,terminalSerialNumber});
+		}catch(DataAccessException dae){
+			dae.getStackTrace();
+			logger.debug("Exception while updating data in TC_TID_HWSR_MAPPING : " +dae.getMessage());
+		}catch (Exception e){
+			logger.debug("Exception while updating data in TC_TID_HWSR_MAPPING :" + e.getMessage());
+		}
+		return message;
+	
+	}
+	
+	public Map<String,String> getEMIDCCFlag(String terminalSerialNumber) throws TCHQueryException{
+		
+		String sql = "select a.EMIFLAG,a.DCCFALG,a.PROMPT_N_PRCD from tc_tid_hwsr_mapping a where a.hwsrno= ?";
+		
+		
+		Map<String,String> tempMap = new HashMap<String, String>();
+		if(Property.isShowSql())
+			logger.debug("Query for getting emi dcc flag value :" + sql + "[" + terminalSerialNumber +"]");
+		
+		try {
+			List<Map<String, Object>> map  = jdbcTemplate.queryForList(sql,terminalSerialNumber);
+			for(Map<String, Object> m : map){
+				tempMap.put(Constants.TCH_EMI_FLAG, (String) m.get("EMIFLAG"));
+				tempMap.put(Constants.TCH_DCC_FLAG, (String) m.get("DCCFALG"));
+				tempMap.put(Constants.TCH_PROMT_N_PROC, (String) m.get("PROMPT_N_PRCD"));
+			}
+		}catch(DataAccessException dae){
+			dae.getStackTrace();
+			logger.debug("Exception in fetching data : " +dae.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}catch (Exception e){
+			logger.debug("Exception while fetching data :" + e.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}
+		
+		return tempMap;
+	}
+	
+	public void getTerminalDetails(final Payment input) throws TCHQueryException{
+		
+		//String query = "select th.H_CARD_ACQUIRING_ID, th.H_TID from TCH_HANDSHAKES th where th.H_TERMINAL_SERIAL_NUMBER = ? ";
+		String query = "select th.H_CARD_ACQUIRING_ID, th.H_TID,thm.BANKCODE from TCH_HANDSHAKES th JOIN tc_tid_hwsr_mapping THM ON THM.HWSRNO  = th.H_TERMINAL_SERIAL_NUMBER where th.H_TERMINAL_SERIAL_NUMBER = ?";
+		
+		
+		if(Property.isShowSql()){
+			logger.debug("Query : [" + query + "] : ["+input.getTerminalSerialNumber().trim()+"]");
+		}
+		try{
+		List<Map<String,Object>> listTerminal = getJdbcTemplate().queryForList(query,new Object[]{input.getTerminalSerialNumber().trim()});
+		//Object(query,,new RowMapper<HandshakeDTO>(){
+			//@Override
+			/*public HandshakeDTO mapRow(ResultSet rs, int rowNum)
+					throws SQLException {
+				HandshakeDTO hsk = new HandshakeDTO();
+				hsk.setCardAcquiringId(rs.getString("H_CARD_ACQUIRING_ID"));
+				hsk.setTid(rs.getString("H_TID"));
+				return hsk;
+			}
+		});*/
+		if(listTerminal != null){
+			for(Map<String,Object> row : listTerminal){
+				input.setMerchantId((String) row.get("H_CARD_ACQUIRING_ID"));
+				input.setTerminalId((String) row.get("H_TID"));
+				input.setBankCode((String) row.get("BANKCODE"));
+			}
+		}else{
+			logger.debug("Exception in fetching terminal parameters");
+			throw new TCHQueryException(ErrorConstants.TCH_S009,ErrorMaster.get(ErrorConstants.TCH_S999));
+		}
+		logger.debug("MID :" +input.getMerchantId());
+		logger.debug("TID :" +input.getTerminalId());
+		logger.debug("BANKCode :" + input.getBankCode());
+		}catch(Exception e){
+			logger.debug("Exception in fetching MID and TID :" + e.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009,ErrorMaster.get(ErrorConstants.TCH_S999));
+		}
+	}
+	
+	
+	public String getBatchNumberBasedOnTerminalSerialNumber(String terminalSerialNumber) throws TCHQueryException{
+		String batchNumber = "";
+		
+		String sql = "SELECT DISTINCT(TPT.P_BATCH_NUMBER) AS BATCH_NUMBER FROM TCH_PAYMENT_TXN TPT WHERE TPT.P_TERMINAL_SERIAL_NUMBER = ? AND TPT.P_SETTLEMENT_FLAG='N'";
+		if(Property.isShowSql())
+			logger.debug("Query for getting pcr flag value :" + sql + "[" + terminalSerialNumber +"]");
+		
+		try {
+			batchNumber = jdbcTemplate.queryForObject(sql, String.class, new Object[]{terminalSerialNumber});
+			if(batchNumber == null){
+				batchNumber = "00001";
+			}else{
+				batchNumber = String.format("%06d", Integer.parseInt(batchNumber));
+			}
+		}catch(DataAccessException dae){
+			dae.getStackTrace();
+			logger.debug("Exception in fetching data : " +dae.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}catch (Exception e){
+			logger.debug("Exception while fetching data :" + e.getMessage());
+			throw new TCHQueryException(ErrorConstants.TCH_S009, ErrorMaster.get(ErrorConstants.TCH_S009));
+		}
+		return batchNumber;
+	}
+	
+	/**
+	 * Get the mid and tid based on terminal serial number from current payment transaction
+	 * @param input
+	 * @return 
+	 * @throws TCHQueryException
+	 */
+	public static String[] getMidTids(String termSerialNumber, String hostId) throws TCHQueryException {
+		
+		TerminalParameter terminalParameter = TerminalParameterCacheMaster.terminalParameterCache.get(termSerialNumber);
+		String arr[] = new String[2];
+		if(terminalParameter != null){
+			if (hostId == null) {
+				hostId = Constants.TCH_CR_DB;
+			}
+			switch(hostId){
+			case Constants.TCH_AMEX :
+				arr = new String[]{terminalParameter.getAmexMid(),terminalParameter.getAmexTid()};
+				break;
+			case Constants.TCH_CR_DB:
+			case Constants.TCH_WALLET:
+				arr = new String[]{terminalParameter.getNormalMid(),terminalParameter.getNormalTid()};
+				break;
+			case Constants.TCH_DCC :
+				arr = new String[]{terminalParameter.getDccMid(),terminalParameter.getDccTid()};
+				break;
+			}
+		}
+		return arr;
+	}
+	
+	public void getMidTidsFrBatchSummary(String terminalSerialNumber) throws TCHQueryException {
+		String sql = "SELECT DISTINCT CASE WHEN P_TRANSACTION_ID = 'A' THEN P_TRANSACTION_ID "
+				+"WHEN P_TRANSACTION_ID NOT IN ('A') THEN 'Z' WHEN P_TRANSACTION_ID IS NULL THEN 'Z' END AS AUTHSOURCE ,"
+				+ "P_MERCHANTID,P_TERMINALID,P_BATCH_NUMBER,P_TRANSACTION_ID FROM TCH_PAYMENT_TXN "
+				+ "AND TTP.P_TERMINALID = TH.H_TID AND TTP.P_CLIENTID = TH.H_CLIENT_ID "
+				+ "WHERE TTP.P_RESPONSE_CODE='00' AND TTP.P_BATCH_NUMBER = O_BATCH_NUMBER "
+				+ "AND TTP.P_TERMINALID = I_TID AND TTP.P_TERMINAL_SERIAL_NUMBER = I_TERMINAL_SERIAL_NUMBER ORDER BY P_TRANSACTION_ID DESC";
+		
+		if(Property.isShowSql()){
+			logger.info(sql + "["+terminalSerialNumber +"]");
+		}
+		if(midTidsFrBatch.get(terminalSerialNumber) == null){
+			List<Map<String, Object>> rows = getJdbcTemplate().queryForList(sql,terminalSerialNumber);
+			if(rows != null && rows.size() != 0){
+				LinkedHashSet<String> listMidTid = new LinkedHashSet<String>();
+				for(Map<String,Object> map : rows){
+					String midTid = "";
+					midTid = ((String)  map.get("P_MERCHANTID")) +","+ ((String) map.get("P_TERMINALID")) + "," +((String) map.get("AUTHSOURCE"));
+					listMidTid.add(midTid);
+				}
+				midTidsFrBatch.put(terminalSerialNumber, listMidTid);
+			}else{
+				throw new TCHQueryException(ErrorConstants.TCH_D402, ErrorMaster.get(ErrorConstants.TCH_D402));
+			}
+		}
+	}
+	
+	/**
+	 * Set start date and end date of transaction for the current batch
+	 * @param input
+	 * @param startDate
+	 * @param endDate
+	 */
+	public void setStartAndEndDate(final SummaryReport input,String startDate, String endDate){
+		try{
+			List<DataPrintObject> listdataObject = new ArrayList<DataPrintObject>();
+			DataPrintObject b1 = new DataPrintObject();
+			b1.setPrintLabel(Constants.TCH_BATCH_START);
+			b1.setPrintVal(UtilityHelper.timestampInddMMyyyy_HHmmss(startDate));
+			listdataObject.add(b1);
+			DataPrintObject b2 = new DataPrintObject();
+			b2.setPrintLabel(Constants.TCH_BATCH_END);
+			b2.setPrintVal(UtilityHelper.timestampInddMMyyyy_HHmmss(endDate));
+			listdataObject.add(b2);
+			input.setDataPrintObj(listdataObject.toArray(new DataPrintObject[listdataObject.size()]));
+		}catch(Exception e){
+			logger.debug("Exception in parsing :" , e);
+		}
+	}
+	
+	/**
+	 * Set decision flag as per amex transaction present or not
+	 * @param input
+	 */
+	public void setDecisionFlagForSummaryReport(final SummaryReport input){
+		if(TerminalParameterCacheMaster.terminalParameterCache.get(input.getTerminalSerialNumber()) != null){
+			if(TerminalParameterCacheMaster.terminalParameterCache.get(input.getTerminalSerialNumber()).isAmexFlag() && input.getHostId() == null){			// check condition for amex 
+				input.setHostId(Constants.TCH_AMEX);
+				input.setDecisionFlag(Constants.TCH_SUMMARY_REPORT);
+			}else if(TerminalParameterCacheMaster.terminalParameterCache.get(input.getTerminalSerialNumber()).isDccFlag() 
+					&& (input.getHostId().equals(Constants.TCH_AMEX) || input.getHostId() == null)){ // check condition for dcc
+				input.setHostId(Constants.TCH_DCC);
+				input.setDecisionFlag(Constants.TCH_END);
+			}else{
+				input.setDecisionFlag(null);
+			}
+		}else{
+			input.setDecisionFlag(null);
+		}
+	}
+
+	/**
+	 * Get version number based on the terminal serial number
+	 * @param termNumber
+	 * @return
+	 */
+	public String getVersionNumber(String termNumber){
+		String query  = "SELECT DISTINCT(H_EDC_APP_VERSION) FROM TCH_HANDSHAKES WHERE H_TERMINAL_SERIAL_NUMBER = ?";
+		if(Property.isShowSql()){
+			logger.info(query + "["+termNumber +"]");
+		}
+		String message = getJdbcTemplate().queryForObject(query, String.class, new Object[]{termNumber});
+		logger.debug("Version number used :[" + message + "]");
+		return message;
+	}
+	
+	
+	public boolean isNewVersionPresent(String termSerialNumber){
+		String versionNumber = getVersionNumber(termSerialNumber);
+		if(versionNumber != null){
+			try {
+				if(UtilityHelper.isVersionGreaterThan14Nov(versionNumber)){
+					logger.debug("Older version before 141117");
+					return true;
+				}
+			} catch (ParseException e) {
+				logger.debug("Exception inparsing",e);
+			}
+		}else{
+			logger.debug("Version number absent");
+		}
+		return false;
+	}
+	
+	
+	public UtilityDTO getUtilityDetailInfo(String appName) throws TCHQueryException{
+		logger.debug("Inside dao impl enquiry");
+		
+		String sql = "SELECT * FROM TCH_UTILITY_INFO WHERE U_APP_NAME='"+appName+"'";
+		
+		if(Property.isShowSql()){
+			logger.debug("Fetching utility info sql ["+sql+"]");
+		}
+		List<Map<String,Object>> rows = getJdbcTemplate().queryForList(sql);
+		UtilityDTO u = null;
+		if(rows	!= null){
+			for(Map<String,Object> row : rows){
+				u = new UtilityDTO();
+				u.setAppName((String) row.get("U_APP_NAME"));
+				u.setIpAddress((String) row.get("U_IP_ADDRESS"));
+				u.setPortNumber((String) row.get("U_PORT_NUMBER"));
+				u.setUrl((String) row.get("U_URL"));
+				u.setPrintLabels((String) row.get("U_PRINT_LABELS"));
+			}
+		}else{
+			throw new TCHQueryException(ErrorConstants.TCH_U001,ErrorMaster.get(ErrorConstants.TCH_U001));
+		}
+		logger.debug("Exiting dao impl enquiry");
+		return u;
+	}
+	
+}

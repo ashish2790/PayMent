@@ -1,0 +1,265 @@
+
+package com.awl.tch.service;
+
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.codehaus.jettison.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.tempuri.Pos_data;
+
+import com.aab.exception.AABServiceException;
+import com.aab.utility.AABExternalEntity;
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.dao.EgrasDaoImpl;
+import com.awl.tch.dao.EnquiryDaoImpl;
+//import com.awl.tch.dao.IrctcDaoImpl;
+import com.awl.tch.dao.MposDaoImpl;
+import com.awl.tch.dao.ReportDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+/*import com.awl.tch.irctc.common.IrctcService;
+import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.service.IrctcSaleEnqServiceImpl;
+import com.awl.tch.irctc.service.IrctcSaleService;*/
+import com.awl.tch.model.EgrassReportDTO;
+//import com.awl.tch.model.IrctcDTO;
+import com.awl.tch.model.MposDTO;
+import com.awl.tch.model.SbiepayDTO;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.mpos.bean.MOPSBean;
+import com.awl.tch.mpos.bean.MOPSResponse;
+import com.awl.tch.mpos.exception.SbiMopsException;
+import com.awl.tch.mpos.service.MPOSServiceImpl;
+import com.awl.tch.util.AppConfigMaster;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.UtilityHelper;
+import com.egras.constant.EgrasEnumConstant;
+//import com.tch.irctc.model.SaleEnquiry;
+import com.tch.sbiepay.exception.TCHSbiepayException;
+import com.tch.sbiepay.model.SBIepaEntity;
+import com.tch.sbiepay.service.SBIepayService;
+
+@Service("enquiryServiceImpl")
+public class EnquiryServiceImpl extends AbstractServiceImpl implements TCHService<Payment>{
+
+	@Autowired
+	@Qualifier(Constants.TCH_ENQUIRY_DAO)
+	EnquiryDaoImpl enquiryDaoImpl;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_DAO)
+	EgrasDaoImpl egrasDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_REPORT_DAO)
+	ReportDaoImpl sbiEpayDao;
+	
+	/*@Autowired
+	@Qualifier(Constants.TCH_IRCTC_DAO)
+	IrctcDaoImpl irctcDao;*/
+		
+	@Autowired
+	@Qualifier(Constants.TCH_MPOS_DAO)
+	MposDaoImpl mposDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_SBI_SERVICEIMPL)
+	MPOSServiceImpl sbiMposService;
+
+	private static Logger logger = LoggerFactory.getLogger(EnquiryServiceImpl.class);
+
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+		
+		logger.debug("Inside the service of enq");
+		String appName = input.getAppName().trim();
+		logger.debug("App name :[" + appName +"]");
+		
+		logger.debug("Reference value :["+input.getReferenceValue()+"]");
+		try {
+			UtilityDTO uDto = enquiryDaoImpl.getUtilityDetailInfo(appName);
+			HashMap<String, String> utilityDetail = enquiryDaoImpl.getUtilityInfo(appName);
+			if(uDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_A004, ErrorMaster.get(ErrorConstants.TCH_A004));
+			}
+			logger.debug("Fetched url from DB ->" +uDto.getUrl());
+			switch(appName){
+			case Constants.TCH_AAB:
+				logger.info("inside switch condition oF AAB" );
+				logger.debug("utilityDetail.get(Constants.TCH_AAB_URL) :"  + utilityDetail.get(Constants.TCH_URL));
+				input.setUrl(uDto.getUrl());
+				try {
+					input.setOriginalAmount(AABExternalEntity.getAmount(input.getBranchCode(), input.getReferenceValue(), input.getRetrivalRefNumber(), utilityDetail.get(Constants.TCH_URL), input.getBinNumber(), input.getLastFourDigitValue()));
+				} catch (AABServiceException e) {
+					throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage(),e.getResponseCode());
+				}
+				break;
+			case Constants.TCH_EGRAS:
+				
+				EgrassReportDTO egrasReportDTO = new EgrassReportDTO();
+				Pos_data posData = null;
+				try {
+					 posData = egrasAdaptor.getGRN(input.getReferenceValue(),AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_URL));
+					 
+					 if(EgrasEnumConstant.STATUS_SUCCESS.equals(posData.getStatus())){
+						 egrasReportDTO.setAmount(new BigDecimal(posData.getAmount()).movePointRight(2).toPlainString());
+						 egrasReportDTO.setGrn(posData.getGrn());
+						 egrasReportDTO.setRemitterName(posData.getName());
+						 egrasDao.save(egrasReportDTO);
+					 }else{
+						 throw new TCHServiceException("EG-04", posData.getStatus());
+					 }
+					 
+				} catch (RemoteException e2) {
+					logger.debug("Exception in get amount" ,e2);
+					throw new TCHServiceException("EG-03", "INTERNAL ERROR");
+				}
+				
+				input.setReferenceValue(posData.getGrn());
+				input.setOriginalAmount(new BigDecimal(posData.getAmount()).movePointRight(2).toPlainString());
+				
+				List<BillingObj> lstBillingEgras = new ArrayList<BillingObj>();
+				BillingObj eGrasBlg = new BillingObj();
+				eGrasBlg.setLabelName(AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_EGRAS_LABEL1));
+				eGrasBlg.setLabelValue(posData.getGrn());
+				lstBillingEgras.add(eGrasBlg);
+				eGrasBlg = new BillingObj();
+				
+				eGrasBlg.setLabelName(AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_EGRAS_LABEL2));
+				eGrasBlg.setLabelValue(posData.getName());
+				lstBillingEgras.add(eGrasBlg);
+				BillingObj[] blgObjArr = new BillingObj[lstBillingEgras.size()];
+				input.setBillingObject(lstBillingEgras.toArray(blgObjArr)); // set billing object
+				
+				break;
+			case Constants.TCH_SBIEPAY:
+				logger.debug("inside codition for SBIEPAY");
+				SBIepaEntity sbiepay = new SBIepaEntity();
+				//sbiepay.setUrl(uDto.getUrl());
+				sbiepay.setUrl(utilityDetail.get(Constants.TCH_URL));
+				sbiepay.setATRN(input.getReferenceValue());
+				//input.setOriginalAmount("10000");
+				SbiepayDTO sbiDto = new SbiepayDTO();
+				sbiDto.setAtrn(input.getReferenceValue());
+				try {
+					input.setOriginalAmount(SBIepayService.getAmount(sbiepay));
+					sbiDto.setAmount(input.getOriginalAmount());
+					logger.debug("Merchant name [" + sbiepay.getMerchantName() +"] Amount [" + sbiepay.getAmount() +"]");
+					List<BillingObj> lstBillingSBIEapy = new ArrayList<BillingObj>();
+					BillingObj sbiEpayBlg = new BillingObj();
+					sbiEpayBlg.setLabelName(utilityDetail.get(Constants.TCH_SBIEPAY_LABEL1));
+					sbiEpayBlg.setLabelValue(input.getReferenceValue());
+					lstBillingSBIEapy.add(sbiEpayBlg);
+					sbiEpayBlg = new BillingObj();
+					
+					sbiEpayBlg.setLabelName(utilityDetail.get(Constants.TCH_SBIEPAY_LABEL2));
+					sbiEpayBlg.setLabelValue(sbiepay.getMerchantName());
+					lstBillingSBIEapy.add(sbiEpayBlg);
+					BillingObj[] blgObjArr1 = new BillingObj[lstBillingSBIEapy.size()];
+					input.setBillingObject(lstBillingSBIEapy.toArray(blgObjArr1)); // set billing object
+					logger.debug("payment processor" + sbiepay.getPaymentProcessor());
+					sbiDto.setPaymentProcessor(sbiepay.getPaymentProcessor());
+					sbiEpayDao.save(sbiDto);
+					
+				} catch (TCHSbiepayException e1) {
+					throw new TCHServiceException(e1.getErrorCode(),e1.getErroMessage());
+				}
+				break;
+				
+			/*case Constants.TCH_IRCTC :
+				logger.debug("inside codition for IRCTC");
+				SaleEnquiry saleEnquiry=new SaleEnquiry();
+				String url=new StringBuilder(utilityDetail.get(Constants.TCH_URL)).append(Constants.TCH_IRCTC).toString();
+				saleEnquiry.setTid(input.getTerminalId());
+				saleEnquiry.setAssetSrNo(input.getTempSerialNumber());
+				saleEnquiry.setServiceProvider("WL");
+				IrctcSaleEnqServiceImpl saleEnq =new IrctcSaleEnqServiceImpl();
+				IrctcDTO irctcDto =new IrctcDTO();
+				HashMap<String, String> configDetail = enquiryDaoImpl.getUtilityInfo(appName);
+				try {
+					saleEnquiry = saleEnq.cosumeWS(configDetail, saleEnquiry);
+					irctcDto.setTid(saleEnquiry.getTid());
+					irctcDto.setAsstSrNo(saleEnquiry.getAssetSrNo());
+					irctcDto.setStatus(saleEnquiry.getStatus());
+					irctcDto.setServiceProvider(saleEnquiry.getServiceProvider());
+					irctcDto.setTimeStamp(saleEnquiry.getTimeStamp());
+					irctcDto.setAppTxnId(saleEnquiry.getAppTxnId());
+					irctcDto.setReqType("Enquiry");
+					irctcDto.setAmount(saleEnquiry.getAmount());
+					input.setOriginalAmount(saleEnquiry.getAmount());
+					irctcDao.save(irctcDto);
+				} catch (IRCTCException e) {
+					throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+				} 
+				break;*/
+				
+			case Constants.TCH_MPOS:
+				logger.debug("Inside condition for MPOS");
+				//MPOSServiceImpl sbiMposService=new MPOSServiceImpl();
+
+				MOPSBean sbiMpos=new MOPSBean();
+				String url=(new StringBuilder(utilityDetail.get(Constants.TCH_URL)).append(Constants.TCH_MPOS_AMOUNT)).toString();
+				logger.debug(url);
+				//String url = "https://uatmerchant.onlinesbi.com/mservices/mopspos/cardpayment/createTransaction";
+				sbiMpos.setBankRefNo(input.getReferenceValue());
+				sbiMpos.setDateTime(UtilityHelper.getDateTime());
+				MposDTO mposDto=new MposDTO();
+				mposDto.setDateTime(UtilityHelper.getDateTime());
+				mposDto.setBankRefNo(input.getReferenceValue());
+				mposDto.setReqType("ENQUIRY");
+
+				
+				try{
+					MOPSResponse sbiMopsRes=sbiMposService.getAmount(sbiMpos, url);
+					input.setStatus(sbiMopsRes.getStatus());
+					if(sbiMopsRes.getAmount()!=null){
+					Double amount=(Double.parseDouble(sbiMopsRes.getAmount()))*100;
+					input.setOriginalAmount(amount.toString());
+					}
+					else{
+						input.setOriginalAmount(sbiMopsRes.getAmount());
+					}
+					mposDto.setStatus(sbiMopsRes.getStatus());
+					mposDto.setStatusCode(sbiMopsRes.getStatusCode());
+					mposDto.setStatusDescription(sbiMopsRes.getStatusDescription());
+					if(sbiMopsRes.getAmount()!=null){
+						Double amount=(Double.parseDouble(sbiMopsRes.getAmount()))*100;
+						mposDto.setAmount(amount.toString());
+						}
+						else{
+							mposDto.setAmount(sbiMopsRes.getAmount());
+						}				
+					mposDao.save(mposDto);
+					
+				}  catch (SbiMopsException e) {
+					logger.debug("Exception Occured",e);
+					throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+				} 
+				break;
+			
+			
+			default :logger.info("inside switch condition oF default" );
+				break;
+			}
+		} catch (TCHQueryException e) {
+			logger.debug("Exception :" + e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+		//input.setOriginalAmount("1234");
+		input.setCustomerName(null);
+		logger.debug("Exiting the service of enq");
+		return input;
+	}
+}

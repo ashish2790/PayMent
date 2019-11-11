@@ -1,0 +1,259 @@
+package com.tch.sbiepay.service;
+
+import java.io.DataOutputStream;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.net.URLEncoder;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tch.sbiepay.constant.SBIepayConstant;
+import com.tch.sbiepay.encryption.SBIepayEncryption;
+import com.tch.sbiepay.exception.TCHSbiepayException;
+import com.tch.sbiepay.helper.SBIepayHelper;
+import com.tch.sbiepay.model.SBIepaEntity;
+
+public class SBIepayService {
+
+	private static Logger logger = LoggerFactory.getLogger(SBIepayService.class);
+	
+	/*@LoadBalanced
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }*/
+	
+	public static String getAmount(final SBIepaEntity entity) throws TCHSbiepayException{
+		logger.debug("get the amount SBIEPAY");
+		String requestStr= "",response = "", uri = entity.getUrl();
+		
+		try {
+			requestStr = getRequestString(entity.getTransactionDetailsRequest());
+			logger.info("request string :" + requestStr);
+		} catch (UnsupportedEncodingException e) {
+			throw new TCHSbiepayException("SB-05", "ENCODING PROBLEM"); 
+		}
+		response = responseFromSBIEpay(uri,requestStr); //restTemplate.postForObject( uri, requestStr, String.class);
+	    
+	    logger.debug("Reponse from sbiepay after decryptions :" + response);
+	    
+	    String[] s = response.replace('|', ',').split(",");
+	    logger.debug("Status for transaction :" + s[6]);
+	    if(SBIepayConstant.TCH_SBIEPAY_EXPIRED.equals(s[6])){
+	    	throw new TCHSbiepayException("SB-01", s[6]);
+	    }else if(SBIepayConstant.TCH_SBIEPAY_PROCESSED.equals(s[6]) || SBIepayConstant.TCH_SBIEPAY_PROCESSED2.equals(s[6])){
+	    	throw new TCHSbiepayException("SB-02", s[7]);
+	    }else{
+	    	/*
+		     *  SBIEPAY
+				merchantName (Brand Name)
+				ATRN
+				merchantOrderNo
+				PaymentProcessor 
+				amount (two decimal places)
+				status
+				statusDescription
+				transactionDate(Txn Booking Date)
+				transactionExpiryDate (ATRN expiry date)
+				mobileNo
+				emailID
+		     */
+	    	entity.setMerchantName(s[0]);
+		    entity.setATRN(s[2]);
+		    entity.setMerchantOrderNo(s[3]);
+		    entity.setPaymentProcessor(s[4]);
+		    logger.debug("Amount fetched from SBIEPAY :" + s[5]);
+		    entity.setAmount(String.valueOf(new BigDecimal(s[5]).movePointRight(2).toPlainString())); // convert into paise to show on terminal
+		    entity.setStatus(s[6]);
+		    entity.setStatusDescription(s[7]);
+		    entity.setTransactionDate(s[8]);
+		    entity.setTransactionExpiryDate(s[9]);
+		    entity.setMobileNo(s[10]);
+		    entity.setEmailID(s[11]);
+	    }
+		return entity.getAmount();
+	}	
+	
+	public static String setStatus(SBIepaEntity entity) throws TCHSbiepayException{
+		logger.debug("Update the status SBIEPAY");
+		String requestStr= "",response = "", uri = entity.getUrl();
+		
+		
+		try {
+			requestStr = getRequestString(entity.getPyamentConfirmationRequest());
+		} catch (UnsupportedEncodingException e) {
+			throw new TCHSbiepayException("SB-05", "ENCODING PROBLEM"); 
+		}
+		response = responseFromSBIEpay(uri,requestStr);//restTemplate.postForObject( uri, requestStr, String.class);
+	    logger.debug("Reponse from sbiepay after decryptions :" + response);
+	    
+	    String[] s = response.replace('|', ',').split(",");
+	    logger.debug("Status for update transaction :" + s[3]);
+	    if(SBIepayConstant.TCH_SBIEPAY_ACK_N.equals(s[3])){
+	    	throw new TCHSbiepayException("SB-03", "FAILED");
+	    }else{
+	    	entity.setAggregatorId(s[0]);
+		    entity.setATRN(s[1]);
+		    entity.setUniqueRefNumber(s[2]);
+		    entity.setAckStatus(s[3]);
+	    }
+		return entity.getAckStatus();
+		
+	}
+	
+	private static String getRequestString(String requestStr) throws UnsupportedEncodingException{
+		logger.debug("Request to sbiepay :" + requestStr + "key :" +SBIepayHelper.Property.getKey());
+		requestStr = SBIepayEncryption.encryptText(requestStr, SBIepayHelper.Property.getKey());
+		requestStr = URLEncoder.encode(requestStr,"UTF-8");
+		logger.debug("Request string after encoding : " + requestStr);
+		requestStr = SBIepayConstant.TCH_SBIEPAY_PARAMETER_VALUE + requestStr;
+		logger.debug("Final request string : " + requestStr);
+		return requestStr;
+	}
+	@Deprecated
+	private static String responseFromSBIEpay(String url, String requestStr) throws TCHSbiepayException{
+		 String outputString = "";
+		 URL obj = null;
+		 HttpsURLConnection con = null;
+		try{
+			obj = new URL(url);
+			con = (HttpsURLConnection) obj.openConnection();
+	        con.setRequestMethod("POST");
+	        con.setRequestProperty("content-type", "application/x-www-form-urlencoded");
+	        // Send post request
+	        con.setDoOutput(true);
+	        
+	        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+	        wr.writeBytes(requestStr);
+	        wr.flush();
+	        wr.close();
+	        
+	        logger.debug("Response Code : " + con.getResponseCode());
+	        
+	        int red = -1;
+	        byte[] buffer  = new byte[4096];
+			byte[] redData; 
+			while ((red = con.getInputStream().read(buffer)) > -1) {
+				redData = new byte[red];
+			    System.arraycopy(buffer, 0, redData, 0, red);
+			    outputString = new String(redData,"UTF-8"); // assumption that client sends data UTF-8 encoded
+			}
+	        
+			String[] strArr = outputString.split("\\n");
+			StringBuilder strBuilder = new StringBuilder(); 
+			for(String s : strArr){
+				strBuilder.append(s);
+			}
+			outputString = strBuilder.toString();
+			logger.debug("Response from SBIEPAY encrypted : " +outputString);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			throw new TCHSbiepayException("SB-04","INVALID DATA");
+		}finally{
+			con.disconnect();
+		}
+		return SBIepayEncryption.decryptText(outputString, SBIepayHelper.Property.getKey());
+	
+	}	
+	
+	/*@SuppressWarnings("unused")
+	private static String restClient(String url, String requestStr) throws TCHSbiepayException{
+		HttpHeaders http = new HttpHeaders();
+		http.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+		RestTemplate restClient = new RestTemplate();
+		String result = restClient.postForObject(url, http, String.class);
+		return result;
+		
+	}*/
+	
+	public static void main(String[] args) {/*
+		
+		String[] str = "SBIEPAY|merchantName (Brand Name)|ATRN|merchantOrderNo|amount (two decimal places)|status|statusDescription|transactionDate(Txn Booking Date)|transactionExpiryDate (ATRN expiry date)|mobileNo|emailID".replace('|', ',').split(",");
+		
+		String d = "100.00";
+		String requestStr= "posTransactiionRequest=Cc14a0N9Qos0l9z7SAEIhK3S8nA7n1g4+k5M9NjeCho=",response = "", uri = "https://uat.sbiepay.com/payagg/requestProcessor/challanTransactionStatus";
+		
+		SBIepayService s = new SBIepayService();
+		
+		RestTemplate restTemplate = new RestTemplate();
+			
+	    response = restTemplate.postForObject(uri, requestStr, String.class);
+		System.out.println(response);
+	    
+		//System.out.println(String.valueOf(new BigDecimal(d).movePointRight(2).toPlainString()));
+		
+		try{
+		String url = "https://uat.sbiepay.com/payagg/requestProcessor/challanTransactionStatus";
+        URL obj = new URL(url);
+        HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+
+        //add reuqest header
+        con.setRequestMethod("POST");
+        con.setRequestProperty("content-type", "application/x-www-form-urlencoded");
+        String urlParameters = "B+Kp2/O93uvdaJ2h9fdcm5s8kfn78P/jm3MqIzehJQs=";
+        urlParameters = "posTransactionRequest=" + URLEncoder.encode(urlParameters,"UTF-8");
+        System.out.println(urlParameters);
+        // Send post request
+        con.setDoOutput(true);
+        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+        wr.writeBytes(urlParameters);
+       wr.flush();
+        wr.close();
+
+        int responseCode = con.getResponseCode();
+        
+        int red = -1;
+        byte[] buffer  = new byte[4096];
+		byte[] redData;
+		String outputString = "";
+		while ((red = con.getInputStream().read(buffer)) > -1) {
+			redData = new byte[red];
+		    System.arraycopy(buffer, 0, redData, 0, red);
+		    outputString = new String(redData); // assumption that client sends data UTF-8 encoded
+		    ///System.out.println(outputString);
+		}
+		System.out.println(outputString);
+		String str[] = outputString.split("\\n");
+		StringBuilder s1 = new StringBuilder();
+		for(String s : str){
+			s1.append(s);
+		}
+		outputString = s1.toString();
+		System.out.println(outputString.length());
+		outputString  = SBIepayEncryption.decryptText(outputString, SBIepayHelper.Property.getKey());
+		System.out.println(outputString);
+		 System.out.println("\nSending 'POST' request to URL : " + url);
+        System.out.println("Post parameters : " + urlParameters);
+        System.out.println("Response Code : " + responseCode);
+    } catch (IOException ex) {
+    	ex.printStackTrace();
+        System.out.println(ex);
+    }
+		
+		
+		
+		for(String str1 : str) {
+			System.out.println(str1);
+		}
+	*/
+		
+	
+	String str = "SBIEPAY|SBIePAY|3138126994942|hIXxh|50.00|BOOKED|Accept the Payment|2017-05-17 10:13:38|2017-05-17 23:59:59|9812345678|NA".replace('|', ',');
+	String[] strac = str.split(",");
+	
+	int i = 0;
+	for(String s : strac){
+		System.out.println("s["+i+++"]"+s);
+	}
+	
+			
+			
+	
+	
+	
+	}
+}

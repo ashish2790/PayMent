@@ -1,0 +1,32 @@
+CREATE TABLE "TCH_FEE_TABLE" 
+   (	"F_ID" NUMBER NOT NULL ENABLE, 
+	"F_PER" VARCHAR2(20 BYTE), 
+	"F_FIXED" VARCHAR2(20 BYTE), 
+	"F_MAX_AMT" VARCHAR2(20 BYTE), 
+	"F_MIN_AMT" VARCHAR2(20 BYTE), 
+	"F_MID" VARCHAR2(20 BYTE), 
+	"F_CAL_METHOD" VARCHAR2(20 BYTE), 
+	"F_ONUS" VARCHAR2(1 CHAR), 
+	"F_CARD_TYPE" VARCHAR2(5 CHAR), 
+	"F_BQR" VARCHAR2(1 CHAR), 
+	"F_UPI" VARCHAR2(1 CHAR), 
+	"F_BINTYPE" VARCHAR2(2 CHAR), 
+	"F_CTAX1" VARCHAR2(7 CHAR), 
+	"F_ITAX1" VARCHAR2(7 CHAR), 
+	 CONSTRAINT "TCH_FEE_TABLE_PK" PRIMARY KEY ("F_ID"));
+	 
+	 /
+	 
+	 CREATE OR REPLACE EDITIONABLE TRIGGER "TCH_FEE_TRIGGER" 
+   before insert on "TCH_FEE_TABLE" 
+   for each row 
+begin  
+   if inserting then 
+      if :NEW."F_ID" is null then 
+         select SEQ_TCH_FEE_ID.nextval into :NEW."F_ID" from dual; 
+      end if; 
+   end if; 
+end;
+
+/
+ALTER TRIGGER "TCH_FEE_TRIGGER" ENABLE;

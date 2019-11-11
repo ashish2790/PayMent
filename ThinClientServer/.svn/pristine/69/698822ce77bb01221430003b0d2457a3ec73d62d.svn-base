@@ -1,0 +1,35 @@
+package com.awl.tch.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import com.awl.tch.adaptor.qr.QRAdaptor;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.service.AbstractServiceImpl;
+import com.awl.tch.service.MenuObjectServiceImpl;
+
+public abstract class AbstractQR<T> extends AbstractServiceImpl{
+	
+	@Autowired
+	@Qualifier(Constants.TCH_QR_ADAPTOR)
+	protected QRAdaptor qrAdaptor;
+	
+	@Autowired
+	@Qualifier("menuObjectService")
+	protected MenuObjectServiceImpl menuService;
+	
+	/**
+	 * Method to process QR related implementation
+	 * @param input
+	 * @throws TCHServiceException
+	 */
+	public void setNullQR(final Payment input){
+		if(!Constants.TCH_QRACK.equals(input.getDecisionFlag())){
+			input.setDecisionFlag(null);
+		}
+		input.setMobileNumber(null);
+	}
+	
+}

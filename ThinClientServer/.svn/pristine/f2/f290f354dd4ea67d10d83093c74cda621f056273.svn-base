@@ -1,0 +1,481 @@
+package com.awl.tch.dao;
+
+import java.math.BigDecimal;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.sql.DataSource;
+
+import oracle.jdbc.OracleTypes;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ColumnMapRowMapper;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Repository;
+
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.Handshake;
+import com.awl.tch.bean.Handshake.CardObj;
+import com.awl.tch.bean.TerminalParameter;
+import com.awl.tch.brandemi.service.CacheService;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.HandshakeDTO;
+import com.awl.tch.model.HealthObjectDTO;
+import com.awl.tch.server.TcpServer;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.Property;
+import com.awl.tch.util.TerminalParameterCacheMaster;
+import com.awl.tch.util.UtilityHelper;
+/**
+* <h1>Handshake CRUD query</h1>
+* HandshakeDaoImpl program is used to store all 
+* the values in TCH_HANDSHAKE table and the values
+* are mostly fetched based on the switch response and parameter
+* from insight table
+* 
+* <b>Note:</b> TCH_HANDSHAKE table going to affect with this class
+*
+* @author  Kunal Surana
+* @version 1.0
+* @since   2016-09-21
+*/
+
+@Repository("handshakeDao")
+public class HandshakeDaoImpl extends GenericDaoImpl<HandshakeDTO> implements HandshakeDao  {
+	
+	private static final Logger logger = LoggerFactory.getLogger(HandshakeDaoImpl.class);
+	
+	@Autowired
+	@Qualifier(Constants.TCH_HEALTH_DAO)
+	HealthObjectDaoImpl healthObjectDaoImpl;
+	
+	/**
+	   * Procedure call happened in this method in which <tt>Terminal serial number </tt> is 
+	   * the mandatory field which need to pass and based on that will get all the infomration
+	   * like <tt>flags</tt>,<tt>card ranges</tt> etc
+	   * 
+	   * @param handshakeRequest Parameter is final as value is going to set in this method on request parameter.
+	   * @return long Existing handshake id
+	   */
+	public long setHandshakeDetails(final Handshake handshakeRequest)throws TCHQueryException
+	{
+		SqlParameter outTerminalSerialNumber = new SqlParameter("I_TERMINAL_SERIAL_NUMBER", Types.VARCHAR);
+		SqlParameter inSettlementFlag= new SqlParameter("I_SETTLEMENT_FLAG", Types.VARCHAR);
+		SqlParameter outClientId = new SqlOutParameter("O_CLIEND_ID", Types.VARCHAR);
+		SqlParameter outStraceNumber = new SqlOutParameter("O_STRACE_NUMBER", Types.VARCHAR);
+		SqlParameter outInvNumber = new SqlOutParameter("O_INV_NUMBER", Types.VARCHAR);
+		SqlParameter outStanNumber = new SqlOutParameter("O_STAN_NUMBER", Types.VARCHAR);
+		SqlParameter outSqlErrorCode = new SqlOutParameter("O_SQL_CODE", Types.VARCHAR);
+		SqlParameter outAppErrorCode = new SqlOutParameter("O_APP_ERROR_CODE", Types.VARCHAR);
+		SqlParameter outDebugPoint = new SqlOutParameter("O_DEBUG_POINT", Types.VARCHAR);
+		SqlParameter outInsertFlag = new SqlOutParameter("O_EXISTING_HSK", Types.NUMERIC);	
+		SqlParameter outHealthobjFlag = new SqlOutParameter("O_HEALTH_OBJ_PARAM", Types.VARCHAR);
+		
+		SqlParameter outHandshakeDetails = new SqlOutParameter("C_HANDSHAKE_DETAILS", OracleTypes.CURSOR,new ColumnMapRowMapper());
+		SqlParameter outCardObjects = new SqlOutParameter("C_CARD_OBJECTS", OracleTypes.CURSOR ,  new ColumnMapRowMapper());
+		SqlParameter outUtilityInfo= new SqlOutParameter("C_UTILITY_INFO", OracleTypes.CURSOR ,  new ColumnMapRowMapper());
+		
+		DataSource ds = (DataSource) TcpServer.getContext().getBean("dataSource");
+		SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(ds);
+		
+		simpleJdbcCall.withProcedureName("TCH_HANDSHAKE_PROC");
+		simpleJdbcCall.declareParameters(outTerminalSerialNumber,inSettlementFlag,outClientId,outStraceNumber,outSqlErrorCode,outAppErrorCode,
+				outDebugPoint,outInsertFlag,outInvNumber,outStanNumber,outHealthobjFlag,outHandshakeDetails,outCardObjects,outUtilityInfo);
+		simpleJdbcCall.withoutProcedureColumnMetaDataAccess();
+		simpleJdbcCall.compile();
+		
+		/*
+		 * on S-999 error do not ask for settlement
+		 */
+		String checkSettlementFlag = "Y";
+		if("S-999".equals(handshakeRequest.getDescFlag())){
+			checkSettlementFlag = "N";
+		}
+		logger.info("I_TERMINAL_SERIAL_NUMBER :"+ handshakeRequest.getTerminalSerialNumber());
+		logger.info("I_SETTLEMENT_FLAG :"+ checkSettlementFlag);
+		
+		SqlParameterSource in = new MapSqlParameterSource()
+        .addValue("I_TERMINAL_SERIAL_NUMBER", handshakeRequest.getTerminalSerialNumber()).addValue("I_SETTLEMENT_FLAG", checkSettlementFlag); 
+		
+		logger.debug("Calling TCH_HANDSHAKE_PROC");
+		Map<String,Object> out = simpleJdbcCall.execute(in);
+		
+		BigDecimal existingId ;
+		String clientId = (String) out.get("O_CLIEND_ID");
+		String straceNumber = (String) out.get("O_STRACE_NUMBER");
+		String sqlCode = (String) out.get("O_SQL_CODE");
+		String appErrorCode = (String) out.get("O_APP_ERROR_CODE");
+		String debugPoint = (String) out.get("O_DEBUG_POINT");
+		existingId = (BigDecimal) out.get("O_EXISTING_HSK");
+		String invoiceNumber = (String) out.get("O_INV_NUMBER");
+		String stanNumber = (String) out.get("O_STAN_NUMBER");
+		String healthObejctFlag = (String) out.get("O_HEALTH_OBJ_PARAM");
+		
+		if(existingId == null)
+			existingId = new BigDecimal(0L);
+
+		logger.info("O_CLIEND_ID :"+clientId);	
+		logger.info("O_STRACE_NUMBER :"+straceNumber);	
+		logger.info("O_SQL_CODE :"+sqlCode);	
+		logger.info("O_APP_ERROR_CODE :"+appErrorCode);
+		logger.info("O_DEBUG_POINT :"+debugPoint);
+		logger.info("O_EXISTING_HSK :"+existingId);
+		logger.info("O_INV_NUMBER :"+invoiceNumber);
+		logger.info("O_STAN_NUMBER :"+stanNumber);
+		logger.info("O_HEALTH_OBJ_PARAM :"+healthObejctFlag);
+		
+		if(appErrorCode!=null)
+		{
+			throw new TCHQueryException(appErrorCode,ErrorMaster.get(appErrorCode));
+		}		
+		
+		@SuppressWarnings("unchecked")
+		List<HashMap<String,Object>> rows = (List<HashMap<String,Object>>) out.get("C_HANDSHAKE_DETAILS");
+		Set<String> hostId = new LinkedHashSet<String>();
+		hostId.add(Constants.TCH_CR_DB);
+		TerminalParameter terminalParameterValues = new TerminalParameter();
+		terminalParameterValues.setTerminalSerialNumber(handshakeRequest.getTerminalSerialNumber());
+		for(Map<String, Object> row : rows)
+		{	
+			handshakeRequest.setTid((String)row.get("TID"));
+			terminalParameterValues.setNormalTid((String)row.get("TID"));
+			handshakeRequest.setCardAcquiringId((String)row.get("MID"));
+			terminalParameterValues.setNormalMid((String)row.get("MID"));
+			handshakeRequest.setNii(((BigDecimal)row.get("NII")).toPlainString());
+			handshakeRequest.setLineEncryptionFlag((String)row.get("LINEENC"));
+			handshakeRequest.setBankName((String)row.get("BANKNAME"));
+			handshakeRequest.setMerchantName((String)row.get("DBANAME"));
+			handshakeRequest.setMerchantLocation((String)row.get("LOCATION"));
+			handshakeRequest.setLegalName((String)row.get("LEGALNAME"));
+			handshakeRequest.setTpdu(((BigDecimal)row.get("TPDU")).toPlainString());
+			handshakeRequest.setReceiptPrinting((String)row.get("RECEIPTFLAG"));
+			handshakeRequest.setBankCode((String)row.get("BANKCODE"));
+			if(row.get("OUTLETCODE") != null)
+				handshakeRequest.setBranchCode((String) row.get("OUTLETCODE"));	
+			if(row.get("OUTLETNAME") != null)
+				handshakeRequest.setBranchName((String) row.get("OUTLETNAME"));
+			if(row.get("BILLERNAME") != null)
+				handshakeRequest.setAppName((String) row.get("BILLERNAME"));
+			
+			Set<String>  flags = new LinkedHashSet<String>();
+			LinkedList<String> menuEnableList = new LinkedList<String>();
+			
+			String reloadFlag = (String)row.get("RELOAD");
+			if(Constants.TCH_Y.equalsIgnoreCase(reloadFlag))
+			{
+				flags.add(Handshake.Flags.REL.name());
+			}
+			if(CacheService.contains(handshakeRequest.getCardAcquiringId())){
+				flags.add(Handshake.Flags.BRDEMI.name());
+			}
+			String balEnqFlag = (String)row.get("BAL_INQ_ALWD");
+			if(Constants.TCH_Y.equalsIgnoreCase(balEnqFlag))
+			{
+				flags.add(Handshake.Flags.BALENQ.name());
+			}
+			
+			String cashbackFlag = (String)row.get("CASHBACK");
+			if(Constants.TCH_Y.equalsIgnoreCase(cashbackFlag))
+			{
+				flags.add(Handshake.Flags.CSHBK.name());
+			}
+			
+			String saleCashbackFlag = (String)row.get("CASHBACKPUR");
+			if(Constants.TCH_Y.equalsIgnoreCase(saleCashbackFlag))
+			{
+				flags.add(Handshake.Flags.SCSHBK.name());
+			}
+			
+			String salePreAuthFlag = (String)row.get("PREAUTH");
+			if(Constants.TCH_Y.equalsIgnoreCase(salePreAuthFlag))
+			{
+				flags.add(Handshake.Flags.PREAUTH.name());
+				flags.add(Handshake.Flags.PREACOMP.name());
+			}
+			String tipFlag = (String)row.get("ADJUSTMENT");
+			if(Constants.TCH_Y.equalsIgnoreCase(tipFlag))
+			{
+				flags.add(Handshake.Flags.TIP.name());
+			}
+			String refundFlag = (String)row.get("REFUNDNEW");
+			if(Constants.TCH_Y.equalsIgnoreCase(refundFlag))
+			{
+				flags.add(Handshake.Flags.REF.name());
+			}
+			
+			//NEW CHAGNES TO STORE AMEX MID AND TID WHICH WILL BE USED FOR DETAIL AND SUMMARY REPORT 
+			BigDecimal seNumber = (BigDecimal) row.get("SE_NUMBER");
+			if(seNumber != null){
+				hostId.add(Handshake.HostId.AMEX.name());
+				try{
+					String arr[] = UtilityHelper.getMIDTIDFromSeNumber(seNumber.toPlainString());
+					terminalParameterValues.setAmexFlag(true);
+					terminalParameterValues.setAmexMid(arr[0]);
+					terminalParameterValues.setAmexTid(arr[1]);
+					logger.debug("AMEX mid and tid :" + terminalParameterValues.getAmexMid()  + " | " + terminalParameterValues.getAmexTid());
+				}catch(Exception e){
+					logger.debug("Exception while getting mid and tid for amex",e);
+				}
+			}
+			
+			//NEW CHANGES TO STORE DCC MID AND TID WHICH WILL BE USED FOR DETAIL AND SUMMARY REPORT
+			String dccFlag = (String) row.get("DCCFLAG");
+			if(dccFlag != null && !dccFlag.isEmpty() && Constants.TCH_Y.equals(dccFlag)){
+				terminalParameterValues.setDccFlag(true);
+				terminalParameterValues.setDccMid((String) row.get("DCCMID"));
+				terminalParameterValues.setDccTid((String) row.get("DCCTID"));
+				logger.debug("DCC mid and tid :" + terminalParameterValues.getDccMid()  + " | " + terminalParameterValues.getDccTid());
+				hostId.add(Handshake.HostId.DCC.name());
+			}
+			
+			//String settlement = (String)row.get("AUTOSETTLEMENT");
+			
+			// SEND SETTLEMENT FLAG EVEN IF ASSINGED OR NOT AS PER RMB 14/10/2017
+			//if("N".equalsIgnoreCase(settlement))
+			//{
+				flags.add(Handshake.Flags.SETL.name());
+			//}
+			
+			if(Constants.TCH_Y.equals((String)row.get("LASTFOURDIGIT"))){
+				handshakeRequest.setLastFourDigitPromptFlag(Constants.TCH_Y);
+			}
+			//changes to add QR in flag. Date 24/07/2017
+			if(Constants.TCH_Y.equals((String)row.get("UPIFLAG"))){
+				menuEnableList.add("QR");
+				handshakeRequest.setMenuEnableList(menuEnableList);
+				flags.add(Handshake.Flags.SALE.name());
+			}
+			if(null !=(String)row.get("WALLETFLAG") && !((String)row.get("WALLETFLAG")).isEmpty()){
+				menuEnableList.add("WALLET");
+				handshakeRequest.setMenuEnableList(menuEnableList);
+				handshakeRequest.setSubmenuEnableList((String)row.get("WALLETFLAG"));
+				flags.add(Handshake.Flags.SALE.name());
+				//hostId.add(Handshake.HostId.WLT.name());
+				terminalParameterValues.setWalletFlag(true);
+			}
+			String flgs[] = new String[flags.size()];
+			handshakeRequest.setFlags(flags.toArray(flgs));
+		}
+		
+		//putting values in cache for future reference
+		logger.debug("Updating cache...");
+		TerminalParameterCacheMaster.put(handshakeRequest.getTerminalSerialNumber(), terminalParameterValues);
+		logger.debug("Storing information in cache");
+		handshakeRequest.setHostId(hostId.toArray(new String[hostId.size()]));
+		
+		//if(handshakeRequest.getBranchCode() !=null){
+			
+			@SuppressWarnings("unchecked")
+			List<HashMap<String,Object>> utililtyRows = (List<HashMap<String,Object>>) out.get("C_UTILITY_INFO");
+			
+			BillingObj[] billingObj = new BillingObj[1];
+			List<BillingObj> bList = new ArrayList<BillingObj>();
+			if(utililtyRows != null){
+				BillingObj b1 = new BillingObj();
+				for(Map<String,Object> m : utililtyRows){
+					String appName = (String) m.get("U_UTILITY_NAME");
+					if(handshakeRequest.getAppName() != null){
+						if(handshakeRequest.getAppName().equals(appName)){
+							if(((String) m.get("U_KEY")).equals(Constants.TCH_HNDSHK_LABEL)){
+								b1.setLabelName((String) m.get("U_VALUE"));
+								b1.setLabelValue(null);
+							}else if(((String) m.get("U_KEY")).equals(Constants.TCH_HNDSHK_LABEL_VAL)){
+								b1.setMaxLength((String) m.get("U_VALUE"));
+							}	
+						}
+					}
+				}
+				bList.add(b1);
+				handshakeRequest.setBillingObj(bList.toArray(billingObj));
+			}
+		//}
+		@SuppressWarnings("unchecked")
+		List<HashMap<String, Object>> cardObjRows = (List<HashMap<String,Object>>) out.get("C_CARD_OBJECTS");
+		
+		LinkedList<CardObj> cardObjList = new LinkedList<CardObj>();
+		
+		for(Map<String, Object> row : cardObjRows)
+		{
+			CardObj cardObj  = handshakeRequest.new CardObj();
+			cardObj.setCardNameLow((String)row.get("CARD_RANGE_LOW"));
+			cardObj.setCardNameHigh((String)row.get("CARD_RANGE_HIGH"));
+			
+			String pinPromptFlag = (String)row.get("PINPROMPT");
+			if(Constants.TCH_1.equalsIgnoreCase(pinPromptFlag))
+			{
+				cardObj.setPinPromptFlag(Constants.TCH_Y);
+			}
+			else if(Constants.TCH_A.equalsIgnoreCase(pinPromptFlag))
+			{
+				cardObj.setPinPromptFlag(Constants.TCH_A);
+			} else{
+				cardObj.setPinPromptFlag("N");
+			}
+			
+			
+			/* From REV Specification
+			 * 0 - Credit, 
+			 * 1 - Debit, 
+			 * 2 â€“ eCash, 
+			 * 3 - Loyalty Card, 
+			 * 4 - UID Card,
+			 * 5 - EMI card,
+			 * 6 â€“ PIN@POS Credit 
+			 */
+			BigDecimal bdCardType = (BigDecimal)row.get("CARD_TYPE");
+			String cardType = bdCardType.toPlainString();
+			if("1".equals(cardType))
+			{
+				cardObj.setAccountType(true);
+			}
+			else
+			{
+				cardObj.setAccountType(false);
+			}
+			if(Constants.TCH_1.equalsIgnoreCase(pinPromptFlag) || Constants.TCH_1.equals(cardType) || Constants.TCH_A.equals(pinPromptFlag))
+				cardObjList.add(cardObj);
+		}
+		CardObj[] cardObjArr = new CardObj[cardObjList.size()];
+		handshakeRequest.setCardObj(cardObjList.toArray(cardObjArr));
+		handshakeRequest.setClientId(clientId);
+		handshakeRequest.setStraceNumber(straceNumber);
+		handshakeRequest.setInvoiceNumber(invoiceNumber);
+		handshakeRequest.setStanNumber(stanNumber);
+		HealthObjectDTO healthDto = null;
+		
+		if("A".equals(healthObejctFlag)){
+			logger.debug("Inserting health object info in table");
+			healthDto = handshakeRequest.getHealthDto();
+			healthDto.setRtmFlag(1);
+			healthObjectDaoImpl.save(healthDto);
+		}/*else{
+			logger.debug("updating health object info in table");
+			healthObjectDaoImpl.update(healthDto);
+		}*/
+		return existingId.longValue();
+		
+	}
+	
+	/**
+	   * Get card range values from this method, based on the terminal serial number and MID and TID.
+	   * 
+	   * @param handshakeRequest Parameter is final as value is going to set in this method on request parameter.
+	   * @return int <tt>0</tt> if found all information. <p>
+	   * 			 <tt>-1</tt> if found any error while fetching data from database. 
+	   */
+
+	@Override
+	public int getCardObjects(Handshake handshakeRequest) {
+		// TODO Auto-generated method stub
+		int ret = 0;
+		try{
+			// TODO Auto-generated method stub
+			String query = 	"select  ttp.CARD_RANGE_LOW , ttp.CARD_RANGE_HIGH , ttp.PINPROMPT , ttp.CARD_TYPE " +
+							"from TC_TERM_PARAMETER ttp join TC_TID_HWSR_MAPPING thm on ttp.mid = thm.mid and ttp.tid = thm.tid " +
+							"where thm.HWSRNO = ?";
+			
+			if(Property.isShowSql())
+			{
+				logger.debug("Query :"+ query);
+			}
+		
+			
+			List<Map<String, Object>> rows =  getJdbcTemplate().queryForList(query,  handshakeRequest.getTerminalSerialNumber());
+			
+			CardObj[] cardObjArr = new CardObj[rows.size()];
+			
+			LinkedList<CardObj> cardObjList = new LinkedList<CardObj>();
+					
+			for(Map<String, Object> row : rows)
+			{
+				CardObj cardObj  = handshakeRequest.new CardObj();
+				cardObj.setCardNameLow((String)row.get("CARD_RANGE_LOW"));
+				cardObj.setCardNameHigh((String)row.get("CARD_RANGE_HIGH"));
+				
+				String pinPromptFlag = (String)row.get("PINPROMPT");
+				if("Y".equalsIgnoreCase(pinPromptFlag))
+				{
+					cardObj.setPinPromptFlag(Constants.TCH_Y);
+				}
+				else
+				{
+					cardObj.setPinPromptFlag("N");
+				}
+				
+				/* From REV Specification
+				 * 0 - Credit, 
+				 * 1 - Debit, 
+				 * 2 â€“ eCash, 
+				 * 3 - Loyalty Card, 
+				 * 4 - UID Card,
+				 * 5 - EMI card,
+				 * 6 â€“ PIN@POS Credit 
+				 */
+				BigDecimal bdCardType = (BigDecimal)row.get("CARD_TYPE");
+				String cardType = bdCardType.toPlainString();
+				if("1".equals(cardType))
+				{
+					cardObj.setAccountType(true);
+				}
+				else
+				{
+					cardObj.setAccountType(false);
+				}
+				cardObjList.add(cardObj);
+			}
+			
+			handshakeRequest.setCardObj(cardObjList.toArray(cardObjArr));
+			ret = rows.size();
+			return ret;
+		}
+		catch (DataAccessException e) {
+			e.printStackTrace();
+			logger.error("DataAccessException while getting data for handshake:"+e,e);
+			ret = -1;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			logger.error("DataAccessException while getting data for handshake:"+e,e);
+			ret = -1;
+		}
+		
+		return ret;
+	}
+
+	/**
+	   * Updating <tt>PCR Flag</tt> in the table <tt>TC_ME_PARAMETER</tt> if handshake happened based on the <tt>PCR Flag</tt> got raised.
+	   * 
+	   * @param handshakeRequest which is used to get terminal serial number. 
+	   */
+	@Override
+	public void updateOpenPCR(Handshake handshakeRequest) {
+
+
+		//String sql1 = "UPDATE TC_ME_PARAMETER SET openpcrflag = 'N' WHERE meparamid IN (SELECT MEPARAMID FROM tc_me_parameter TMP JOIN TC_TID_HWSR_MAPPING THM ON thm.mid = tmp.mid WHERE thm.hwsrno = ?)";
+		String sql = "UPDATE TC_TID_HWSR_MAPPING SET OPENPCRFLAG = 'N' WHERE hwsrno = ?";
+		
+		if(Property.isShowSql())
+		{	
+			logger.debug("Query :"+ sql);
+		}
+		getJdbcTemplate().update(sql ,new Object[] {handshakeRequest.getTerminalSerialNumber().trim()});
+		logger.debug("Update for open pcr flag");
+		
+	}
+}

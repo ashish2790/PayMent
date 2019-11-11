@@ -1,0 +1,185 @@
+package com.awl.tch.brandemi.dao;
+
+import java.math.BigDecimal;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import oracle.jdbc.OracleTypes;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.ColumnMapRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Repository;
+
+import com.awl.tch.brandemi.model.Menu;
+import com.awl.tch.brandemi.model.MenuNode;
+import com.awl.tch.brandemi.util.QueryConstant;
+
+@Repository("menuDao")
+public class MenuDaoImpl {
+	
+	private static final Logger logger = LoggerFactory.getLogger(MenuDaoImpl.class);
+	
+	@Autowired
+	@Qualifier("jdbcTemplateBrandEmi")
+	private JdbcTemplate jdbcTemplate;
+	
+	@Autowired
+	@Qualifier("namedJdbcTemplateBrandEmi")
+	private NamedParameterJdbcTemplate namedJdbcTemplate;
+	
+	@Autowired
+	@Qualifier("simpleJdbcCallBrandEmi")
+	private SimpleJdbcCall simpleJdbcCall;
+	
+	public Menu getMenuDetails(String mid)
+	{
+		Menu menuOut = new Menu(); 
+		SqlParameter inMID = new SqlParameter("I_MID", Types.VARCHAR);
+		SqlParameter outSqlErrorCode = new SqlOutParameter("O_SQL_CODE", Types.VARCHAR);
+		SqlParameter outAppErrorCode = new SqlOutParameter("O_APP_ERROR_CODE", Types.VARCHAR);
+		SqlParameter outDebugPoint = new SqlOutParameter("O_DEBUG_POINT", Types.VARCHAR);
+		
+		SqlParameter outScreen1  = new SqlOutParameter("C_SCREEN1", OracleTypes.CURSOR,   new ColumnMapRowMapper());
+		SqlParameter outScreen2  = new SqlOutParameter("C_SCREEN2", OracleTypes.CURSOR ,  new ColumnMapRowMapper());
+		SqlParameter outScreen3  = new SqlOutParameter("C_SCREEN3", OracleTypes.CURSOR ,  new ColumnMapRowMapper());
+		SqlParameter outPrograms = new SqlOutParameter("C_PROGRAMS", OracleTypes.CURSOR ,  new ColumnMapRowMapper());
+		
+		simpleJdbcCall.withProcedureName("TCH_GET_MENU_OBJECT");
+		simpleJdbcCall.declareParameters(inMID,outScreen1,outScreen2,outScreen3,outPrograms,
+				outSqlErrorCode,outAppErrorCode,outDebugPoint);
+		simpleJdbcCall.withoutProcedureColumnMetaDataAccess();
+		simpleJdbcCall.compile();
+		
+		logger.info("I_MID :"+ mid);
+		
+		SqlParameterSource in = new MapSqlParameterSource()
+        .addValue("I_MID", mid); 
+		
+		logger.debug("Calling TCH_GET_MENU_OBJECT");
+		Map<String,Object> out = simpleJdbcCall.execute(in);
+		
+		String sqlCode = (String) out.get("O_SQL_CODE");
+		String appErrorCode = (String) out.get("O_APP_ERROR_CODE");
+		String debugPoint = (String) out.get("O_DEBUG_POINT");
+		
+		logger.debug("sqlCode:"+sqlCode);
+		logger.debug("appErrorCode:"+appErrorCode);
+		logger.debug("debugPoint:"+debugPoint);
+		if("5".equals(debugPoint))
+		{
+			@SuppressWarnings("unchecked")
+			List<HashMap<String,Object>> screen1MenuList = (List<HashMap<String,Object>>) out.get("C_SCREEN1"); // MAPPING FOR SCHEME MOBILE/CD FROM TABLE XP_EMI_MID_DEALERSCHEME_MAP
+			menuOut.setScreen1(screen1MenuList);
+			
+			@SuppressWarnings("unchecked")
+			List<HashMap<String,Object>> screen2MenuList = (List<HashMap<String,Object>>) out.get("C_SCREEN2"); // MAPPING FOR MANUFATURER (eg.lg cd special) XP_EMI_MANUFACTURER
+			menuOut.setScreen2(screen2MenuList);
+			
+			@SuppressWarnings("unchecked")
+			List<HashMap<String,Object>> screen3MenuList = (List<HashMap<String,Object>>) out.get("C_SCREEN3"); //XP_EMI_BRAND_SCHEMEMASTER (mbo/cib)
+			menuOut.setScreen3(screen3MenuList);
+			
+			@SuppressWarnings("unchecked")
+			List<HashMap<String,Object>> programList = (List<HashMap<String,Object>>) out.get("C_PROGRAMS");  
+			menuOut.setPrograms(programList);
+		}
+		else
+		{
+			logger.error("Error in procedure TCH_GET_MENU_OBJECT");
+		}
+		return menuOut;
+	}
+	
+	public Map<Integer,List<MenuNode>> getMenuHierarchy(Set<Integer> ids)
+	{
+		
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+		parameters.addValue("ids", ids);
+		
+		String sql = QueryConstant.MENU_HIERARCHY; 
+		List<Map<String, Object>> rows =  namedJdbcTemplate.queryForList(sql, parameters);
+		 
+		int key = 0;
+		Map<Integer,List<MenuNode>> map = new HashMap<>();
+		List<MenuNode> menuHierarchy =null;
+		for(Map<String, Object> row : rows)
+		{
+			int tempkey = ((BigDecimal)row.get("ID")).intValue();
+			
+			int previousId = ((BigDecimal)row.get("PREVIOUS_ID")).intValue();
+			int currentId = ((BigDecimal)row.get("CURRENT_ID")).intValue();
+			String displayName = (String)row.get("NAME");
+			String headerName = (String)row.get("DESCRIPTION");
+			MenuNode mNode = new MenuNode(previousId, currentId, displayName, headerName);
+			if(tempkey != key)
+			{
+				menuHierarchy = new ArrayList<>();
+				key = tempkey;
+				menuHierarchy.add(mNode);
+				map.put(tempkey, menuHierarchy);
+			}else{
+				map.get(tempkey).add(mNode);
+			}
+		}
+		return map;
+	}
+	
+	
+	public List<String> getListOfMid(){
+		List<String> mids = new ArrayList<String>();
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+		String sql = QueryConstant.GET_MID; 
+		List<Map<String, Object>> rows =  namedJdbcTemplate.queryForList(sql, parameters);
+		for(Map<String, Object> row : rows){
+			mids.add((String) row.get("MID"));
+		}
+		if(mids!= null)
+			logger.debug("Available MID FOR BRAND EMI :" + mids.toString());
+		return mids;
+	}
+	
+	public List<Map<String, Object>> getCategoryManId(String mid){
+		MapSqlParameterSource parameters = new MapSqlParameterSource();
+		parameters.addValue("mid", mid);
+		String sql = QueryConstant.GET_MID_MAN_SCHEME; 
+		logger.debug("Query to get category and manufacturer mapping :" + sql + "["+mid+"]");
+		List<Map<String, Object>> rows =  namedJdbcTemplate.queryForList(sql, parameters);
+		return rows;
+	}
+	
+	public boolean isBinSupport(String mid,String binValue){
+		boolean present = false;
+		try{
+			String sql = QueryConstant.GET_BIN_MID_MAPPING;
+			MapSqlParameterSource parameters = new MapSqlParameterSource();
+			parameters.addValue("mid", mid);
+			logger.debug("Query to get bin mapping :" + sql + "["+mid+"]");
+			List<Map<String, Object>> rows =  namedJdbcTemplate.queryForList(sql, parameters);
+			for(Map<String, Object> row : rows){
+				if(binValue.equals(((BigDecimal) row.get("BINCODE")).toPlainString())){
+					present = true;
+					break;
+				}
+			}
+			logger.debug("Bin not present in merchant program bin mapping");
+		}catch(Exception e){
+			logger.debug("Exceptio e",e);
+			present = true;
+		}
+		return present;
+	}
+}

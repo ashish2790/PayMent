@@ -1,0 +1,72 @@
+package com.awl.tch.client;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+public class CardDetClient {
+	public static void main(String[] args) {
+		/*if (args.length != 2) {
+            System.err.println(
+                "Usage: java EchoClient <host name> <port number>");
+            System.exit(1);
+        }*/
+		
+		long startTime = System.currentTimeMillis();
+		
+		int i=0;
+		while(i<1)			
+		{
+			
+       String hostName = "127.0.0.1";
+		//	String hostName = "10.10.11.126";
+        int portNumber = 9001;
+        for(int p = 0 ;p < 3 ; p++){
+        try (
+            Socket kkSocket = new Socket(hostName, portNumber);
+            PrintWriter out = new PrintWriter(kkSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(kkSocket.getInputStream()));
+        ) {
+        	
+        		Thread.sleep(5000);
+        		BufferedReader stdIn =
+                        new BufferedReader(new InputStreamReader(System.in));
+                    
+                    String reqStr = "{ 	\"requestType\":	\"CARDDET\", 	\"requestObject\":	{ 		\"termSerNum\":	\"14298WL22307843\", 		\"cltId\":	\"TC0000000000363\", 		\"packetNum\":	\"0000\", 		\"cardDetVer\":	\"0001\", 		\"date\":	\"161021\", 		\"time\":	\"133451\" 	} }";
+                    System.out.println(reqStr);
+                    out.print(reqStr);
+                    out.flush();
+                    String incommingMessage = "";
+                    char cbuf[] = new char[4096];
+        			int charRead =  in.read(cbuf);
+        			incommingMessage = new String(cbuf);
+        			System.out.println("Server : length : " +charRead +": "+incommingMessage);
+        	
+            
+			
+        } catch (UnknownHostException e) {
+            System.err.println("Don't know about host " + hostName);
+            System.exit(1);
+        } catch (IOException e) {
+            System.err.println("Couldn't get I/O for the connection to " +
+                hostName);
+            System.exit(1);
+        } catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        }
+        
+        i++;
+       
+		}
+		
+		long endTime = System.currentTimeMillis();
+		System.out.println(endTime - startTime );
+		
+	}
+}

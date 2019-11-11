@@ -1,0 +1,45 @@
+
+ƒsquid:S1858Â"O"getLastFourDigitValue" returns a string, there's no need to call "toString()".(ãšÓİşÿÿÿÿH”¥RMINORZ
+CODE_SMELL
+usquid:S3457§"AFormat specifiers should be used instead of string concatenation.(‚Æè¦úÿÿÿÿH•¥RMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine³"<This block of commented-out lines of code should be removed.(‡÷ˆ€H–¥RMAJORZ
+CODE_SMELL
+Zsquid:S1148»"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH—¥RMINORZVULNERABILITY
+usquid:S3457Ã"AFormat specifiers should be used instead of string concatenation.(§°ŸÎøÿÿÿÿH˜¥RMAJORZ
+CODE_SMELL
+bsquid:S1066d"/Merge this if statement with the enclosing one.(ğ¨ØüÿÿÿÿH™¥RMAJORZ
+CODE_SMELL
+psquid:S3457À"AFormat specifiers should be used instead of string concatenation.(ÙìÉĞHš¥RMAJORZ
+CODE_SMELL
+ˆsquid:S3776X"RRefactor this method to reduce its Cognitive Complexity from 62 to the 15 allowed.(ç²®úÿÿÿÿH›¥RCRITICALZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineÕ"<This block of commented-out lines of code should be removed.(½‘Ñ³Hœ¥RMAJORZ
+CODE_SMELL
+zsquid:S1858†"F"getBinNumber" returns a string, there's no need to call "toString()".(ŞÊ”øÿÿÿÿH¥RMINORZ
+CODE_SMELL
+Wsquid:S2200«"/Only the sign of the result should be examined.(ƒŸê²H¥RMINORZBUG
+lsquid:S1854k">Remove this useless assignment to local variable "paymentDto".(¨Õ—ËHŸ¥RMAJORZ
+CODE_SMELL
+psquid:S3457Ÿ"AFormat specifiers should be used instead of string concatenation.(şî³ÈH ¥RMAJORZ
+CODE_SMELL
+isquid:S1141£"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿH¡¥RMAJORZ
+CODE_SMELL
+Ssquid:S2129§"$Remove this "BigDecimal" constructor(ŸçH¢¥RMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineä"<This block of commented-out lines of code should be removed.(½‘Ñ³H£¥RMAJORZ
+CODE_SMELL
+ƒsquid:S1858…"O"getLastFourDigitValue" returns a string, there's no need to call "toString()".(½Ö¯ëıÿÿÿÿH¤¥RMINORZ
+CODE_SMELL
+psquid:S3457õ"AFormat specifiers should be used instead of string concatenation.(»šÁµH¥¥RMAJORZ
+CODE_SMELL
+fsquid:S2629õ"7Use the built-in formatting to construct this argument.(»šÁµH¦¥RMAJORZ
+CODE_SMELL
+osquid:S3457ò"AFormat specifiers should be used instead of string concatenation.(úìøH§¥RMAJORZ
+CODE_SMELL
+„squid:S3776İ"RRefactor this method to reduce its Cognitive Complexity from 21 to the 15 allowed.(‡Î­äH¨¥RCRITICALZ
+CODE_SMELL
+usquid:S3457Ã"AFormat specifiers should be used instead of string concatenation.(Ùı³¦ùÿÿÿÿH©¥RMAJORZ
+CODE_SMELL
+usquid:S3457"AFormat specifiers should be used instead of string concatenation.(Â¸¸ØøÿÿÿÿHª¥RMAJORZ
+CODE_SMELL

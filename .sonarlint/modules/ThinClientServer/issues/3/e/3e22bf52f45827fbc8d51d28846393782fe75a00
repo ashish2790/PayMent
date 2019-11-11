@@ -1,0 +1,68 @@
+
+Ë%squid:RedundantThrowsDeclarationCheckö"Remove the declaration of thrown exception 'com.awl.tch.exceptions.TCHQueryException', as it cannot be thrown from method's body.(‚”¬İHÑµRMINORZ
+CODE_SMELL
+Wsquid:S2629w"$Invoke method(s) only conditionally.(Î‘ØøÿÿÿÿHÒµRMAJORZ
+CODE_SMELL
+squid:S2629Œ"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(‰³í®ıÿÿÿÿHÓµRMAJORZ
+CODE_SMELL
+fsquid:S2629"7Use the built-in formatting to construct this argument.(©ÊĞ¤HÔµRMAJORZ
+CODE_SMELL
+ksquid:S2629”"7Use the built-in formatting to construct this argument.(Æ’üÍøÿÿÿÿHÕµRMAJORZ
+CODE_SMELL
+ksquid:S2629ƒ"7Use the built-in formatting to construct this argument.(•ÃÇÃúÿÿÿÿHÖµRMAJORZ
+CODE_SMELL
+ksquid:S2629"7Use the built-in formatting to construct this argument.(£ë½èûÿÿÿÿH×µRMAJORZ
+CODE_SMELL
+fsquid:S2629¼"7Use the built-in formatting to construct this argument.(×ÃÍİHØµRMAJORZ
+CODE_SMELL
+Šsquid:S2629•"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(¼æ×SHÙµRMAJORZ
+CODE_SMELL
+ˆsquid:S2293˜"YReplace the type specification in this constructor call with the diamond operator ("<>").(çÍ·¾HÚµRMINORZ
+CODE_SMELL
+~squid:CommentedOutCodeLinea"<This block of commented-out lines of code should be removed.(È³Œ ùÿÿÿÿHÛµRMAJORZ
+CODE_SMELL
+hsquid:S1141p"5Extract this nested try block into a separate method.(¡»¢üùÿÿÿÿHÜµRMAJORZ
+CODE_SMELL
+fsquid:S2589"7Remove this expression which always evaluates to "true"(’Š°HİµRMAJORZ
+CODE_SMELL
+ˆsquid:S3776P"RRefactor this method to reduce its Cognitive Complexity from 26 to the 15 allowed.(’²àêùÿÿÿÿHŞµRCRITICALZ
+CODE_SMELL
+ssquid:S2259»"FA "NullPointerException" could be thrown; "response" is nullable here.(Øˆ¤ÍüÿÿÿÿHßµRMAJORZBUG
+tsquid:S2147ƒ"ECombine this catch with the one at line 385, which has the same body.(‰°úÅHàµRMINORZ
+CODE_SMELL
+Zsquid:S1148‚"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHáµRMINORZVULNERABILITY
+Zsquid:S1148„"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHâµRMINORZVULNERABILITY
+nsquid:S3457s"AFormat specifiers should be used instead of string concatenation.(Èğ¯5HãµRMAJORZ
+CODE_SMELL
+nsquid:S3457t"AFormat specifiers should be used instead of string concatenation.(§£„iHäµRMAJORZ
+CODE_SMELL
+usquid:S3457‚"AFormat specifiers should be used instead of string concatenation.(õ¥ËüÿÿÿÿHåµRMAJORZ
+CODE_SMELL
+psquid:S3457ƒ"AFormat specifiers should be used instead of string concatenation.(€ºàİHæµRMAJORZ
+CODE_SMELL
+psquid:S3457„"AFormat specifiers should be used instead of string concatenation.(µ´øâHçµRMAJORZ
+CODE_SMELL
+psquid:S3457Š"AFormat specifiers should be used instead of string concatenation.(×ã¯HèµRMAJORZ
+CODE_SMELL
+usquid:S3457Œ"AFormat specifiers should be used instead of string concatenation.(‰³í®ıÿÿÿÿHéµRMAJORZ
+CODE_SMELL
+psquid:S3457"AFormat specifiers should be used instead of string concatenation.(©ÊĞ¤HêµRMAJORZ
+CODE_SMELL
+usquid:S3457”"AFormat specifiers should be used instead of string concatenation.(Æ’üÍøÿÿÿÿHëµRMAJORZ
+CODE_SMELL
+usquid:S3457ü"AFormat specifiers should be used instead of string concatenation.(ë„¦ÌşÿÿÿÿHìµRMAJORZ
+CODE_SMELL
+usquid:S3457ƒ"AFormat specifiers should be used instead of string concatenation.(•ÃÇÃúÿÿÿÿHíµRMAJORZ
+CODE_SMELL
+usquid:S3457"AFormat specifiers should be used instead of string concatenation.(£ë½èûÿÿÿÿHîµRMAJORZ
+CODE_SMELL
+psquid:S3457•"AFormat specifiers should be used instead of string concatenation.(Ã´ğóHïµRMAJORZ
+CODE_SMELL
+psquid:S3457¼"AFormat specifiers should be used instead of string concatenation.(×ÃÍİHğµRMAJORZ
+CODE_SMELL
+usquid:S3457"AFormat specifiers should be used instead of string concatenation.(Ğ‹”—ùÿÿÿÿHñµRMAJORZ
+CODE_SMELL
+osquid:S3457•"AFormat specifiers should be used instead of string concatenation.(¼æ×SHòµRMAJORZ
+CODE_SMELL
+psquid:S3457¢"AFormat specifiers should be used instead of string concatenation.(ì¶ç·HóµRMAJORZ
+CODE_SMELL

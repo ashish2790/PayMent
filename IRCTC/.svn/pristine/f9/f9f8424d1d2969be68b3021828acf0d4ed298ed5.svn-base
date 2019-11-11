@@ -1,0 +1,44 @@
+package com.tch.irctc.encryption;
+
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.codec.binary.Base64;
+
+public class AES {
+	private static byte[] iv = { 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8 };
+
+	public static String Encrypt(String text, String key) throws Exception{
+		byte[] mykey;
+		SecretKeySpec secretKey = null;
+		mykey = Base64.decodeBase64(key.getBytes("UTF-8"));
+		secretKey = new SecretKeySpec(mykey, "AES");
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		IvParameterSpec ivspec = new IvParameterSpec(iv);
+		cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivspec);
+		byte[] results = cipher.doFinal(text.getBytes("UTF-8"));
+		return new String(Base64.encodeBase64(results), "UTF-8");
+	}
+
+	public static String Decrypt(String text, String key) throws Exception {
+		byte[] mykey;
+		SecretKeySpec secretKey = null;
+		mykey = Base64.decodeBase64(key.getBytes("UTF-8"));
+		secretKey = new SecretKeySpec(mykey, "AES");
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		IvParameterSpec ivspec = new IvParameterSpec(iv);
+		cipher.init(Cipher.DECRYPT_MODE, secretKey, ivspec);
+		byte[] decodedData = Base64.decodeBase64(text.getBytes("UTF-8"));
+		byte[] results = cipher.doFinal(decodedData);
+		return new String(results, "UTF-8");
+	}
+}

@@ -1,0 +1,92 @@
+
+squid:S00117–"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(¬³…„ÿÿÿÿÿ8ÒÅÆ­ñ,H°áRMINORZ
+CODE_SMELL
+jsquid:S2629Y"7Use the built-in formatting to construct this argument.(‰•ÊàúÿÿÿÿH±áRMAJORZ
+CODE_SMELL
+|squid:S3457"AFormat specifiers should be used instead of string concatenation.(‰•Êàúÿÿÿÿ8ÒÅÆ­ñ,H²áRMAJORZ
+CODE_SMELL
+tsquid:S3457G"AFormat specifiers should be used instead of string concatenation.(–¤µ†üÿÿÿÿH³áRMAJORZ
+CODE_SMELL
+csquid:S1854^"5Remove this useless assignment to local variable "i".(ãÃ·éH´áRMAJORZ
+CODE_SMELL
+tsquid:S3457l"AFormat specifiers should be used instead of string concatenation.(‰•ÊàúÿÿÿÿHµáRMAJORZ
+CODE_SMELL
+\squid:S1481›"&Remove this unused "i" local variable.(ãÃ·é8ÒÅÆ­ñ,H¶áRMINORZ
+CODE_SMELL
+tsquid:S3457"AFormat specifiers should be used instead of string concatenation.(ç½¶õıÿÿÿÿH·áRMAJORZ
+CODE_SMELL
+wsquid:S3457«"AFormat specifiers should be used instead of string concatenation.(Ìû–Å8ÒÅÆ­ñ,H¸áRMAJORZ
+CODE_SMELL
+rsquid:S2629’"7Use the built-in formatting to construct this argument.(‘»Ææûÿÿÿÿ8ÒÅÆ­ñ,H¹áRMAJORZ
+CODE_SMELL
+squid:S1192c"QDefine a constant instead of duplicating this literal "failed in update" 3 times.(Ü÷‡şÿÿÿÿ8ÒÅÆ­ñ,HºáRCRITICALZ
+CODE_SMELL
+ksquid:S1854›"5Remove this useless assignment to local variable "i".(ãÃ·é8ÒÅÆ­ñ,H»áRMAJORZ
+CODE_SMELL
+squid:S00117ª"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ÇŠê…ıÿÿÿÿ8ÒÅÆ­ñ,H¼áRMINORZ
+CODE_SMELL
+osquid:S34575"AFormat specifiers should be used instead of string concatenation.(ö±àˆH½áRMAJORZ
+CODE_SMELL
+rsquid:S2629˜"7Use the built-in formatting to construct this argument.(‡ÁÇ¡ıÿÿÿÿ8ÒÅÆ­ñ,H¾áRMAJORZ
+CODE_SMELL
+nsquid:S3878›"8Remove this array creation and simply pass the elements.(ãÃ·é8ÒÅÆ­ñ,H¿áRMINORZ
+CODE_SMELL
+tsquid:S3457"AFormat specifiers should be used instead of string concatenation.(¯†ÁıÿÿÿÿHÀáRMAJORZ
+CODE_SMELL
+|squid:S3457˜"AFormat specifiers should be used instead of string concatenation.(‡ÁÇ¡ıÿÿÿÿ8ÒÅÆ­ñ,HÁáRMAJORZ
+CODE_SMELL
+tsquid:S3457["AFormat specifiers should be used instead of string concatenation.(îìÉÿÿÿÿÿHÂáRMAJORZ
+CODE_SMELL
+fsquid:S3878q"8Remove this array creation and simply pass the elements.(ãÃ·éHÃáRMINORZ
+CODE_SMELL
+Šsquid:S1192d"MDefine a constant instead of duplicating this literal "Exception e:" 3 times.(ŸÜÒÛıÿÿÿÿ8ÒÅÆ­ñ,HÄáRCRITICALZ
+CODE_SMELL
+fsquid:S3878^"8Remove this array creation and simply pass the elements.(ãÃ·éHÅáRMINORZ
+CODE_SMELL
+jsquid:S2629G"7Use the built-in formatting to construct this argument.(–¤µ†üÿÿÿÿHÆáRMAJORZ
+CODE_SMELL
+Tsquid:S1481q"&Remove this unused "i" local variable.(ãÃ·éHÇáRMINORZ
+CODE_SMELL
+tsquid:S3457C"AFormat specifiers should be used instead of string concatenation.(Ğ…ñÍüÿÿÿÿHÈáRMAJORZ
+CODE_SMELL
+jsquid:S26291"7Use the built-in formatting to construct this argument.(·®¤ÀøÿÿÿÿHÉáRMAJORZ
+CODE_SMELL
+ˆsquid:S00117•"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Şªš­8ÒÅÆ­ñ,HÊáRMINORZ
+CODE_SMELL
+tsquid:S3457"AFormat specifiers should be used instead of string concatenation.(‡ú°ıÿÿÿÿHËáRMAJORZ
+CODE_SMELL
+jsquid:S2629"7Use the built-in formatting to construct this argument.(ç½¶õıÿÿÿÿHÌáRMAJORZ
+CODE_SMELL
+|squid:S3457’"AFormat specifiers should be used instead of string concatenation.(‘»Ææûÿÿÿÿ8ÒÅÆ­ñ,HÍáRMAJORZ
+CODE_SMELL
+osquid:S1126!"AReplace this if-then-else statement by a single return statement.(¬°„óHÎáRMINORZ
+CODE_SMELL
+osquid:S3457\"AFormat specifiers should be used instead of string concatenation.(†ÒÒèHÏáRMAJORZ
+CODE_SMELL
+…squid:S1192Y"HDefine a constant instead of duplicating this literal "query :" 3 times.(‰•Êàúÿÿÿÿ8ÒÅÆ­ñ,HĞáRCRITICALZ
+CODE_SMELL
+tsquid:S34571"AFormat specifiers should be used instead of string concatenation.(·®¤ÀøÿÿÿÿHÑáRMAJORZ
+CODE_SMELL
+esquid:S26295"7Use the built-in formatting to construct this argument.(ö±àˆHÒáRMAJORZ
+CODE_SMELL
+tsquid:S3457Y"AFormat specifiers should be used instead of string concatenation.(‰•ÊàúÿÿÿÿHÓáRMAJORZ
+CODE_SMELL
+jsquid:S2629l"7Use the built-in formatting to construct this argument.(‰•ÊàúÿÿÿÿHÔáRMAJORZ
+CODE_SMELL
+Tsquid:S1481^"&Remove this unused "i" local variable.(ãÃ·éHÕáRMINORZ
+CODE_SMELL
+qsquid:S2629n"7Use the built-in formatting to construct this argument.(‘»Ææûÿÿÿÿ8ÒÅÆ­ñ,HÖáRMAJORZ
+CODE_SMELL
+wsquid:S3457—"AFormat specifiers should be used instead of string concatenation.(ñÛ•ä8ÒÅÆ­ñ,H×áRMAJORZ
+CODE_SMELL
+csquid:S1854q"5Remove this useless assignment to local variable "i".(ãÃ·éHØáRMAJORZ
+CODE_SMELL
+rsquid:S2629"7Use the built-in formatting to construct this argument.(‰•Êàúÿÿÿÿ8ÒÅÆ­ñ,HÙáRMAJORZ
+CODE_SMELL
+k
+squid:S106 "9Replace this use of System.out or System.err by a logger.(³ğ¸ûÿÿÿÿHÚáRMAJORZ
+CODE_SMELL
+tsquid:S3457n"AFormat specifiers should be used instead of string concatenation.(‘»ÆæûÿÿÿÿHÛáRMAJORZ
+CODE_SMELL
+jsquid:S2629C"7Use the built-in formatting to construct this argument.(Ğ…ñÍüÿÿÿÿHÜáRMAJORZ
+CODE_SMELL

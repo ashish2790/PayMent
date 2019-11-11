@@ -1,0 +1,95 @@
+package com.awl.tch.wallet.fc.service;
+
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.wallet.common.AbstractWalletService;
+import com.awl.tch.wallet.common.HttpsClient;
+import com.awl.tch.wallet.common.WalletException;
+import com.awl.tch.wallet.fc.bean.WalletResponseBean;
+import com.awl.tch.wallet.fc.constant.FcConstant;
+import com.awl.tch.wallet.fc.model.FcWalletRequest;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+
+/**
+ * FcReverseServiceImpl is an API for Wallet's reversal transactions.
+ * Method consumeWS is used to call Fc host web-service for reversal
+ * @author pooja.patil
+ *
+ */
+@Service(FcConstant.TCH_FC_REVERSE_SERVICE)
+public class FcReverseServiceImpl extends AbstractWalletService implements FcService{
+
+	private static Logger logger = LoggerFactory.getLogger(FcReverseServiceImpl.class);
+	Gson gson = new Gson();
+	
+	@Override
+	public WalletResponseBean cosumeWS(FcWalletRequest request) throws WalletException {
+		logger.debug("Entering web service for Reversal");
+		Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		String apiParams = gson.toJson(request);
+		logger.debug("Plain Text [" +apiParams+"]");
+		
+		String url = new StringBuilder(request.getUrl()).append(FcConstant.TCH_FC_WALLET_API_REVERSAL).toString();
+		logger.debug("URL ["+url+"]");
+		
+		HashMap<String, String> headerMap = setHeaderParams(apiParams.length());
+        String responseJson = HttpsClient.send(url, apiParams, headerMap);
+        if (responseJson != null && !responseJson.isEmpty()) {
+			logger.debug("Response Json ["+responseJson+"]");
+		} else{
+			throw new WalletException("Response received as null");
+		}
+		WalletResponseBean response = (WalletResponseBean) parseGson(FcConstant.TCH_FC_REVERSE_SERVICE, responseJson);
+        
+		logger.debug("Result ["+response+"]");
+		logger.debug("Exiting cosumeWS().. Exiting web service for void enquiry");
+	
+		return response;
+		
+	}
+	
+	/**
+	 * Setting response in FcWalletRequest object for testing purpose
+	 * @param response
+	 * @return
+	 */
+	public static void main(String[] args){
+		FcReverseServiceImpl fcSale = new FcReverseServiceImpl();
+		FcWalletRequest reversalReq = new FcWalletRequest();
+		reversalReq.setMerchantId("1");
+		reversalReq.setTerminalId("TERM0001");
+		reversalReq.setTransactionRefNumber("11111111111111111111111112");
+		reversalReq.setTxnAmount("100");
+		reversalReq.setTxnDatenTime("23052016154010");
+		reversalReq.setProcCode("10");
+		reversalReq.setAuthToken("4c0f8dfd0fefd290b33a314d111b75de123d91d9a278556dd199b6a60de92550");
+		/*AdditinalInfo addInfo = new AdditinalInfo();
+		List<AdditinalInfo> listObj = new ArrayList<AdditinalInfo>();
+		addInfo.setTag("1001");
+		addInfo.setValue("xyz");
+		listObj.add(addInfo);
+		addInfo = new AdditinalInfo();
+		addInfo.setTag("1002");
+		addInfo.setValue("abc");
+		listObj.add(addInfo);
+		reversalReq.setAdditinalInfo(listObj.toArray(new AdditinalInfo[listObj.size()]));*/
+		reversalReq.setAdditinalInfo(null);
+		Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		String apiParams = gson.toJson(reversalReq);
+		logger.debug("Plain Text [" +apiParams+"]");
+		try {
+			fcSale.cosumeWS(reversalReq);
+		} catch (WalletException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}

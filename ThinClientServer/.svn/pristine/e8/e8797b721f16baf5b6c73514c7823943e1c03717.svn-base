@@ -1,0 +1,305 @@
+
+package com.awl.tch.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.aab.exception.AABServiceException;
+import com.aab.utility.AABExternalEntity;
+import com.awl.tch.adaptor.brandemi.BrandEmiAdaptorImpl;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bean.SuperMenuObject;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.dao.BrandEmiSerialNumberDaoImpl;
+import com.awl.tch.dao.SaleAmexDaoImpl;
+import com.awl.tch.dao.VoidDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.PaymentAmexDTO;
+import com.awl.tch.model.PaymentDTO;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.ISOMessages;
+/**
+* <h1>Processing request parameter.</h1>
+* VoidServiceImpl program is used to set all
+* the business logic related to void transaction , and if
+* all the business logic <tt>satisfy</tt> all the condition for getting 
+* response from switch then and then only appropriate response send.
+* 
+* <p>
+* In which request parameter must contain mandatory 
+* field as <tt>Terminal serial number</tt>,
+* base on which all the related information like <tt>client id</tt>,
+* <tt>MID</tt>,<tt>TID</tt> is going to
+* send as response object as <tt>json</tt> format.
+* <p>
+* Finally if all condition are satisfied then based on the <tt> invoice number</tt>
+* previous sale transaction is void and it is going to save in DB as void.
+* 
+* <b>Note:</b> Business logic set as per the standard followed by WL.
+*
+* @author  Ashish Bhavsar
+* @version 1.0
+* @since   2016-09-21
+*/
+@Service("paymentVoidService")
+public class VoidServiceImpl extends AbstractServiceImpl implements VoidService{
+
+	private static final Logger logger  = LoggerFactory.getLogger(VoidServiceImpl.class);
+	
+	@Autowired
+	@Qualifier("paymentVoidDao")
+	VoidDaoImpl paymentVoidDao;
+	
+	@Autowired
+	@Qualifier("paymentAmexDao")
+	SaleAmexDaoImpl paymentAmexDao;
+	
+	/**
+	   * Service the request received and add business logic as per standard of WL.
+	   *
+	   * @param input Contains request in <tt>json</tt> format with mandatory field in it. 
+	   * @return <tt>Payment</tt> if no error contain response send with appropriate response code and 
+	   * 							all fields which need to be print on charge slip.
+	   * 							And success response is saved in DB.
+	   * 							<p> if error present it contains only error related information <tt>error code</tt>
+	   * 								<tt> error message</tt>.
+	   * @exception TCHServiceException On output error.
+	   * @see TCHServiceException
+	   */
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+
+		logger.debug("Entering in service void");
+		
+		checkForPcrFlag(input);
+		//input.setBatchNumber(UtilityHelper.leftPad(batchNumber.toString(), 6)); 
+		
+		PaymentDTO paymentDto = new PaymentDTO();
+		PaymentDTO existingDto = new PaymentDTO();
+		SuperMenuObject superMenu = new SuperMenuObject();
+		String orgAmount  = "";
+		
+		try {
+			existingDto = paymentVoidDao.getSaleParameterWithSp(input);
+			checkForVoidEnable(existingDto);
+		 } catch (TCHQueryException e) {
+			logger.debug("Error in fetching original amount");
+			logger.debug(e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+		
+		// COPY ALL DATA FROM DTO TO PAYMENT BEAN
+		BeanUtils.copyProperties(existingDto, input, "decisionFlag", "track2","referenceValue","date","time");
+		logger.debug("rquest type :" + existingDto.getRequestType());
+		if(existingDto.getRequestType() != null)
+			if(existingDto.getRequestType().equals(Constants.TCH_REQUEST_CSHBK))
+				throw new TCHServiceException(ErrorConstants.TCH_V009, ErrorMaster.get(ErrorConstants.TCH_V009));
+		
+		input.setRefundNewFlag(existingDto.getRefundFlag() == 1 ? "Y" : "N");
+		input.setBatchNumber(String.format("%06d", existingDto.getBatchNumber()));
+		input.setAuthorizationId(existingDto.getAuthorizationId());
+		input.setLastFourDigitValue(existingDto.getLastFourDigitValue().toString());
+		if(existingDto.getCurrencyCode() != null)
+			input.setCurrencyCode(existingDto.getCurrencyCode().toString());
+		orgAmount = String.format("%.0f", Double.valueOf(existingDto.getOriginalAmount()));
+		input.setDccAmount(String.format("%.0f", Double.valueOf(existingDto.getDccAmount())));
+		//orgAmount = new BigDecimal(existingDto.getOriginalAmount()).stripTrailingZeros().toPlainString();
+		
+		if(input.getOriginalAmount() == null &&	input.getDecisionFlag() == null){
+			if(existingDto != null && existingDto.getVoidApprovedFlag() == 1){
+				throw new TCHServiceException(ErrorConstants.TCH_V006, ErrorMaster.get(ErrorConstants.TCH_V006));
+			}else{
+				/*
+				 * Changes for External utility
+				 */
+				if(input.getAppName() != null)
+					updateBillingSystem(input,"1",null);
+				
+				/*
+				 * End of changes for external untility
+				 */
+				// set original amount in addditional amount in first leg of VOID
+				input.setAdditionalAmount(orgAmount);
+				getAdditionalAmountInPrecision(input);
+				input.setCardLabel(getCardLabelWithInternationalInd(input));
+			}
+		}else if(input.getDecisionFlag() != null && Constants.TCH_VOID_ACK.equalsIgnoreCase(input.getDecisionFlag())){
+			input.setOriginalAmount(orgAmount);
+			sendToSwitch(input, Constants.TCH_REQUEST_VOID);
+			logger.debug("Request type :"+ paymentDto.getRequestType());
+			paymentDto = input.getPaymentDTO();
+			logger.debug("Request type existingDto:"+ existingDto.getRequestType());
+			
+			setHeaderForChargeslip(paymentDto,existingDto,input); // set the charge slip header
+			
+			if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+				error82(input);
+				throw new TCHServiceException(ErrorConstants.TCH_V005,  ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode()));
+			}else{
+				/*
+				 * changes for external utility
+				 */
+				if(input.getAppName() != null)
+					updateBillingSystem(input, "2",paymentDto); // update the billing system as per requirement
+				
+				BeanUtils.copyProperties(input, superMenu);
+				boolean isEMIVoid = brandEmiSerialNumberImpl.getEmiSerialValidateDataForVoid(superMenu);
+				if (isEMIVoid){
+					try {
+						brandEmiAdaptor.unblockSerialNumberNonCache(superMenu);
+						brandEmiSerialNumberImpl.updateEmiValidateStatus(superMenu,Constants.EMI_VALIDATE_SERIAL_STATUS_VOID);
+					}  catch (TCHQueryException | TCHServiceException e) {
+						logger.error("Could not unblock Serial number.");
+					}
+				}
+				
+				/*
+				 * end of changes for external utility
+				 */
+				if(input.getAppName() == null){
+					paymentDto.setVoidApprovedFlag(1);
+					paymentDto.setStatus(Constants.TCH_SUCCESS);
+					paymentDto.setVoidStatus(Constants.TCH_SUCCESS);
+					paymentDto.setProcessingCode(Constants.VOID_PROCESSING_CODE);
+					if(Constants.TCH_CR_DB.equals(input.getHostId())){
+						logger.debug("updating void ");
+						paymentVoidDao.update(paymentDto);
+					}else{
+						logger.debug("updating void valus for amex sale");
+						PaymentAmexDTO paymentAmexDto = new PaymentAmexDTO();
+						BeanUtils.copyProperties(paymentDto, paymentAmexDto);
+						paymentAmexDao.update(paymentAmexDto);
+					}
+					
+				}
+			}
+			getOriginalAmountInPrecision(input);
+			
+			input.setCardLabel(getCardLabelWithInternationalInd(input));
+		}else{
+			throw new TCHServiceException(ErrorConstants.TCH_V003, ErrorMaster.get(ErrorConstants.TCH_V003));
+		}
+		
+		// setting null values
+		setNull(input);
+		logger.debug("Exiting from service void");
+		return input;
+	}
+	
+	private void setToBillingSystem(final Payment input, String sequence) throws TCHServiceException{
+		logger.debug("sending request to set void transaction");
+		logger.debug("App name :[" + input.getAppName()+"]");
+		logger.debug("Reference value :["+input.getReferenceValue()+"]");
+		try {
+			UtilityDTO uDto = enquiryDaoImpl.getUtilityDetailInfo(input.getAppName());
+			if(uDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_A004, ErrorMaster.get(ErrorConstants.TCH_A004));
+			}
+			switch(input.getAppName()){
+			case Constants.TCH_AAB:
+				logger.debug("Fetched url from DB ->" +uDto.getUrl());
+				input.setUrl(uDto.getUrl());
+				if("1".equals(sequence)){
+					try{
+						input.setOriginalAmount(AABExternalEntity.setVoidStatus(input.getBranchCode(), input.getReferenceValue(), input.getRetrivalRefNumber(), uDto.getUrl(), input.getBinNumber(), input.getLastFourDigitValue()));
+					} catch (AABServiceException e) {
+						throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage(),e.getResponseCode());
+					}
+					//UtilityExternalEntityHelper.setVoidStatus(input, getExternalEntityService(input.getAppName()));
+				} else { 
+					try{
+						input.setOriginalAmount(AABExternalEntity.setVoidStatusUpdate(input.getBranchCode(), input.getReferenceValue(), input.getRetrivalRefNumber(), uDto.getUrl(), input.getBinNumber(), input.getLastFourDigitValue()));
+					} catch (AABServiceException e) {
+						throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage(),e.getResponseCode());
+					}
+					//UtilityExternalEntityHelper.setVoidStatusUpdate(input, getExternalEntityService(input.getAppName()));
+				}
+				break;
+			default :
+				break;
+			}
+		} catch (TCHQueryException e) {
+			logger.debug("Exception :" + e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+	}
+	
+	private void updateBillingSystem(final Payment input, String indicator, PaymentDTO paymentDto) throws TCHServiceException{
+		
+		switch(input.getAppName()){
+		case Constants.TCH_AAB:
+			if(input.getBranchCode() != null){
+				logger.debug("Branch code :" + input.getBranchCode());
+				try{
+					setToBillingSystem(input,indicator);
+				}catch(TCHServiceException e){
+					if(!"01".equals(e.getResponseCode())){
+						throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage(),e.getResponseCode());
+					}
+				}
+			}
+			if("2".equals(indicator)){
+				paymentDto.setVoidApprovedFlag(1);
+				paymentDto.setStatus(Constants.TCH_SUCCESS);
+				paymentDto.setVoidStatus(Constants.TCH_SUCCESS);
+				paymentVoidDao.update(paymentDto);
+			}
+			break;
+		case Constants.TCH_EGRAS:
+			throw new TCHServiceException(ErrorConstants.TCH_V008, ErrorMaster.get(ErrorConstants.TCH_V008),null);
+		default :
+			break;
+		}
+		
+		
+	}
+	
+	private void checkForVoidEnable(PaymentDTO paymentDTO) throws TCHServiceException{
+		if(Constants.TCH_SBIEPAY.equals(paymentDTO.getAppName())){
+			throw new TCHServiceException("V-111", "VOID NOT SUPPORTED");
+		}
+	}
+	
+	/**
+	 * Set the header for chargeslip in case of void
+	 * @param paymentDto
+	 * @param existingDto
+	 * @param input
+	 */
+	private void setHeaderForChargeslip(final PaymentDTO paymentDto, final PaymentDTO existingDto, final Payment input){
+		switch(existingDto.getRequestType()){
+		case Constants.TCH_REQUEST_SALE:
+			paymentDto.setRequestType(Constants.TCH_REQUEST_VOID);
+			if(existingDto.getEmiIndicator() != null && !existingDto.getEmiIndicator().isEmpty()){
+				paymentDto.setRequestType(Constants.TCH_REQUEST_VOID_EMI_SALE_MENU);
+				input.setDecisionFlag(Constants.TCH_REQUEST_VOID_EMI_SALE_PRINT);
+			}else if(existingDto.getTipApproved() != null && Constants.TCH_1.equals(existingDto.getTipApproved())){
+				paymentDto.setRequestType(Constants.TCH_REQUEST_VOID_TIP_SALE_MENU);
+				input.setDecisionFlag(Constants.TCH_REQUEST_VOID_SALE_TIP_PRINT);
+			}else{
+				input.setDecisionFlag(Constants.TCH_REQUEST_VOID_SALE_PRINT);
+			}
+			break;
+		case Constants.TCH_REQUEST_REFUND:
+			paymentDto.setRequestType(Constants.TCH_REQUEST_VOID_REFUND);
+			input.setDecisionFlag(Constants.TCH_REQUEST_VOID_REFUND_PRINT);
+			break;
+		case Constants.TCH_REQUEST_SALECSHBK:
+			paymentDto.setRequestType(Constants.TCH_REQUEST_VOID_SALE_CASHBACK);
+			input.setDecisionFlag(Constants.TCH_REQUEST_VOID_SCHBK_PRINT);
+			break;
+		case Constants.TCH_REQUEST_CSHBK:
+			paymentDto.setRequestType(Constants.TCH_REQUEST_VOID);
+			input.setDecisionFlag(Constants.TCH_REQUEST_VOID_CSHBK_PRINT);
+			break;
+		}
+	}
+	
+}

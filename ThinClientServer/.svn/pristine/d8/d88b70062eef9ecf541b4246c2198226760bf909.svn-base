@@ -1,0 +1,193 @@
+package com.awl.tch.iso8583;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.util.Arrays;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.util.UtilityHelper;
+import com.solab.iso8583.IsoMessage;
+import com.solab.iso8583.IsoType;
+import com.solab.iso8583.MessageFactory;
+
+public class ISOEmiSale {
+	
+	private static final Logger logger = LoggerFactory.getLogger(ISOEmiSale.class);
+	
+	public static String createISOProgramEnquiry(Payment paymentBean, String reqType){
+		
+		MessageFactory<IsoMessage> msgFact = new MessageFactory<IsoMessage>();
+		IsoMessage iso = msgFact.newMessage(0x600);
+		logger.debug("TPDU : [" + "6001120000" +"]");
+		iso.setIsoHeader(UtilityHelper.unHex("6001120000"));
+		iso.setBinary(true);
+		iso.setCharacterEncoding("ISO-8859-1");
+		
+		
+		logger.info("ISO REQUEST FOR 0600");
+		if(Constants.TCH_REQUEST_PRG_ENQ.equals(reqType))
+			logger.info("Field 3 :["+ 630000 +"]");
+		else
+			logger.info("Field 3 :["+ 620000 +"]");
+		logger.info("Field 4 :["+paymentBean.getOriginalAmount()+"]");
+		logger.info("Field 11 :["+paymentBean.getStanNumber()+"]");
+		logger.info("Field 14 :["+paymentBean.getExpiryDate()+"]");
+		logger.info("Field 22 :["+ paymentBean.getCardEntryMode()+"]");
+		logger.info("Field 24 :["+paymentBean.getNii().trim()+"]");
+		logger.info("Field 25 :["+00+"]");
+		logger.info("Field 35 :["+paymentBean.getTrack2()+"]");
+		logger.info("Field 41 :["+paymentBean.getTerminalId()+"]");
+		logger.info("Field 42 :["+paymentBean.getMerchantId()+"]");
+		logger.info("Field 63 :["+paymentBean.getField63()+"]");
+		
+		//iso.setValue(2, "5236750024000015" , new BCDencodeField60(), IsoType.LLBIN, 19);
+		//iso.setValue(14,1019, IsoType.NUMERIC, 4); // date expiry
+		if(Constants.TCH_REQUEST_PRG_ENQ.equals(reqType))
+			iso.setValue(3, 630000 , IsoType.NUMERIC, 6);
+		else
+			iso.setValue(3, 620000 , IsoType.NUMERIC, 6);
+		iso.setValue(4, paymentBean.getOriginalAmount(), IsoType.NUMERIC, 12);
+		//if(paymentBean.getTrack2() != null && !paymentBean.getTrack2().isEmpty())
+			//if((paymentBean.getTrack2().length() % 2) == 0) 
+			//	iso.setValue(35,paymentBean.getTrack2(), new BcdEncodedField35(), IsoType.LLBIN, 37); // track 2 data
+			//else
+				//iso.setValue(35,paymentBean.getTrack2() +"F", new BcdEncodedField35(), IsoType.LLBIN, 37); // track 2 data
+		//else{
+			iso.setValue(2, paymentBean.getPanNumber() , new BCDencodeField60(), IsoType.LLBIN, 19); // pan number
+			iso.setValue(14, paymentBean.getExpiryDate(), IsoType.NUMERIC, 4); // expiry date in YYMM
+		//}
+		iso.setValue(11, Integer.valueOf(paymentBean.getStanNumber()), IsoType.NUMERIC, 6); // stan number
+		iso.setValue(22, 51, IsoType.NUMERIC, 3); //pos entry mode //emv 51
+		iso.setValue(24, paymentBean.getNii().trim() , IsoType.NUMERIC, 3); // NII
+		iso.setValue(25, 00 , IsoType.NUMERIC, 2);// pos condition code
+		//iso.setValue(41, "22511680", IsoType.ALPHA, 8); // terminal id		
+		//iso.setValue(42, "051003309991671  ", IsoType.ALPHA, 15); // acquiring id or merchant id
+		
+		iso.setValue(41, paymentBean.getTerminalId(), IsoType.ALPHA, 8); // terminal id		
+		iso.setValue(42, paymentBean.getMerchantId(), IsoType.ALPHA, 15); // acquiring id or merchant id
+		if(paymentBean.getField55() != null && !paymentBean.getField55().isEmpty())
+			iso.setValue(55, paymentBean.getField55(),new BCDEncodedField55() , IsoType.LLLBIN, 1);
+		iso.setValue(63, paymentBean.getField63(),new BCDencodeField60(), IsoType.LLLVAR, 6);
+		 
+
+		
+		/*iso.setValue(2, "4629864339046007" , new BCDencodeField60(), IsoType.LLBIN, 19); // pan number
+		if(Constants.TCH_REQUEST_PRG_ENQ.equals(reqType))
+			iso.setValue(3, 630000 , IsoType.NUMERIC, 6);
+		else
+			iso.setValue(3, 620000 , IsoType.NUMERIC, 6);
+		iso.setValue(4, 111  , IsoType.AMOUNT, 12);
+		iso.setValue(11,4233, IsoType.NUMERIC, 6); // stan number	
+		iso.setValue(14,1019, IsoType.NUMERIC, 4); // date expiry
+		iso.setValue(22, 21, IsoType.NUMERIC, 3); //pos entry mode //emv 51
+		iso.setValue(24, 112 , IsoType.NUMERIC, 3); // NII
+		iso.setValue(25, 00 , IsoType.NUMERIC, 2);// pos condition code
+		iso.setValue(41, "00001288", IsoType.ALPHA, 8); // terminal id		
+		iso.setValue(42, "075126027804067  ", IsoType.ALPHA, 15); // acquiring id or merchant id
+		iso.setValue(63, "F" + "00121312",new BCDencodeField60(), IsoType.LLLVAR, 6);*/
+		
+		byte[] isoMsg = iso.writeData();
+		ByteArrayOutputStream byteOuts = new ByteArrayOutputStream();
+		
+		try {
+			iso.write(byteOuts, 2);
+			isoMsg = byteOuts.toByteArray();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			logger.error("Exception in Program Enquiry transaction :",e);
+		}finally{	
+			try {
+				byteOuts.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block				
+				e.printStackTrace();
+			}
+		}
+		
+		logger.info("ProgramEnquiry packet :"+UtilityHelper.byteArrayToHexString(isoMsg));
+		
+		String str ="";
+			
+		try {
+			str = new String(isoMsg,"ISO-8859-1");
+		} catch (UnsupportedEncodingException e) {
+			logger.error("Exception in Program Enquiry packet trancation :",e);
+		}
+		return str;
+	}
+	
+	
+	public static void parseIsoISOProgramEnquiry(String responseData,final Payment paymentBean){
+		try {
+			byte responseByteArray[] = responseData.getBytes("ISO-8859-1");
+			
+			String hexDumpResponse = UtilityHelper.byteArrayToHexString(responseByteArray);			
+			logger.info("Program Enquiry Response Hex Dump :"+hexDumpResponse);
+			
+			final MessageFactory<IsoMessage> mfact = UtilityHelper.config("config.xml");
+			byte binArray[]  = Arrays.copyOfRange(responseByteArray, 2, responseByteArray.length);
+			mfact.setUseBinaryMessages(true);
+			logger.debug("Program Enquiry response : [0610]");
+			IsoMessage m610 = mfact.parseMessage(binArray, 5);
+			
+			logger.info("Field 3 :"+m610.getField(3));
+			logger.info("Field 11 :"+m610.getField(11));
+			logger.info("Field 12 :"+m610.getField(12));
+			logger.info("Field 13 :"+m610.getField(13));
+			logger.info("Field 24 :"+m610.getField(24));
+			logger.info("Field 37 :"+m610.getField(37));
+			logger.info("Field 39 :"+m610.getField(39));
+			logger.info("Field 41 :"+m610.getField(41));
+			logger.info("Field 63 :"+m610.getField(63));
+			
+			paymentBean.setProcessingCode(m610.getField(3).toString());
+			
+			if(m610.getField(39) != null){
+				paymentBean.setResponseCode(m610.getField(39).toString());
+			}
+			if(m610.getField(61) != null){
+				paymentBean.setDate(m610.getField(61).toString().substring(0, 8));
+				paymentBean.setTime(m610.getField(61).toString().substring(8));
+			}
+			if(m610.getField(37) != null){
+				paymentBean.setRetrivalRefNumber(m610.getField(37).toString());
+			}
+			if(m610.getField(63) !=null){
+				paymentBean.setField63(m610.getField(63).toString());
+			}
+				
+	
+		} catch (IOException e) {
+			logger.error("Exception in Program Enquiry :"+e.getMessage(),e);
+		} catch (ParseException e) {
+			logger.error("Exception in Program Enquiry:"+e.getMessage(),e);
+		}
+		catch (Exception e) {
+			logger.error("Exception in Program Enquiry :"+e.getMessage(),e);
+		}
+	
+	}
+	
+/*	public static void main(String[] args) {
+		
+		TcpClient tcp = new TcpClient();
+		Payment bean = new Payment();
+		try {
+			String str = tcp.send(createISOProgramEnquiry(bean, Constants.TCH_REQUEST_EMI_ENQ));
+			parseIsoISOProgramEnquiry(str, bean);
+		} catch (TCHServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}*/
+	
+	
+}

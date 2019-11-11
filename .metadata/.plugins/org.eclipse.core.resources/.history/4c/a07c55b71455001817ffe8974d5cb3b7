@@ -1,0 +1,84 @@
+package com.awl.tch.brandemi.service;
+
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.MenuObject;
+
+
+public class CacheService {
+
+	private static final Logger logger = LoggerFactory.getLogger(CacheService.class);
+	private static ConcurrentHashMap<String, LinkedList<MenuObject>> menuCache = new ConcurrentHashMap<String, LinkedList<MenuObject>>();
+	
+	@Autowired
+	@Qualifier("menuService")
+	private MenuServiceImpl menuService;
+	
+	public static  void add(String mid , LinkedList<MenuObject> menuObject)
+	{
+		menuCache.put(mid, menuObject);
+	}
+	
+	public static MenuObject getActualObject(String mid, MenuObject menuObj)
+	{
+		logger.debug("mid :"+mid);
+		LinkedList<MenuObject>  menuList = menuCache.get(mid) ;
+		logger.debug("menuList size :"+menuList.size());
+		logger.debug("index of :"+menuList.indexOf(menuObj));
+		return menuList.get(menuList.indexOf(menuObj));
+	}
+	
+	public static Integer[] getActualIds(String mid, MenuObject[] menuObj)
+	{
+		logger.debug("MID value : "+ mid);
+		LinkedList<MenuObject>  menuList = menuCache.get(mid) ;
+		
+		logger.debug("Menu list :" + menuList);
+		if(menuList == null){
+			logger.debug("mid present in cache :"+ CacheService.contains(mid));
+			logger.debug("Reloading cache again");
+			
+		}
+		Integer ids [] = new Integer[menuObj.length];
+		logger.info("MenuObj length : "+menuObj.length);
+		for(int i=0;i<menuObj.length;i++)
+		{
+			//logger.debug("Menu object:"+menuObj[i]);
+			int index = menuList.indexOf(menuObj[i]);
+			logger.debug("index of :"+index);
+			if(index!=-1)
+			{
+				MenuObject actual =  menuList.get(menuList.indexOf(menuObj[i]));
+				ids[i] = actual.getId();
+			}
+			else
+				ids[i] = -1;
+		}
+		return ids;
+	}
+	
+	
+	public static LinkedList<MenuObject> get(String mid)
+	{
+		return menuCache.get(mid);
+	}
+	
+	public static boolean contains(String mid)
+	{
+		return menuCache.containsKey(mid);
+	}
+	
+	public static Set<String> getKeySet()
+	{
+		return menuCache.keySet();
+	}
+	
+}

@@ -1,0 +1,184 @@
+package com.awl.tch.service;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.dao.SaleCompDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.PaymentAuthDTO;
+import com.awl.tch.model.PaymentDTO;
+import com.awl.tch.model.TerminalParameterDTO;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.ISOMessages;
+import com.awl.tch.validator.ISOPaymentValidator;
+/**
+* <h1>Processing request parameter.</h1>
+* SaleCompServiceImpl program is used to set all
+* the business logic related to sale completion transaction , and if
+* all the business logic <tt>satisfy</tt> all the condition for getting 
+* response from switch then and then only appropriate response send.
+* 
+* <p>
+* In which request parameter must contain mandatory 
+* field as <tt>Terminal serial number</tt>,
+* base on which all the related information like <tt>client id</tt>,
+* <tt>MID</tt>,<tt>TID</tt> is going to
+* send as response object as <tt>json</tt> format.
+* 
+* <b>Note:</b> Business logic set as per the standard followed by WL.
+*
+* @author  Ashish Bhavsar
+* @version 1.0
+* @since   2016-09-21
+*/
+@Service("saleCompServiceImpl")
+public class SaleCompServiceImpl extends AbstractServiceImpl implements SaleCompService{
+
+	private static final Logger logger  = LoggerFactory.getLogger(SaleCompServiceImpl.class);
+	/**
+	   * Service the request received and add business logic as per standard of WL.
+	   *
+	   * @param input Contains request in <tt>json</tt> format with mandatory field in it. 
+	   * @return <tt>Payment</tt> if no error contain response send with appropriate response code and 
+	   * 							all fields which need to be print on charge slip.
+	   * 							And success response is saved in DB.
+	   * 							<p> if error present it contains only error related information <tt>error code</tt>
+	   * 								<tt> error message</tt>.
+	   * @exception TCHServiceException On output error.
+	   * @see TCHServiceException
+	   */
+	@Autowired
+	@Qualifier("saleCompDao")
+	SaleCompDaoImpl saleCompSaleDao;
+	
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+		
+		logger.debug("Entering in Sale comp service impl service");
+		String termSerialNumber = input.getTerminalSerialNumber().trim();
+		PaymentAuthDTO paymentAuthDto = new PaymentAuthDTO();
+		 // First check for PCR flag is yes or not and then proceed further for actual transaction.
+		checkForPcrFlag(input);
+		
+		if(!ISOPaymentValidator.nonZeroAmount(input)){
+			throw new TCHServiceException(ErrorConstants.TCH_P009, ErrorMaster.get(ErrorConstants.TCH_P009)); // nonzero or Negative value check
+		}
+		
+		if(input.getReferenceValue() != null){
+			// CHECK FOR MID MISMATCH, 21 DAYS VALIDATION
+			try {
+				saleCompSaleDao.validationForPreauthComp(input);
+			} catch (TCHQueryException e) {
+				logger.debug("Exception for MID mismatch : " + e.getMessage());
+				throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+			}
+			String rrn = input.getReferenceValue().trim();	
+			PaymentAuthDTO existingAuthDto = new PaymentAuthDTO();
+			logger.debug("RRN value in pre auth completion : [" + rrn +"]");
+			try {
+				existingAuthDto = saleCompSaleDao.getDtoBasedOnRequestRRN(input);
+			} catch (TCHQueryException e) {
+				throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+			}
+			if(existingAuthDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_P007, ErrorMaster.get(ErrorConstants.TCH_P007));
+			}
+			if(existingAuthDto != null && "1".equals(existingAuthDto.getSaleCompletionFlag())){
+				throw new TCHServiceException(ErrorConstants.TCH_P013, ErrorMaster.get(ErrorConstants.TCH_P013));
+			}
+			BeanUtils.copyProperties(existingAuthDto, input,"track2","originalAmount","paymentId","date","tableId","panNumber","date","time");
+			if(existingAuthDto.getRefundFlag() == 1) // changes to save refund flag
+				input.setRefundNewFlag("Y");
+			input.setLastFourDigitValue(existingAuthDto.getLastFourDigitValue().toString());
+			input.setBinNumber(existingAuthDto.getBinNumber().toString());
+			if(existingAuthDto.getCurrencyCode() != null)
+				input.setCurrencyCode(existingAuthDto.getCurrencyCode().toString());
+			if(input.getBatchNumber() == null){
+				input.setBatchNumber(String.format("%06d", existingAuthDto.getBatchNumber()));
+			}
+			
+			input.setTableId(existingAuthDto.getSessionKey());
+			logger.debug("Table id :" + input.getTableId());
+			calculationForPreAuth(existingAuthDto, input);
+			sendToSwitch(input, Constants.TCH_REQUEST_PREAUTHCOMP);
+			paymentAuthDto = input.getPaymentAuthDTO();
+			if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+				paymentAuthDto.setPaymentId(existingAuthDto.getPaymentId());
+				paymentAuthDto.setRetrivalRefNumber(existingAuthDto.getRetrivalRefNumber()); // maintain sale rrn instead of Refund rrn
+				paymentAuthDto.setInvoiceNumber(existingAuthDto.getInvoiceNumber()); // maintain sale invoice number
+				paymentAuthDto.setOriginalAmount(existingAuthDto.getOriginalAmount()); // original amount after the calculation
+				paymentAuthDto.setSaleCompletionFlag("1");
+				saleCompSaleDao.update(paymentAuthDto);
+			}
+		}else{
+			// swipe based sale completion
+			List<TerminalParameterDTO> listTermParamDto;
+			try {
+				input.setTerminalSerialNumber(termSerialNumber); 
+				listTermParamDto = paymentSaleDao.getTerminalParameter1(input);
+			} catch (TCHQueryException e) {
+				e.printStackTrace();
+				logger.debug(e.getMessage());
+				throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+			}
+			
+			ISOPaymentValidator.binSpecificParameterWithValidation(input, listTermParamDto);
+			
+			//get card entry mode
+			getCardEntryMode(input);
+			
+			//get account type
+			getAccountType(input);
+			
+			input.setStanNumber(input.getStanNumber());
+			sendToSwitch(input, Constants.TCH_REQUEST_PREAUTHCOMP);
+		}
+		logger.debug("date :" + input.getDate());
+		 
+		PaymentDTO paymentDto = input.getPaymentDTO();
+		logger.debug("date :2 ::" + input.getDate());
+		paymentDto.setRequestType(Constants.TCH_REQUEST_SALE_COMP);
+		if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+			paymentDto.setStatus(Constants.TCH_SUCCESS);
+			paymentAuthDto.setSaleCompletionFlag("1");
+			paymentSaleDao.save(paymentDto);
+		}else{
+			paymentDto.setStatus(Constants.TCH_UNSUCCESS);
+			paymentSaleDao.save(paymentDto);
+			throw new TCHServiceException(ErrorConstants.TCH_P004,  ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode()));
+		}
+			
+		// setting precision value for original payment amount
+		getOriginalAmountInPrecision(input);
+		//Setting null for parameter need to be absent in response
+		setNull(input);
+		logger.debug("Exiting in Sale comp service impl service");
+		return input;
+	}
+	
+	private void calculationForPreAuth(final PaymentAuthDTO preAuthDTO, final Payment input) throws TCHServiceException{
+		
+		logger.debug("Caluculation for preauth");
+		BigDecimal orgAmt = new BigDecimal(preAuthDTO.getOriginalAmount()).stripTrailingZeros();
+		Long exstOrgAmount = new Long(orgAmt.toPlainString());
+		Long inputOrgAmount = new Long(input.getOriginalAmount());
+		
+		if(exstOrgAmount < inputOrgAmount){
+			throw new TCHServiceException(ErrorConstants.TCH_P005, ErrorMaster.get(ErrorConstants.TCH_P005));
+		}else{
+			exstOrgAmount = exstOrgAmount - inputOrgAmount;
+			preAuthDTO.setOriginalAmount(Double.valueOf(exstOrgAmount.toString()));
+		}
+	}
+}

@@ -1,0 +1,80 @@
+
+/**
+ * 
+ */
+package com.awl.tch.dao;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
+import com.awl.tch.bean.MenuObject;
+import com.awl.tch.model.MenuObjectDTO;
+import com.awl.tch.util.Property;
+
+/**
+ * @author kunal.surana
+ *
+ */
+@Repository("menuObjectDao")
+public class MenuObjectDaoImpl extends GenericDaoImpl<MenuObjectDTO> implements MenuObjectDao {
+
+	 private static Logger logger = LoggerFactory.getLogger(MenuObjectDaoImpl.class);
+
+	/* (non-Javadoc)
+	 * @see com.awl.tch.dao.MenuObjectDao#getMenus()
+	 */
+	@Override
+	public List<MenuObject> getMenus() {
+		// TODO Auto-generated method stub
+		String query  = "SELECT (level - 1) as SCREEN_ID, CASE WHEN TMO_PARENT_KEY IS NULL THEN 0 ELSE TMO_PARENT_KEY END CURRENT_ID, "
+				+ "TMO_ID AS NEXT_ID, "
+				+ "TMO_MENU_NAME, "
+				+ "TMO_HEADER_NAME, "
+				+ "TMO_VALUE, "
+				+ "TMO_MENU_FLAG, "
+				+ "LTRIM(SYS_CONNECT_BY_PATH(TMO_ID, '-'), '-') AS path, "
+				+ "CONNECT_BY_ISLEAF AS leaf , "
+				+ "CONNECT_BY_ROOT TMO_ID AS root_id "
+				+ "FROM TCH_MENU_OBJECT "
+				+ "START WITH TMO_PARENT_KEY IS NULL "
+				+ "CONNECT BY TMO_PARENT_KEY = PRIOR TMO_ID ";
+				//+ "ORDER BY PATH1" ; // order by path 1 for double digit sorting as string issue
+				//+"ORDER BY NEXT_ID";
+		
+		
+		if(Property.isShowSql()){
+			logger.debug("query [" +query+"]");
+		}
+		
+		List<Map<String, Object>> list  = getJdbcTemplate().queryForList(query);
+		List<MenuObject> menuObjectList = new ArrayList<MenuObject>();
+		for(Map<String, Object> row : list )
+		{
+			MenuObject obj = new MenuObject();
+			obj.setTableNumber(((BigDecimal)row.get("SCREEN_ID")).intValue());
+			obj.setCurrentTableCode(((BigDecimal)row.get("CURRENT_ID")).intValue());
+			obj.setNextTableCode(((BigDecimal)row.get("NEXT_ID")).intValue());
+			obj.setDisplayName((String)row.get("TMO_MENU_NAME"));
+			obj.setHeaderName((String)row.get("TMO_HEADER_NAME"));
+			obj.setValue((String)row.get("TMO_VALUE"));
+			obj.setMenuFlag((String)row.get("TMO_MENU_FLAG"));
+			obj.setRootId(((BigDecimal)row.get("ROOT_ID")).intValue());
+			obj.setCategoryIdString(null);
+			obj.setCategoryId(null);
+			int leaf = ((BigDecimal)row.get("LEAF")).intValue();
+			if(leaf == 1)
+				obj.setLeaf(true);
+			else
+				obj.setLeaf(false);
+			menuObjectList.add(obj);
+		}
+		return menuObjectList;
+	}
+	
+}

@@ -1,0 +1,138 @@
+package com.awl.tch.service;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.dao.PreAuthDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.PaymentAuthDTO;
+import com.awl.tch.model.PaymentDTO;
+import com.awl.tch.model.TerminalParameterDTO;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.ISOMessages;
+import com.awl.tch.validator.ISOPaymentValidator;
+
+@Service("preauthServiceImpl")
+public class PreAuthServiceImpl extends AbstractServiceImpl implements PreAuthService{
+
+	private static final Logger logger  = LoggerFactory.getLogger(PreAuthServiceImpl.class);
+	
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+		
+		logger.debug("Entering in the Preauth service impl");
+		
+		String terminalSerialNumber  = input.getTerminalSerialNumber().trim();
+		
+		// check for pcr flag
+		checkForPcrFlag(input);
+		
+		// condition for preauth_ack 
+					if(Constants.TCH_PREAUTH_ACK.equalsIgnoreCase(input.getDecisionFlag())){
+						if(preauthAckTransaction(input))
+							return input;
+					}
+					/// end of preauth ACK
+		
+		List<TerminalParameterDTO> listTermParamDto;
+		try {
+			input.setTerminalSerialNumber(terminalSerialNumber); 
+			listTermParamDto = preAuthDao.getPreauthParameter(input);
+			//listTermParamDto = paymentSaleDao.getTerminalParameter(input);
+		} catch (TCHQueryException e) {
+			e.printStackTrace();
+			logger.debug(e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+		}
+		
+		if(listTermParamDto != null){
+			if(!ISOPaymentValidator.binSpecificParameterWithValidation(input, listTermParamDto)){
+				throw new TCHServiceException(ErrorConstants.TCH_P002, ErrorMaster.get(ErrorConstants.TCH_P002)); // Card not accepted , bin value error
+			}
+		}
+		if(!Constants.TCH_YES.equalsIgnoreCase(input.getPreAuthFlag())){
+			throw new TCHServiceException(ErrorConstants.TCH_P003, ErrorMaster.get(ErrorConstants.TCH_P003)); 
+		}
+		if(!ISOPaymentValidator.expiryDateValidation(input)){
+			throw new TCHServiceException(ErrorConstants.TCH_P008, ErrorMaster.get(ErrorConstants.TCH_P008)); // Card expired
+		}
+		if(!ISOPaymentValidator.nonZeroAmount(input)){
+			throw new TCHServiceException(ErrorConstants.TCH_P009, ErrorMaster.get(ErrorConstants.TCH_P009)); // nonzero or Negative value check
+		}
+		
+		// Setting card entry mode
+		getCardEntryMode(input);
+		
+		// Setting account type
+		getAccountType(input);
+		
+		sendToSwitch(input, Constants.TCH_REQUEST_PREAUTH);
+		PaymentAuthDTO paymentAuthDto = input.getPaymentAuthDTO();
+		if(input.getSeNumber() != null){
+			logger.debug("Se number present"); // setting bankcode for AMEX transactions.
+			paymentAuthDto.setBankCode(Constants.TCH_PAYMENT_00066);
+		}
+		paymentAuthDto.setRequestType(Constants.TCH_REQUEST_PREAUTH);
+		if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+			paymentAuthDto.setStatus(Constants.TCH_SUCCESS);
+		}else
+			paymentAuthDto.setStatus(Constants.TCH_UNSUCCESS);
+
+		logger.debug("Locking request in DB");
+			preAuthDao.save(paymentAuthDto);
+		logger.debug("Request locked");	
+		
+		// setting precision value for original payment amount
+		getOriginalAmountInPrecision(input);
+		
+		if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+			throw new TCHServiceException(ErrorConstants.TCH_P010,  ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode())); // invalid response from magnus
+		}
+		logger.debug("Exiting in preauth service impl");
+		
+		setNull(input);
+		return input;
+	}
+	
+	protected boolean preauthAckTransaction(final Payment input) throws TCHServiceException{
+		try {
+			logger.debug("Inside preauth_ack condition");
+			PaymentDTO exstPaymentDTO = preAuthDao.getExistPreauthParamter(input);
+			if(exstPaymentDTO != null){
+				BeanUtils.copyProperties(exstPaymentDTO, input);
+				input.setPaymentId(exstPaymentDTO.getPaymentId());
+				input.setBatchNumber(String.format("%06d", exstPaymentDTO.getBatchNumber()));
+				input.setAuthorizationId(exstPaymentDTO.getAuthorizationId());
+				input.setLastFourDigitValue(exstPaymentDTO.getLastFourDigitValue().toString());
+				logger.debug("Original transaction found pid :" +input.getPaymentId());
+				getOriginalAmountInPrecision(input);
+				if(exstPaymentDTO.getResponseCode() != null && Constants.TCH_SUCCESS_RESPONSE.equals(exstPaymentDTO.getResponseCode())){
+					logger.debug("Getting successful transaction ");
+					setNull(input);
+					return true;
+					} else {
+						logger.debug("generate reversal forcefully..");
+						throw new TCHServiceException(ErrorConstants.TCH_S014, ISOMessages.getSpecificMessageBasedOnResponseCode(exstPaymentDTO.getResponseCode()));
+					}
+				}else{
+					logger.debug("Original transaction not found");
+					input.setSaleAckWrong(Constants.TCH_Y);
+					throw new TCHServiceException(Constants.SACK_REJECT,"Exception in preauth ack while not found orginal transaction and dont give response terminal");
+			}
+		} catch (TCHQueryException e) {
+			logger.debug(e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+		}
+	}
+
+}

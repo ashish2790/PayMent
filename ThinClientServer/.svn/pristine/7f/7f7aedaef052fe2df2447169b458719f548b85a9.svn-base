@@ -1,0 +1,131 @@
+package com.awl.tch.bridge;
+
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bean.TerminalParameter;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.dao.AXISepayDaoImpl;
+import com.awl.tch.dao.EgrasDaoImpl;
+import com.awl.tch.dao.EnquiryDaoImpl;
+import com.awl.tch.dao.IrctcDaoImpl;
+import com.awl.tch.dao.MposDaoImpl;
+import com.awl.tch.dao.ReportDaoImpl;
+import com.awl.tch.egras.EgrasAdptor;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.EnqAckDTO;
+import com.awl.tch.mpos.service.MOPSService;
+//import com.awl.tch.service.GBSSServiceImpl;
+import com.awl.tch.util.AppConfigMaster;
+import com.awl.tch.util.TerminalParameterCacheMaster;
+import com.egras.constant.EgrasEnumConstant;
+import com.tch.irctc.model.IrctcCacheObject;
+
+public abstract class ExternalEntityBridge  {
+
+	@Autowired
+	@Qualifier(Constants.TCH_SBI_SERVICEIMPL)
+	protected MOPSService mopService;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_MPOS_DAO)
+	protected MposDaoImpl mopDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_AXISEPAY_DAO)
+	protected AXISepayDaoImpl axisEpayDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_REPORT_DAO)
+	protected ReportDaoImpl epayDao;
+	
+	@Autowired
+	@Qualifier(EgrasEnumConstant.EGRAS_ADPTOR)
+	protected EgrasAdptor egrasAdaptor;
+
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_DAO)
+	protected EgrasDaoImpl egrasDao;
+	
+	@Autowired
+	@Qualifier("enquiryDaoImpl")
+	protected EnquiryDaoImpl enquiryDaoImpl;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_DAO)
+	protected EgrasDaoImpl egrasdao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_IRCTC_DAO)
+	protected IrctcDaoImpl irctcDao;
+	
+	/*@Autowired
+	@Qualifier("GBSSServiceimpl")
+	protected GBSSServiceImpl gbssService;*/
+	
+	public static BigDecimal HUNDRED_VAL = new BigDecimal("100");
+	
+	public static Map<String,String> getUtilityInfo(Payment input){
+		return AppConfigMaster.getConfigValue(input.getAppName());
+	}
+	
+	public static ConcurrentHashMap<String, IrctcCacheObject> irctcCache = new  ConcurrentHashMap<String, IrctcCacheObject>();
+	
+	public void saveEnqAck(Payment input, String status){
+		EnqAckDTO dto  = new EnqAckDTO();
+		dto.setAmount(input.getOriginalAmount());
+		dto.setAppName(input.getAppName());
+		dto.setBinNumber(input.getBinNumber());
+		dto.setLastFourDigit(input.getLastFourDigitValue());
+		dto.setRrn(input.getRetrivalRefNumber());
+		dto.setTerminalSernumber(input.getTerminalSerialNumber());
+		dto.setTransId(input.getReferenceValue());
+		dto.setUniqueId(input.getBranchCode());
+		dto.setStatus(status);
+		enquiryDaoImpl.save(dto);
+	}
+	
+	public String[] getMidTids(String termSerialNumber, String hostId) throws TCHQueryException {
+		
+		TerminalParameter terminalParameter = TerminalParameterCacheMaster.terminalParameterCache.get(termSerialNumber);
+		String arr[] = new String[2];
+		if(terminalParameter != null){
+			if (hostId == null) {
+				hostId = Constants.TCH_CR_DB;
+			}
+			switch(hostId){
+			case Constants.TCH_AMEX :
+				arr = new String[]{terminalParameter.getAmexMid(),terminalParameter.getAmexTid()};
+				break;
+			case Constants.TCH_CR_DB:
+				arr = new String[]{terminalParameter.getNormalMid(),terminalParameter.getNormalTid()};
+				break;
+			case Constants.TCH_DCC :
+				arr = new String[]{terminalParameter.getDccMid(),terminalParameter.getDccTid()};
+				break;
+			}
+		}
+		return arr;
+	}
+
+	/**
+	 * @return the irctcCache
+	 */
+	public static ConcurrentHashMap<String, IrctcCacheObject> getIrctcCache() {
+		return irctcCache;
+	}
+
+	/**
+	 * @param irctcCache the irctcCache to set
+	 */
+	public static void setIrctcCache(
+			ConcurrentHashMap<String, IrctcCacheObject> irctcCache) {
+		ExternalEntityBridge.irctcCache = irctcCache;
+	}
+	
+}

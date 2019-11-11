@@ -1,0 +1,95 @@
+package com.awl.tch.wallet.fc.service;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.wallet.common.AbstractWalletService;
+import com.awl.tch.wallet.common.HttpsClient;
+import com.awl.tch.wallet.common.WalletException;
+import com.awl.tch.wallet.fc.bean.WalletResponseBean;
+import com.awl.tch.wallet.fc.constant.FcConstant;
+import com.awl.tch.wallet.fc.model.FcWalletRequest;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+//import com.tch.irctc.encryption.AES;
+//import com.tch.irctc.model.SaleEnqResponse;
+
+/**
+ * FcSaleEnqServiceImpl is an API for Wallet's sale enquiry transactions.
+ * @author pooja.patil
+ *
+ */
+@Service(FcConstant.TCH_FC_SALE_SERVICE_ENQ)
+public class FcSaleEnqServiceImpl extends AbstractWalletService implements FcService{
+	
+	private static Logger logger = LoggerFactory.getLogger(FcSaleEnqServiceImpl.class);
+	Gson gson = new Gson();
+	
+	/**
+	 * Method consumeWS is used to call Fc host web-service for sale enquiry
+	 * by sending FcWalletRequest to web-service and getting corresponding response
+	 * @param input, request
+	 * @return response
+	 * @throws WalletException
+	 * @author pooja.patil
+	 */
+	@Override
+	public WalletResponseBean cosumeWS(FcWalletRequest request) throws WalletException {
+		logger.debug("Entering web service for sale enquiry");
+		Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		String apiParams = gson.toJson(request);
+		//logger.debug("Plain Text [" +apiParams+"]");
+		
+		String url = new StringBuilder(request.getUrl()).append(FcConstant.TCH_FC_WALLET_API_SALE).toString();
+		logger.debug("URL ["+url+"]");
+	
+		HashMap<String, String> headerMap = setHeaderParams(apiParams.length());
+        
+        String responseJson = HttpsClient.send(url, apiParams, headerMap);
+        if (responseJson != null && !responseJson.isEmpty()) {
+			logger.debug("Response Json ["+responseJson+"]");
+		} else{
+			throw new WalletException("Response received as null");
+		}
+		WalletResponseBean response = (WalletResponseBean) parseGson(FcConstant.TCH_FC_SALE_SERVICE_ENQ, responseJson);
+        
+		logger.debug("Result [ "+response+" ]");
+		logger.debug("Exiting cosumeWS().. Exiting web service for sale enquiry");
+	
+		return response;
+        
+	}
+
+	
+	/**
+	 * Setting response in FcWalletRequest object for testing purpose
+	 * @param response
+	 * @return
+	 */
+	public static void main(String[] args){
+		FcSaleEnqServiceImpl fcSale = new FcSaleEnqServiceImpl();
+		FcWalletRequest saleEnq = new FcWalletRequest();
+		saleEnq.setUrl("https://stg-posservice.freecharge.in");
+		saleEnq.setTxnAmount("100");
+		saleEnq.setTerminalId("26371692");
+		saleEnq.setMerchantId("037022000622381");
+		saleEnq.setPlatformId(FcConstant.TCH_FC_PLATFORMID);
+		saleEnq.setTransactionRefNumber("802400000003");
+		saleEnq.setWalletId("8860532795");
+		saleEnq.setTxnDatenTime("23052016154010");
+		saleEnq.setProcCode("10");
+		saleEnq.setAuthToken("0ac642e7897c0af1df34411c5cc05344820aecf6a07945ce2920ea68fd3da9c6");
+		Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.TRANSIENT).create();
+		String apiParams = gson.toJson(saleEnq);
+		//logger.debug("Plain Text [" +apiParams+"]");
+		try {
+			fcSale.cosumeWS(saleEnq);
+		} catch (WalletException e) {
+			e.printStackTrace();
+		}
+	}
+}
+

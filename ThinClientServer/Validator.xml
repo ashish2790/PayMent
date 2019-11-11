@@ -1,0 +1,36 @@
+<validator>
+	<beans>
+		<bean id="SALE">
+			<parameters>
+				<parameter>
+					<name>binNumber</name>
+					<regExpr>^[0-9]{6,10}$</regExpr>
+				</parameter>
+				<parameter>
+					<name>originalAmount</name>
+					<regExpr>^[0-9]{0,12}$</regExpr>
+				</parameter>
+				<!-- <parameter>
+					<name>exchangeRate</name>
+					<regExpr>^[0-9]{0,12}$</regExpr>
+				</parameter> -->
+				<parameter>
+					<name>cardEntryMode</name>
+					<regExpr>^[a-zA-Z0-9]{0,15}$</regExpr>
+				</parameter>
+				<parameter>
+					<name>invoiceNumber</name>
+					<regExpr>^[0-9]{0,6}$</regExpr>
+				</parameter>
+				<parameter>
+					<name>accountType</name>
+					<regExpr>^[a-zA-Z]*$</regExpr>
+				</parameter>	
+				<parameter>
+					<name>terminalSerialNumber</name>
+					<regExpr>^[a-zA-Z0-9]{8,20}$</regExpr>
+				</parameter>
+			</parameters>
+		</bean>
+	</beans>
+</validator>

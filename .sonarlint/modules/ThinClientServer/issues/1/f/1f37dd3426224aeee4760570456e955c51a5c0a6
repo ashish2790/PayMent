@@ -1,0 +1,73 @@
+
+fsquid:S2629í"7Use the built-in formatting to construct this argument.(úûöëHû©RMAJORZ
+CODE_SMELL
+ksquid:S2629ª"7Use the built-in formatting to construct this argument.(ÔÅ¡ûÿÿÿÿHü©RMAJORZ
+CODE_SMELL
+ksquid:S2629±"7Use the built-in formatting to construct this argument.(¯‘‹éüÿÿÿÿHı©RMAJORZ
+CODE_SMELL
+˜squid:S1192“"aDefine a constant instead of duplicating this literal "Exception in fetching pcr flag :" 4 times.(¹üì¸üÿÿÿÿHş©RCRITICALZ
+CODE_SMELL
+„squid:S30084"VRename this field "ONE_HUNDRED" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ä¥Œ Hÿ©RMINORZ
+CODE_SMELL
+…squid:S30085"RRename this field "HUNDRED" to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(„ä²üÿÿÿÿH€ªRMINORZ
+CODE_SMELL
+csquid:S1066Œ"/Merge this if statement with the enclosing one.(İıÆåıÿÿÿÿHªRMAJORZ
+CODE_SMELL
+^squid:S1066"/Merge this if statement with the enclosing one.(òÈ³©H‚ªRMAJORZ
+CODE_SMELL
+^squid:S1066±"/Merge this if statement with the enclosing one.(·Øï¼HƒªRMAJORZ
+CODE_SMELL
+csquid:S1066²"/Merge this if statement with the enclosing one.(¼•¸üÿÿÿÿH„ªRMAJORZ
+CODE_SMELL
+bsquid:S14441"1Make this "public static batchNumber" field final(ÑıßùH…ªRMINORZVULNERABILITY
+bsquid:S14444"1Make this "public static ONE_HUNDRED" field final(ä¥Œ H†ªRMINORZVULNERABILITY
+csquid:S14445"-Make this "public static HUNDRED" field final(„ä²üÿÿÿÿH‡ªRMINORZVULNERABILITY
+ysquid:CommentedOutCodeLine"<This block of commented-out lines of code should be removed.(Ú¦û‚HˆªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine"<This block of commented-out lines of code should be removed.(”ÌÏ’H‰ªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine˜"<This block of commented-out lines of code should be removed.(êÈƒåüÿÿÿÿHŠªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineÉ"<This block of commented-out lines of code should be removed.(ş€´ñH‹ªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineÔ"<This block of commented-out lines of code should be removed.(Œ’¹HŒªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineß"<This block of commented-out lines of code should be removed.(¿©øèHªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineò"<This block of commented-out lines of code should be removed.(¾£İHªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineô"<This block of commented-out lines of code should be removed.(ã¡§…şÿÿÿÿHªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineù"<This block of commented-out lines of code should be removed.(Ğ³êHªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineƒ"<This block of commented-out lines of code should be removed.(¦Ï¤™H‘ªRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineŠ"<This block of commented-out lines of code should be removed.(£İÈH’ªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine¥"<This block of commented-out lines of code should be removed.(îšô§ùÿÿÿÿH“ªRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine‡"<This block of commented-out lines of code should be removed.(‡˜ãüÿÿÿÿH”ªRMAJORZ
+CODE_SMELL
+Ÿ"squid:ClassVariableVisibilityCheck1"WMake batchNumber a static final constant or non-public and provide accessors if needed.(ÑıßùH•ªRMINORZVULNERABILITY
+Ÿ"squid:ClassVariableVisibilityCheck4"WMake ONE_HUNDRED a static final constant or non-public and provide accessors if needed.(ä¥Œ H–ªRMINORZVULNERABILITY
+ "squid:ClassVariableVisibilityCheck5"SMake HUNDRED a static final constant or non-public and provide accessors if needed.(„ä²üÿÿÿÿH—ªRMINORZVULNERABILITY
+csquid:S1172Â"/Remove this unused method parameter "multiple".(®ÇéùÿÿÿÿH˜ªRMAJORZ
+CODE_SMELL
+Rsquid:S21294"$Remove this "BigInteger" constructor(ä¥Œ H™ªRMAJORZ
+CODE_SMELL
+usquid:S3457“"AFormat specifiers should be used instead of string concatenation.(¹üì¸üÿÿÿÿHšªRMAJORZ
+CODE_SMELL
+usquid:S3457¥"AFormat specifiers should be used instead of string concatenation.(òİÁÁşÿÿÿÿH›ªRMAJORZ
+CODE_SMELL
+usquid:S3457°"AFormat specifiers should be used instead of string concatenation.(òİÁÁşÿÿÿÿHœªRMAJORZ
+CODE_SMELL
+usquid:S3457¿"AFormat specifiers should be used instead of string concatenation.(òİÁÁşÿÿÿÿHªRMAJORZ
+CODE_SMELL
+psquid:S3457í"AFormat specifiers should be used instead of string concatenation.(úûöëHªRMAJORZ
+CODE_SMELL
+psquid:S3457ê"AFormat specifiers should be used instead of string concatenation.(è¦¦ºHŸªRMAJORZ
+CODE_SMELL
+usquid:S3457ª"AFormat specifiers should be used instead of string concatenation.(ÔÅ¡ûÿÿÿÿH ªRMAJORZ
+CODE_SMELL
+usquid:S3457±"AFormat specifiers should be used instead of string concatenation.(¯‘‹éüÿÿÿÿH¡ªRMAJORZ
+CODE_SMELL

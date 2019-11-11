@@ -1,0 +1,155 @@
+package com.awl.tch.axisepay.service;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.awl.tch.axisepay.constant.AXISepayConstant;
+import com.awl.tch.axisepay.encryption.AXISepayEncryption;
+import com.awl.tch.axisepay.exception.TCHAxisepayException;
+import com.awl.tch.axisepay.helper.AXISepayHelper;
+import com.awl.tch.axisepay.helper.HttpsClient;
+import com.awl.tch.axisepay.model.AXISepayRequest;
+import com.awl.tch.axisepay.model.AXISepayResponse;
+
+
+public class AXISepayService {
+
+	private static Logger logger = LoggerFactory.getLogger(AXISepayService.class);
+	
+	
+	public static AXISepayResponse getAmount(final AXISepayRequest request) throws TCHAxisepayException{
+		logger.debug("Get the Transaction details for Axis");
+		String requestStr= "",response = "";
+		try {
+			requestStr = getRequestString(request.getTransactionDetailsRequest());
+			logger.info("request string :" + requestStr);
+		} catch (UnsupportedEncodingException e) {
+			throw new TCHAxisepayException("AB-05", "ENCODING PROBLEM"); 
+		}
+		response = sendRequest(AXISepayHelper.Property.getApiUrl()+
+				AXISepayConstant.TCH_AXIS_TRANSACTION_DETAILS,requestStr);
+		logger.debug("Reponse from axis pay after decryptions :" + response);
+		
+	    AXISepayResponse resObj= AXISepayResponse.getObjectFromResponse(response);
+	    
+	    logger.debug("Status for transaction :" + resObj.getErrorCode());
+	    if(!AXISepayConstant.TCH_AXIS_SUCCESS_CODE_000.equals(resObj.getErrorCode()) 
+	    		&& !AXISepayConstant.TCH_AXIS_SUCCESS_CODE_101.equals(resObj.getErrorCode())){
+	    	throw new TCHAxisepayException("AB-01", resObj.getErrorDesc());
+	    }
+		return resObj;
+	}	
+	
+	public static AXISepayResponse saleConfirmation(final AXISepayRequest request) throws TCHAxisepayException{
+		logger.debug("Get the Sale confirmation for Axis");
+		String requestStr= "",response = "";
+		try {
+			requestStr = getRequestString(request.getSaleRequest());
+			logger.info("request string :" + requestStr);
+		} catch (UnsupportedEncodingException e) {
+			throw new TCHAxisepayException("AB-05", "ENCODING PROBLEM"); 
+		}
+		response = sendRequest(AXISepayHelper.Property.getApiUrl()+
+				AXISepayConstant.TCH_AXIS_SALE_COMPELETION,requestStr); 
+	    logger.debug("Reponse from axis pay after decryptions :" + response);
+	    AXISepayResponse resObj= AXISepayResponse.getObjectFromResponse(response);
+	    
+	    logger.debug("Status for transaction :" + resObj.getErrorCode());
+	    if(!AXISepayConstant.TCH_AXIS_SUCCESS_CODE_000.equals(resObj.getErrorCode())){
+	    	throw new TCHAxisepayException("AB-01", resObj.getErrorDesc());
+	    }
+		return resObj;
+	}	
+	
+	
+
+	public static AXISepayResponse saleFailure(final AXISepayRequest request) throws TCHAxisepayException{
+		logger.debug("Get the Sale failure for Axis");
+		String requestStr= "",response = "";
+		try {
+			requestStr = getRequestString(request.getSaleRequest());
+			logger.info("request string :" + requestStr);
+		} catch (UnsupportedEncodingException e) {
+			throw new TCHAxisepayException("AB-05", "ENCODING PROBLEM"); 
+		}
+		response = sendRequest(AXISepayHelper.Property.getApiUrl()+
+				AXISepayConstant.TCH_AXIS_SALE_DECLINE,requestStr); 
+	    logger.debug("Reponse from axis pay after decryptions :" + response);
+	    AXISepayResponse resObj= AXISepayResponse.getObjectFromResponse(response);
+	    
+	    logger.debug("Status for transaction :" + resObj.getErrorCode());
+	    if(!AXISepayConstant.TCH_AXIS_SUCCESS_CODE_000.equals(resObj.getErrorCode())){
+	    	throw new TCHAxisepayException("AB-01", resObj.getErrorDesc());
+	    }
+		return resObj;
+	}	
+	
+	public static String getTransactionEnq(final AXISepayRequest request) throws TCHAxisepayException{
+		logger.debug("Get the Sale confirmation for Axis");
+		String requestStr= "",response = "";
+		try {
+			requestStr = getRequestString(request.getSaleRequest());
+			logger.info("request string :" + requestStr);
+		} catch (UnsupportedEncodingException e) {
+			throw new TCHAxisepayException("AB-05", "ENCODING PROBLEM"); 
+		}
+		response = sendRequest(AXISepayHelper.Property.getApiUrl()+
+				AXISepayConstant.TCH_AXIS_TRANSACTION_ENQ,requestStr); 
+	    logger.debug("Reponse from axis pay after decryptions :" + response);
+	    AXISepayResponse resObj= AXISepayResponse.getObjectFromResponse(response);
+	    
+	    logger.debug("Status for transaction :" + resObj.getErrorCode());
+	    if(!AXISepayConstant.TCH_AXIS_SUCCESS_CODE_000.equals(resObj.getErrorCode())){
+	    	throw new TCHAxisepayException("AB-01", resObj.getErrorDesc());
+	    }
+		return resObj.getAmount();
+	}	
+	
+
+	private static String getRequestString(String requestStr) throws UnsupportedEncodingException{
+		logger.debug("Request to Axis ePay :" + requestStr + " key :" +AXISepayHelper.Property.getEncryptionKey());
+		requestStr = AXISepayEncryption.encryptText(requestStr, AXISepayHelper.Property.getEncryptionKey());
+		requestStr = AXISepayConstant.TCH_AXISEPAY_PARAMETER_VALUE + requestStr;
+		logger.debug("Final request string : " + requestStr);
+		return requestStr;
+	}
+	
+	private static String sendRequest( String url,String requestString) {
+		logger.debug("Sending request..");
+		HashMap<String, String> headerMap = new HashMap<String, String>();
+		headerMap.put("Content-Type", "application/x-www-form-urlencoded");
+		String response = sendRequest(requestString, url,headerMap);
+		return AXISepayEncryption.decryptText(response, AXISepayHelper.Property.getEncryptionKey() );
+	}
+
+	public static String sendRequest(String requestString, String url,HashMap<String, String> map){
+		return HttpsClient.send(url, requestString, map);
+	}
+
+	
+	
+	public static void main(String[] args) {
+	
+	AXISepayRequest request = new AXISepayRequest();
+	request.setMid("037022000044066");
+	request.setTid("24315905");
+	request.setUrn("647599");
+	request.setCid("1125");
+	request.setRid("16419");
+	request.setRrn("12345");
+	request.setAmount("1");
+	request.setDatetime("30-12-2017");
+	
+	try {
+		//AXISepayService.getAmount(request);
+		AXISepayService.saleConfirmation(request);
+		//AXISepayService.saleFailure(request);
+	} catch (TCHAxisepayException e) {
+		e.printStackTrace();
+	}
+	
+	}
+}

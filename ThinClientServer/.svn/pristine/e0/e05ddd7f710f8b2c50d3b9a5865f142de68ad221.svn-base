@@ -1,0 +1,309 @@
+package com.awl.tch.constant;
+
+public interface ExternalEntityConstants extends ColumnProcNameConstant{
+	
+	/*
+	 * Common for all entity
+	 */
+	
+	public static final String TCH_PRINT_LABEL = "PRINT_LABEL";
+	
+	public static final String TCH_HNDSHK_LABEL = "HNDSHK_LABEL";
+	
+	public static final String TCH_HNDSHK_LABEL_VAL = "HNDSHK_LABEL_VAL";
+	
+	//URL
+	//public static final String TCH_URL = "URL";
+	
+	/*
+	 *  End of Common for all entity
+	 */
+	
+	/*
+	 *   AAB constants
+	 */
+	//AAB
+	public static final String TCH_AAB = "AAB";
+	
+	//GETAMOUNT
+	public static final String TCH_AAB_GET_AMOUNT = "GetAmt";
+	
+	//DONE
+	public static final String TCH_AAB_DONE = "DONE";
+	
+	//SETAMOUNT
+	public static final String TCH_AAB_SET_STATUS = "SetStatus";
+	
+	//VOID
+	public static final String TCH_AAB_VOID = "Void";
+	
+	//VOID
+	public static final String TCH_AAB_VOID_UPDATE = "VoidStatusUpdate";
+	
+	//Service
+	public static final String TCH_AAB_BRDGE = "aabBridgeService";
+	
+	
+	/*
+	 *   end of AAB constants
+	 */
+	/***********************************************************************/
+	
+	/*
+	 *e-GRAS constants 
+	 */
+	
+	public static final String TCH_EGRAS = "EGRAS";
+	
+	public static final String TCH_EGRAS_POSAPP = "POSAPP";
+	
+	public static final String TCH_EGRAS_GRNDETAILS =  "GRNDETAILS";
+	
+	public static final String TCH_EGRAS_GRNDETAILS_ID =  "GRNDETAILS_ID";
+	 
+	public static final String TCH_EGRAS_SAVESTATUS =  "SAVESTATUS";
+	
+	public static final String TCH_EGRAS_LABEL1 =  "EGRAS_LABEL1";
+	
+	public static final String TCH_EGRAS_LABEL2 =  "EGRAS_LABEL2";
+	
+	
+	
+	
+	/*
+	 * Production related information
+	 * 
+	public static final String BANKCODE  = "1608";
+	 
+	public static final String USERID = "bankpos";
+	 
+	public static final String PASS = "Psbnk@234";
+	 
+	public static final String STATUS_S = "S";
+	
+	*
+	*End 
+	*/
+	
+	public static final String BANKCODE  = "1608";
+	 
+	public static final String USERID = "bankpos";
+	 
+	public static final String PASS = "pos@234";
+	 
+	public static final String STATUS_S = "S";
+	/*
+	 *end of e-GRAS constants 
+	 */
+	
+	
+	/*
+	 * CONSTATNT FOR SBIEPAY
+	 */
+	//
+	public static final String TCH_EPAY_BRIDGE = "eapyBridge";
+	
+	public static final String TCH_SBIEPAY = "SBIEPAY";
+	
+	public static final String TCH_SBIEPAY_LABEL1 =  "SBIEPAY_LABEL1";
+	
+	public static final String TCH_SBIEPAY_LABEL2 =  "SBIEPAY_LABEL2";
+	
+	/*
+	 * END OF CONSTANT FOR SBIEPAY
+	 */
+	
+	
+	/*
+	 * CONSTATNT FOR AXISEPAY
+	 */
+	//
+	public static final String TCH_AXIS_EPAY_BRIDGE = "axisEPayBridge";
+	
+	public static final String TCH_AXIS_EPAY = "AXISEPAY";
+	
+	public static final String TCH_AXIS_EPAY_LABEL1 =  "AXISEPAY_LABEL1";
+	
+	public static final String TCH_AXIS_EPAY_LABEL2 =  "AXISEPAY_LABEL2";
+	
+	public static final String TCH_AXIS_EPAY_LABEL3 =  "AXISEPAY_LABEL3";
+	
+	public static final String TCH_AXIS_EPAY_LABEL4 =  "AXISEPAY_LABEL4";
+	
+	/*
+	 * END OF CONSTANT FOR AXISEPAY
+	 */
+	
+	/*
+	 * BRAND EMI
+	 */
+	public static final String TCH_BRAND_EMI_UNBLOCK = "UNBLOCK";
+	
+	public static final String TCH_BRAND_EMI_BLOCK = "BLOCK";
+	
+	public static final String TCH_BRAND_EMI_REALTIME = "R";
+	
+	public static final String TCH_BRAND_EMI_OFFLINE = "O";
+	
+	public static final String TCH_BRAND_EMI = "BRDEMI";
+	
+	public static final String TCH_BRAND_TRUE = "TRUE";
+	
+	public static final String TCH_BRAND_FALSE = "FALSE";
+	
+	public static final String TCH_BRAND_SAMSUNG = "SAMSUNG";
+	
+	public static final String TCH_BRAND_LG = "LG";
+	
+	public static final String TCH_BRAND_SCHEME_MBO = "MBO";
+	
+	public static final String TCH_BRDENQ = "BRDENQ";
+	
+	public static final String TCH_BRDSKU = "BRDSKU";
+	
+	public static final String TCH_BRDTNR = "EMITEN";
+	
+	public static final String TCH_BRDSALE = "BRDSALE";
+	
+	public static final String TCH_BRD_ISSUER_DISCLAIMER = "disclaimer";
+	
+	public static final String TCH_BRD_ISSUER_PRODUCT = "productDetail";
+	
+	public static final String TCH_BRD_ISSUER_MFG = "manufactureDetail";
+	
+	public static final String TCH_BRD_ISSUER_VALID = "validationParam";
+	
+	public static final String TCH_BRD_CASHBACK_AMOUNT = "cashBackAmount";
+	
+	public static final String TCH_BRD_CASHBACK_PER = "cashbackPer";
+	
+	public static final String TCH_BRD_ISSUER_BANK_NAME = "issuerBankName";
+	
+	public static final String TCH_BRD_ISSUER_BANK_DISC = "issuerBankDisc";
+	
+	public static final String TCH_BRD_ACQ_BANK_DISC = "acquirerBankDisc";
+	
+	public static final String TCH_BRD_SUBVENTION_AMT = "subventionAmt";
+	
+	public static final String TCH_BRD_SUBVENTION_FINAL_AMT = "subventionFinalAmt";
+	
+	public static final String TCH_BRD_SUBVENTION = "subvention";
+	
+	public static final String TCH_BRD_MANUFACTURE_DISC = "manDisc";
+	
+	public static final String TCH_BRD_MANUFACTURE_NAME = "manName";
+	
+	public static final String TCH_BRD_DESC = "BRDEMI_1";
+	
+	public static final String TCH_ENQ_EXCG = "DCCENQ";
+	
+	public static final String TCH_LINE_UTILITY = "DCCENQ_1";
+	
+	public static final String TCH_CURREXCG_UTILITY = "DCCENQ_2";
+	
+	public static final String TCH_PRODUCT_DESC = "productDesc";
+	
+	public static final String TCH_PRODUCT_CODE = "productCode";
+	
+	public static final String TCH_MANF_CODE = "manfCode";
+	
+	/*
+	 *END OF BRAND EMI 
+	 */
+	
+	/*
+	 * QR Integration
+	 */
+	public static final String TCH_QR = "QR";
+	
+	public static final String TCH_QRACK = "ACKQR";
+	
+	public static final String TCH_QRCAN = "CANQR";
+	
+	public static final String TCH_QR_DYNAMIC = "2";
+	
+	public static final String TCH_QR_STATIC = "1";
+
+	public static final String TCH_QR_SUCCESS = "SUCCESS";
+	
+	public static final String TCH_QR_FAILED = "FAILED";
+	
+	public static final String TCH_QR_PENDING = "PENDING";
+	
+	public static final String TCH_QR_GET = "/getQR";
+	
+	public static final String TCH_QR_CHECKSTATUS = "/checkStatus";
+	
+	public static final String TCH_QR_CAN = "/cancelQR";
+	
+	public static final String TCH_QR_REFUND = "/refund";
+	
+	public static final String TCH_QR_URL = "URL_QR";
+	/*
+	 * End of QR integration
+	 */
+	public static final String TCH_URL = "URL";
+
+	
+	//IRCTC
+	public static final String TCH_IRCTC = "IRCTC";
+	
+	public static final String TCH_IRCTC_BRIDGE = "irctcBridgeService";
+	
+	public static final String TCH_IRCTC_LABEL1 =  "IRCTC_LABEL1";
+	
+	public static final String TCH_IRCTC_LABEL2 =  "IRCTC_LABEL2";
+	
+	public static final String TCH_IRCTC_BANKCODE = "SB";
+	
+	public static final String TCH_IRCTC_SERVICE_PROVIDER = "WL";
+	
+	public static final String TCH_IRCTC_SALE_CONFIRM = "SALECOMPLETE";
+	
+	public static final String TCH_IRCTC_ENQUIRY = "ENQUIRY";
+	
+	public static final String TCH_IRCTC_VOID = "VOID";
+	
+	
+	//MOPS
+	
+	public static final String TCH_MOP_BRIDGE = "mopsBridgeImpl";
+	
+	//EGRAS
+	
+	public static final String TCH_EGRAS_BRIDGE = "egrasBridge";
+	
+	//GBSS
+	public static final String TCH_GBSS_BRIDGE = "GBSSBridge";
+	
+	public static final String TCH_GBSS_GETAMOUNT = "/Get_POS_CHLN_DETAILS";
+	
+	public static final String TCH_GBSS_UPDATESTATUS = "/Update_POS_CHLN_DETAILS";
+	
+	public static final String TCH_GBSS_LABEL1 = "PRINT_GBSS_LABEL1";
+	
+	public static final String TCH_GBSS_LABEL2 = "PRINT_GBSS_LABEL2";
+	
+	public static final String TCH_GBSS_LABEL3 = "PRINT_GBSS_LABEL3";
+	
+	public static final String TCH_GBSS_LABEL31 = "PRINT_GBSS_LABEL31";
+	
+	public static final String TCH_GBSS_LABEL4 = "PRINT_GBSS_LABEL4";
+	
+	public static final String TCH_GBSS_LABEL5 = "PRINT_GBSS_LABEL5";
+	
+	public static final String TCH_GBSS_LABEL6 = "PRINT_GBSS_LABEL6";
+	
+	public static final String TCH_GBSS_BASE_AMT = "BASE AMT: RS";
+	
+	public static final String TCH_GBSS_CONV_AMT = "Convenience Fee (";
+	
+	public static final String TCH_GBSS_REMAINING = "%) : RS"; 
+	
+	public static final String TCH_GBSS_CGST = "CGST(";
+	
+	public static final String TCH_GBSS_SGST = "SGST(";
+	
+	public static final String TCH_GBSS_TOTAL = "TOTAL : RS ";
+	
+}

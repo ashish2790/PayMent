@@ -1,0 +1,12 @@
+package com.awl.tch.dao;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.model.PaymentDTO;
+
+public interface RefundDao extends GenericDao<PaymentDTO>{
+
+	public void getTerminalDetails(final Payment input) throws TCHQueryException;
+	public PaymentDTO getExistingDTO(String rrn) throws TCHQueryException;
+	public PaymentDTO getPaymentDetails(String rrn) throws TCHQueryException;
+}

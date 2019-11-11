@@ -1,0 +1,126 @@
+package com.awl.tch.brandemi.dao;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Repository;
+
+import com.awl.tch.bean.MenuObject;
+import com.awl.tch.brandemi.util.QueryConstant;
+
+@Repository("productDao")
+public class ProductDaoImpl {
+	
+	private static final Logger logger = LoggerFactory.getLogger(ProductDaoImpl.class);
+	
+	@Autowired
+	@Qualifier("jdbcTemplateBrandEmi")
+	private JdbcTemplate jdbcTemplate;
+	
+	@Autowired
+	@Qualifier("simpleJdbcCallBrandEmi")
+	private SimpleJdbcCall simpleJdbcCall;
+	
+	
+	public String[] getSKUDetails(String mid,String binNumber,String manufaturerName , Integer[] ids)
+	{
+		/*String sql = "SELECT DISTINCT T3.PRODUCTCODE  FROM XP_EMI_PROGRAM_MERCHANT  T1 JOIN  XP_EMI_PROGRAM_PRODUCT T2 ON T1.PROGRAMCODE = T2.PROGRAMCODE "
+				+ "JOIN  XP_EMI_PRODUCT T3 ON T3.PRODUCTCODE = T2.PRODUCTCODE WHERE T1.MERCHANTCODE = ? and  T3.CHILDID  = ? ";*/		
+		String sql = QueryConstant.GET_SKU_WITH_MAN_CHK;
+		logger.debug("Query :" +sql);
+		List<Map<String, Object>> result = null;
+		String[] skuCode = null;
+		String binSubstr = binNumber.substring(0,6);
+		logger.debug(mid+":query parameters:"+Arrays.toString(ids));
+		logger.debug("Query input :" +mid+"|"+ids[1]+"|"+ids[2]+"|"+binSubstr+"|"+ids[ids.length-1]+"|"+manufaturerName);
+		result = jdbcTemplate.queryForList(sql, mid , ids[1] , ids[2] , binSubstr , ids[ids.length-1], manufaturerName);
+		skuCode = new String[result.size()];
+		int i = 0;
+		for(Map<String, Object> row : result)
+		{
+			skuCode[i] = (String) row.get("PRODUCTCODE");
+			i++;
+		}
+		return skuCode;
+	}
+	
+	public String[] getProductDetails(String mid,Integer[] ids)
+	{
+		String sql = QueryConstant.PRODUCT_DETAILS;
+		List<Map<String, Object>> productDetails = new ArrayList<Map<String, Object>>();
+		logger.debug("Query :" +sql);
+		logger.debug(mid+":query parameters:"+Arrays.toString(ids));
+		productDetails = jdbcTemplate.queryForList(sql,  mid , ids[1] , ids[2] , ids[ids.length-1]);
+		if(productDetails.size() > 1)
+			throw new IncorrectResultSizeDataAccessException(1, productDetails.size());
+		String[] data = new String[productDetails.get(0).size()];
+		for(Map<String, Object> row : productDetails)
+		{
+			data[0] = (String) row.get("PRODUCTCODE");
+			data[1] = (String) row.get("PRODUCTDESCRIPTION");
+			data[2] = (String) row.get("PROGRAMCODE");
+			data[3] = (String) row.get("PROGRAMSHORTNAME");
+		}
+		return data;
+			
+	}
+	
+	public String[] getProductDetails(String mid,String manufaturerName,String skuCode,String binValue,Integer[] ids)
+	{
+		String sql = QueryConstant.PRODUCT_DETAILS_WITH_SKU_MANF;
+		List<Map<String, Object>> productDetails =  new ArrayList<Map<String, Object>>();
+		logger.debug("Query :" +sql);
+		logger.debug("Bin Value after substring :" +binValue);
+		logger.debug(mid+"|"+skuCode+"|"+ids[1]+"|"+ ids[2] +"|"+binValue+"|"+ ids[ids.length-1] + "|" + manufaturerName);
+		try{
+		productDetails = jdbcTemplate.queryForList(sql,  mid , skuCode, ids[1] , ids[2],binValue, ids[ids.length-1],manufaturerName);
+		}catch(Exception e){
+			logger.debug("Exception in ",e);
+		}
+		logger.debug("Product details size :" + productDetails.size());
+		if(productDetails.size() > 1)
+			logger.debug("product details size :"+productDetails.size());
+		String[] data = new String[productDetails.get(0).size()];
+		for(Map<String, Object> row : productDetails)
+		{
+			data[0] = (String) row.get("PRODUCTCODE");
+			data[1] = (String) row.get("PRODUCTDESCRIPTION");
+			data[2] = (String) row.get("PROGRAMCODE");
+			data[3] = (String) row.get("PROGRAMSHORTNAME");
+		}
+		return data;
+			
+	}
+	
+	public String[] getNoEmiCashbackDetails(String mid,Integer[] ids)
+	{
+		String sql = QueryConstant.PRODUCT_DETAILS;
+		List<Map<String, Object>> productDetails =  new ArrayList<Map<String, Object>>();
+		logger.debug("Query :" +sql);
+		logger.debug(mid+":query parameters:"+Arrays.toString(ids));
+		productDetails = jdbcTemplate.queryForList(sql,  mid , ids[1] , ids[2] , ids[ids.length-1]);
+		if(productDetails.size() > 1)
+			throw new IncorrectResultSizeDataAccessException(1, productDetails.size());
+		String[] data = new String[productDetails.get(0).size()];
+		for(Map<String, Object> row : productDetails)
+		{
+			data[0] = (String) row.get("NOEMICASHBACK");
+			data[1] = (String) row.get("PER_FIX");
+			data[2] = (String) row.get("AMOUNT");
+		}
+		return data;
+	}
+	
+	
+	
+}

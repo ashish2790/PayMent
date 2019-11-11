@@ -1,0 +1,33 @@
+
+‹squid:S2629"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(ÿÍİ–H£RMAJORZ
+CODE_SMELL
+squid:S2293Æ"YReplace the type specification in this constructor call with the diamond operator ("<>").( ŠĞÉÿÿÿÿÿH’£RMINORZ
+CODE_SMELL
+~squid:CommentedOutCodeLinex"<This block of commented-out lines of code should be removed.(‚ß ‘şÿÿÿÿH•£RMAJORZ
+CODE_SMELL
+—squid:S1192`"aDefine a constant instead of duplicating this literal "Exception in handshake service :" 3 times.(ü¡ğíûÿÿÿÿH‘£RCRITICALZ
+CODE_SMELL
+squid:S2293É"YReplace the type specification in this constructor call with the diamond operator ("<>").(…ş‡ÅùÿÿÿÿH”£RMINORZ
+CODE_SMELL
+usquid:S3457™"AFormat specifiers should be used instead of string concatenation.(­–ÛÿÿÿÿÿH£RMAJORZ
+CODE_SMELL
+tsquid:S3457d"AFormat specifiers should be used instead of string concatenation.(ü¡ğíûÿÿÿÿH›£RMAJORZ
+CODE_SMELL
+tsquid:S3457`"AFormat specifiers should be used instead of string concatenation.(ü¡ğíûÿÿÿÿHš£RMAJORZ
+CODE_SMELL
+psquid:S3457"AFormat specifiers should be used instead of string concatenation.(ÿÍİ–Hœ£RMAJORZ
+CODE_SMELL
+qsquid:S23879"<"tcpClient" is the name of a field in "AbstractServiceImpl".(¤¹œıÿÿÿÿH˜£RBLOCKERZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine¥"<This block of commented-out lines of code should be removed.(½‘Ñ³H–£RMAJORZ
+CODE_SMELL
+esquid:S2629Q"7Use the built-in formatting to construct this argument.(¥ÿÊ¯H£RMAJORZ
+CODE_SMELL
+squid:S2293Ç"YReplace the type specification in this constructor call with the diamond operator ("<>").(çƒ‚ıÿÿÿÿH“£RMINORZ
+CODE_SMELL
+osquid:S3457Q"AFormat specifiers should be used instead of string concatenation.(¥ÿÊ¯H™£RMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLineÚ"<This block of commented-out lines of code should be removed.(ÿÇ¥H—£RMAJORZ
+CODE_SMELL
+usquid:S3457"AFormat specifiers should be used instead of string concatenation.(ü¡ğíûÿÿÿÿH£RMAJORZ
+CODE_SMELL

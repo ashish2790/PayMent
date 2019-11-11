@@ -1,0 +1,352 @@
+package com.awl.tch.service;
+
+import java.math.BigDecimal;
+import java.rmi.RemoteException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.codehaus.jettison.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.tempuri.BankStatus_info;
+
+import com.aab.exception.AABServiceException;
+import com.aab.utility.AABExternalEntity;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.dao.EgrasDaoImpl;
+import com.awl.tch.dao.EnquiryDaoImpl;
+//import com.awl.tch.dao.IrctcDaoImpl;
+import com.awl.tch.dao.MposDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+/*import com.awl.tch.irctc.exception.IRCTCException;
+import com.awl.tch.irctc.service.IrctcSaleConfirmSerivceImpl;
+import com.awl.tch.irctc.service.IrctcSaleEnqServiceImpl;*/
+import com.awl.tch.model.EgrassReportDTO;
+import com.awl.tch.model.EnqAckDTO;
+//import com.awl.tch.model.IrctcDTO;
+import com.awl.tch.model.MposDTO;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.mpos.bean.MOPSBean;
+import com.awl.tch.mpos.bean.MOPSResponse;
+import com.awl.tch.mpos.exception.SbiMopsException;
+import com.awl.tch.mpos.service.MPOSServiceImpl;
+import com.awl.tch.util.AppConfigMaster;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.UtilityHelper;
+import com.egras.constant.EgrasEnumConstant;
+import com.egras.entity.SaveStatus;
+import com.egras.exception.EGRASServiceException;
+//import com.tch.irctc.model.SaleConfirm;
+//import com.tch.irctc.model.SaleEnquiry;
+import com.tch.sbiepay.exception.TCHSbiepayException;
+import com.tch.sbiepay.model.SBIepaEntity;
+import com.tch.sbiepay.service.SBIepayService;
+
+
+@Service("enquiryACKServiceImpl")
+public class EnquiryACKServiceImpl extends AbstractServiceImpl implements TCHService<Payment>{
+
+	private static Logger logger = LoggerFactory.getLogger(EnquiryACKServiceImpl.class);
+	
+	@Autowired
+	@Qualifier("enquiryDaoImpl")
+	EnquiryDaoImpl enquiryDaoImpl;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_EGRAS_DAO)
+	EgrasDaoImpl egrasdao;
+	
+	/*@Autowired
+	@Qualifier(Constants.TCH_IRCTC_DAO)
+	IrctcDaoImpl irctcDao;*/
+	
+	@Autowired
+	@Qualifier(Constants.TCH_MPOS_DAO)
+	MposDaoImpl mposDao;
+	
+	@Autowired
+	@Qualifier(Constants.TCH_SBI_SERVICEIMPL)
+	MPOSServiceImpl sbiMposService;
+
+	
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+		logger.info("Inside service enq ack");
+
+		logger.debug("App name :[" + input.getAppName()+"]");
+		logger.debug("Reference value :["+input.getReferenceValue()+"]");
+		logger.debug("RRN :[" + input.getRetrivalRefNumber() +"]");
+		String status = "";
+		try {
+			UtilityDTO uDto = enquiryDaoImpl.getUtilityDetailInfo(input.getAppName());
+			if(uDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_A004, ErrorMaster.get(ErrorConstants.TCH_A004));
+			}
+			switch(input.getAppName().trim()){
+			case Constants.TCH_AAB:
+				logger.debug("Fetched url from DB ->" +uDto.getUrl());
+				input.setUrl(uDto.getUrl());
+				try{
+					input.setOriginalAmount(AABExternalEntity.setStatus(input.getBranchCode(), input.getReferenceValue(), input.getRetrivalRefNumber(), uDto.getUrl(), input.getBinNumber(), input.getLastFourDigitValue()));
+					status=Constants.TCH_SUCCESS;
+				} catch (AABServiceException e) {
+					status=Constants.TCH_UNSUCCESS+":"+e.getErrorCode();
+					throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+				}finally{
+					saveEnqAck(input,status);
+				}
+				//UtilityExternalEntityHelper.setStatus(input, getExternalEntityService(input.getAppName()))
+				break;
+			case Constants.TCH_EGRAS:
+				EgrassReportDTO egrasReportDTO = new EgrassReportDTO();
+				SaveStatus saveStatus = new SaveStatus();
+				try {
+					saveStatus.setBankCode(Constants.BANKCODE);
+					saveStatus.setUserId(Constants.USERID);
+					saveStatus.setPassword(Constants.PASS);
+					saveStatus.setGrn(input.getReferenceValue());
+					
+					saveStatus.setPaid_Amount(String.valueOf(new BigDecimal(input.getOriginalAmount()).movePointLeft(2).intValue()));
+					saveStatus.setCIN(input.getRetrivalRefNumber());
+					saveStatus.setBankRefNumber(input.getRetrivalRefNumber());
+					saveStatus.setTran_Status(Constants.STATUS_S);
+					
+					SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd");
+					SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
+					saveStatus.setPaidDate(sdf1.format(sdf.parse(input.getDate())));
+					
+					//save in report dto
+					egrasReportDTO.setGrn(input.getReferenceValue());
+					egrasReportDTO.setDateOfProcessing(saveStatus.getPaidDate());
+					egrasReportDTO.setFundReceivedDate(saveStatus.getPaidDate());
+					egrasReportDTO.setPosReference(saveStatus.getCIN());
+					
+					sdf=null;
+					sdf1=null;
+				
+					try {
+						// call the web service to update status
+						BankStatus_info info = egrasAdaptor.updateStatus(saveStatus,AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_URL));
+						if(info!=null){
+							if(EgrasEnumConstant.STATUS.equals(info.getSuccess())){
+								status=Constants.TCH_SUCCESS;
+							}else{
+								throw new TCHServiceException("EG-04", info.getError()+"|" + info.getSuccess());
+							}
+						}
+					} catch (RemoteException e) {
+						logger.debug("Exception ",e);
+						throw new TCHServiceException("EG-03", "INTERNAL ERROR");
+					}
+				} catch (EGRASServiceException e1) {
+					status=Constants.TCH_UNSUCCESS;
+					throw new TCHServiceException(e1.getErrorCode(), e1.getErrorMessage(), e1.getResponseCode());
+				}finally{
+					saveEnqAck(input, status);
+					//save the information in Egras report for making the report
+					if(Constants.TCH_SUCCESS.equals(status)){
+						logger.debug("GRN [" +input.getReferenceValue()+"]");
+						logger.debug("RRN [" +input.getRetrivalRefNumber()+"]");
+						logger.debug("Amount [" +input.getOriginalAmount()+"]");
+						logger.debug("paid Date [" +saveStatus.getPaidDate()+"]");
+						
+						try {
+							Map<String, String> result = egrasAdaptor.getNontrasoryInfo(input.getReferenceValue(), input.getRetrivalRefNumber(), input.getOriginalAmount(),
+									saveStatus.getPaidDate(), 'S', AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_URL));
+							for(String str : result.keySet()){
+								getMappingDTO(egrasReportDTO, result, str);
+							}
+						} catch (NumberFormatException | RemoteException e) {
+							logger.debug("Exception while invoking non trasory service :",e);
+						}
+						egrasReportDTO.setStatus("P"); // p stands for Pending
+					}else{
+						egrasReportDTO.setStatus("U"); // U stands for unsucess
+					}
+					egrasdao.update(egrasReportDTO);
+				}
+				break;
+			case Constants.TCH_SBIEPAY :
+				logger.debug("ACK to sbi epay");
+				logger.debug("Fetched url from DB ->" +uDto.getUrl());
+				SBIepaEntity sbiepay = new SBIepaEntity();
+				sbiepay.setUrl(uDto.getUrl());
+				sbiepay.setAggregatorId("SBIEPAY");
+				sbiepay.setATRN(input.getReferenceValue());
+				sbiepay.setUniqueRefNumber(input.getRetrivalRefNumber());
+				sbiepay.setAmount(new BigDecimal(input.getOriginalAmount()).movePointLeft(2).toPlainString());
+				sbiepay.setStatus(Constants.TCH_Y);
+				sbiepay.setStatusDescription("Payment transferred.");
+				try{
+					SBIepayService.setStatus(sbiepay);
+				}catch(TCHSbiepayException e){
+					throw new TCHServiceException(e.getErrorCode(), e.getErroMessage());
+				}
+				break;
+		
+			case Constants.TCH_MPOS:
+				logger.debug("ACK to MPOS");
+				//MPOSServiceImpl sbiMposService=new MPOSServiceImpl();
+				MOPSBean sbiMpos=new MOPSBean();
+				MposDTO mpos=new MposDTO();
+				sbiMpos.setBankRefNo(input.getReferenceValue());
+				//sbiMpos.setAmount(input.getOriginalAmount());
+				
+				if(input.getOriginalAmount()!=null){
+					Double amount=(Double.parseDouble(input.getOriginalAmount()))/100;
+					sbiMpos.setAmount(amount.toString());
+					}
+					else{
+						sbiMpos.setAmount(input.getOriginalAmount());
+						}
+				
+				
+				
+				sbiMpos.setDateTime(UtilityHelper.getDateTime());
+				sbiMpos.setStatus("SUCCESS");
+				mpos.setReqType("ENQUIRYACK");
+				mpos.setBankRefNo(input.getReferenceValue());
+				//mpos.setAmount(input.getOriginalAmount());
+				if(input.getOriginalAmount()!=null){
+					Double amount=(Double.parseDouble(input.getOriginalAmount()))/100;
+					mpos.setAmount(amount.toString());
+					}
+					else{
+						mpos.setAmount(input.getOriginalAmount());
+						}
+				
+				
+				
+				mpos.setDateTime(UtilityHelper.getDateTime());
+				mpos.setStatus("SUCCESS");
+				
+				String url=(new StringBuilder(uDto.getUrl()).append(Constants.TCH_MPOS_STATUS)).toString();
+				logger.debug(url);
+				try{
+					MOPSResponse sbiMposRes=sbiMposService.updateStatus(sbiMpos, url);
+					
+					mpos.setStatusCode(sbiMposRes.getStatusCode());
+					mpos.setStatusDescription(sbiMposRes.getStatusDescription());
+					mposDao.save(mpos);
+				}catch (SbiMopsException e1) {
+					logger.debug("Exception Occured"+e1);
+					throw new TCHServiceException(e1.getErrorCode(),e1.getErrorMessage());
+				} 
+				break;
+				
+			/*case Constants.TCH_IRCTC :
+				logger.debug("inside codition for IRCTC");
+				SaleConfirm saleConfirm=new SaleConfirm();
+				IrctcDTO irctcDto =new IrctcDTO();
+				String url=(new StringBuilder(uDto.getUrl()).append(Constants.TCH_IRCTC)).toString();
+				saleConfirm.setTid(input.getTerminalId());
+				saleConfirm.setAssetSrNo(input.getTerminalSerialNumber());
+				saleConfirm.setServiceProvider("WL");
+				saleConfirm.setAmount(input.getOriginalAmount());
+				saleConfirm.setAppTxnId(input.getAppTxnId());
+				saleConfirm.setInvoiceNumber(input.getInvoiceNumber());
+				saleConfirm.setRrn(input.getRetrivalRefNumber());
+				saleConfirm.setCardDigit(input.getLastFourDigitValue());
+				saleConfirm.setCardProvider(input.getCardLabel());
+				saleConfirm.setCardType((input.getCardType()).toString());
+				saleConfirm.setTimestamp(UtilityHelper.getDateTime());
+				
+				irctcDto.setTid(input.getTerminalId());
+				irctcDto.setAsstSrNo(input.getTerminalSerialNumber());
+				irctcDto.setServiceProvider("WL");
+				irctcDto.setAmount(input.getOriginalAmount());
+				irctcDto.setInvoiceNo(input.getInvoiceNumber());
+				irctcDto.setRrn(input.getRetrivalRefNumber());
+				irctcDto.setCardigit(input.getLastFourDigitValue());
+				irctcDto.setCardProvider(input.getCardLabel());
+				irctcDto.setCardType((input.getCardType()).toString());
+				irctcDto.setTimeStamp(UtilityHelper.getDateTime());
+				irctcDto.setReqType("ENQUIRYACK");
+				
+				IrctcSaleConfirmSerivceImpl saleCon =new IrctcSaleConfirmSerivceImpl();
+				HashMap<String, String> configDetail = enquiryDaoImpl.getUtilityInfo(input.getAppName());
+				try {
+					saleConfirm = saleCon.cosumeWS(configDetail, saleConfirm);
+					input.setStatus(saleConfirm.getStatus());
+					irctcDto.setStatus(saleConfirm.getStatus());
+					irctcDao.save(irctcDto);
+				} catch (IRCTCException e) {
+					throw new TCHServiceException(e.getErrorCode(),e.getErrorMessage());
+				}
+				break;*/
+			default :
+				break;
+			}
+		} catch (TCHQueryException e) {
+			logger.debug("Exception :" + e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		} catch (ParseException e1) {
+		}
+	
+		logger.debug("Exiting service enq ack");
+		return input;
+	}
+	
+	
+	private void getMappingDTO(final EgrassReportDTO egrasDTO, Map<String, String> map, String key) {
+		
+		switch(key){
+		case EgrasEnumConstant.EGRAS_ACCOUNT6:
+			egrasDTO.setAccount_6(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT7:
+			egrasDTO.setAccount_7(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT8:
+			egrasDTO.setAccount_8(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT9:
+			egrasDTO.setAccount_9(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT10:
+			egrasDTO.setAccount_10(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT10:
+			egrasDTO.setAmount_10(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT6:
+			egrasDTO.setAmount_6(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT7:
+			egrasDTO.setAmount_7(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT8:
+			egrasDTO.setAmount_8(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT9:
+			egrasDTO.setAmount_9(map.get(key));
+			break;
+		}
+	}
+
+
+	private void saveEnqAck(Payment input, String status){
+		logger.info("save enq ack");
+		EnqAckDTO dto  = new EnqAckDTO();
+		dto.setAmount(input.getOriginalAmount());
+		dto.setAppName(input.getAppName());
+		dto.setBinNumber(input.getBinNumber());
+		dto.setLastFourDigit(input.getLastFourDigitValue());
+		dto.setRrn(input.getRetrivalRefNumber());
+		dto.setTerminalSernumber(input.getTerminalSerialNumber());
+		dto.setTransId(input.getReferenceValue());
+		dto.setUniqueId(input.getBranchCode());
+		dto.setStatus(status);
+		logger.info(dto.toString());
+		enquiryDaoImpl.save(dto);
+		logger.info("exiting saving enq ack");
+	}
+}

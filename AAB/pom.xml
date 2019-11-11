@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>AAB</groupId>
+  <artifactId>AAB</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <description>Anand Adayar Bhawan</description>
+  <name>AAB</name>
+  <parent>
+		<groupId>ThinClientModulo</groupId>
+		<artifactId>ThinClientModulo</artifactId>
+		<version>v1.0</version>
+		<relativePath>../ThinClientModulo/pom.xml</relativePath>
+	</parent>
+  <properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<slf4j.version>1.7.21</slf4j.version>
+		<logback.version>1.1.7</logback.version>
+		<java.version>1.7</java.version>
+		<j8583.version>1.11.0</j8583.version>
+		<mysql.version>5.1.38</mysql.version>
+		<spring.version>4.2.3.RELEASE</spring.version>
+		<spring.batch.version>2.2.0.RELEASE</spring.batch.version>
+		<quartz.version>2.2.1</quartz.version>
+	</properties>
+  <build>
+	  <!-- <resources>
+        <resource>
+            <directory>src/main/java</directory>
+            <filtering>false</filtering>
+        </resource>
+    </resources> -->
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+    <!--  <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>2.3</version>
+          <configuration>
+            <includes>
+              <include>**/*</include>
+            </includes>
+          </configuration>
+      </plugin> -->
+      <plugin> 
+		<artifactId>maven-assembly-plugin</artifactId>
+		<groupId>org.apache.maven.plugins</groupId>
+		<version>2.4.1</version>
+		<configuration>
+			<descriptors>
+				<descriptor>${basedir}/assemblyDescriptor.xml</descriptor>
+			</descriptors>  
+			<!-- <outputDirectory>C:\\Users\\ashish.bhavsar\\Desktop</outputDirectory> -->
+		</configuration>
+		<executions>
+			<execution>
+				 <id>make-assembly</id>
+				<phase>package</phase> 
+				<goals>
+					<goal>single</goal>
+				</goals>
+			</execution>
+		</executions>
+		</plugin>
+    </plugins>
+  </build>
+  <dependencies>
+		<!-- http://mvnrepository.com/artifact/com.google.code.gson/gson -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.6.2</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.j8583</groupId>
+			<artifactId>j8583</artifactId>
+			<version>1.10.2</version>
+			<scope>compile</scope>
+		</dependency>
+		<!-- http://mvnrepository.com/artifact/net.sf.j8583/j8583 <dependency> 
+			<groupId>net.sf.j8583</groupId> <artifactId>j8583</artifactId> <version>${j8583.version}</version> 
+			</dependency> -->
+
+		<!-- Logging Dependencies : Start -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<version>${logback.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>${logback.version}</version>
+		</dependency>
+		<!-- Logging Dependencies : End -->
+
+
+		<!-- Batch processing -->
+			<!-- QuartzJobBean in spring-context-support.jar -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context-support</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+		
+			<!-- Spring Batch dependencies -->
+			<dependency>
+				<groupId>org.springframework.batch</groupId>
+				<artifactId>spring-batch-core</artifactId>
+				<version>${spring.batch.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.batch</groupId>
+				<artifactId>spring-batch-infrastructure</artifactId>
+				<version>${spring.batch.version}</version>
+			</dependency>
+		<!-- End ogf batch processing -->
+		
+		<!-- web service dependancy -->
+		 <dependency>
+		  <groupId>org.apache.axis2</groupId>
+		  <artifactId>axis2-kernel</artifactId>
+		  <version>1.6.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/xerces/xercesImpl -->
+		<dependency>
+		    <groupId>xerces</groupId>
+		    <artifactId>xercesImpl</artifactId>
+		    <version>2.8.0</version>
+		</dependency>
+		
+		<!-- web service dependancy jar end -->
+		
+	</dependencies>
+</project>

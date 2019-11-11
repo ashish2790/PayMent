@@ -1,0 +1,373 @@
+package com.awl.tch.service;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.Payment;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.controller.AbstractQR;
+import com.awl.tch.dao.RefundDaoImpl;
+import com.awl.tch.dao.RefundSettledDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.PaymentAmexDTO;
+import com.awl.tch.model.PaymentDTO;
+import com.awl.tch.model.PaymentSettleDTO;
+import com.awl.tch.model.TerminalParameterDTO;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.ISOMessages;
+import com.awl.tch.validator.ISOPaymentValidator;
+/**
+* <h1>Processing request parameter.</h1>
+* RefundServiceImpl program is used to set all
+* the business logic related to refund transaction , and if
+* all the business logic <tt>satisfy</tt> all the condition for getting 
+* response from switch then and then only appropriate response send.
+* 
+* <p>
+* In which request parameter must contain mandatory 
+* field as <tt>Terminal serial number</tt>,
+* base on which all the related information like <tt>client id</tt>,
+* <tt>MID</tt>,<tt>TID</tt> is going to
+* send as response object as <tt>json</tt> format.
+* 
+* <b>Note:</b> Business logic set as per the standard followed by WL.
+*
+* @author  Ashish Bhavsar
+* @version 1.0
+* @since   2016-09-21
+*/
+@Service("paymentRefundService")
+public class RefundServiceImpl extends AbstractQR<Payment> implements RefundService{
+
+	@Autowired
+	@Qualifier("refundDaoImpl")
+	RefundDaoImpl payemntRefundDao;
+	
+	@Autowired
+	@Qualifier("refundDaoSettled")
+	RefundSettledDaoImpl refundSettledTxndao;
+	
+	private static final Logger logger = LoggerFactory.getLogger(RefundServiceImpl.class);
+	
+	/**
+	   * Service the request received and add business logic as per standard of WL.
+	   *
+	   * @param input Contains request in <tt>json</tt> format with mandatory field in it. 
+	   * @return <tt>Payment</tt> if no error contain response send with appropriate response code and 
+	   * 							all fields which need to be print on charge slip.
+	   * 							And success response is saved in DB.
+	   * 							<p> if error present it contains only error related information <tt>error code</tt>
+	   * 								<tt> error message</tt>.
+	   * @exception TCHServiceException On output error.
+	   * @see TCHServiceException
+	   */
+	@Override
+	public Payment service(Payment input) throws TCHServiceException {
+
+		logger.debug("Entering in service refund");
+		String orgTermSerialNumber = input.getTerminalSerialNumber().trim();
+		checkForPcrFlag(input);
+		/*
+		 * change by Saloni Jindal on 21/11/2017
+		 */
+		// condition for refund_ack 
+					if(Constants.TCH_REFUND_ACK.equalsIgnoreCase(input.getDecisionFlag())){
+						if(refundAckTransaction(input))
+							return input;
+					}
+					/// end of refund ACK	
+		/*
+		 * end of change by Saloni Jindal on 21/11/2017
+		 */
+		PaymentDTO paymentDto = new PaymentDTO();
+		if(!ISOPaymentValidator.nonZeroAmount(input)){
+			throw new TCHServiceException(ErrorConstants.TCH_R009, ErrorMaster.get(ErrorConstants.TCH_R009)); // nonzero or Negative value check
+		}
+		// refund on rrn basis
+		if(input.getReferenceValue() != null){
+			String rrn = input.getReferenceValue().trim();
+			PaymentDTO existingDto;
+			try {
+				existingDto = payemntRefundDao.getExistingDTO(rrn);
+			} catch (TCHQueryException e) {
+				logger.debug("Exception while fetching transaction basis on rrn " + rrn ,e);
+				throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+			}
+			if(existingDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_R010, ErrorMaster.get(ErrorConstants.TCH_R010));
+			}
+			if(existingDto != null && existingDto.getVoidApprovedFlag() == 1)
+				throw new TCHServiceException(ErrorConstants.TCH_V006, ErrorMaster.get(ErrorConstants.TCH_V006));
+			if(existingDto != null && "1".equalsIgnoreCase(existingDto.getRefundApproved())){
+				throw new TCHServiceException(ErrorConstants.TCH_R002, ErrorMaster.get(ErrorConstants.TCH_R002));
+			}
+			if(existingDto != null && (existingDto.getRequestType().equals(Constants.TCH_REQUEST_CSHBK) || existingDto.getRequestType().equals(Constants.TCH_REQUEST_SALECSHBK)))
+					throw new TCHServiceException(ErrorConstants.TCH_R008, ErrorMaster.get(ErrorConstants.TCH_R008));
+			// COPY ALL DATA FROM DTO TO PAYMENT BEAN
+			BeanUtils.copyProperties(existingDto, input,"invoiceNumber","track2","originalAmount","date","paymentId","panNumber","date","time"); // pan number will be consider from request not from dto
+			input.setLastFourDigitValue(existingDto.getLastFourDigitValue().toString());
+			input.setBinNumber(existingDto.getBinNumber().toString());
+			input.setBatchNumber(String.format("%06d", existingDto.getBatchNumber()));
+			input.setCurrencyCode(String.valueOf(existingDto.getCurrencyCode()));
+			input.setTempBatchNumber(existingDto.getTempBatchNumber());
+			input.setAuthorizationId(existingDto.getAuthorizationId());
+			calculationForRefund(existingDto, input);
+			
+			if(!ISOPaymentValidator.debitCardCheck(input)){
+				throw new TCHServiceException(ErrorConstants.TCH_R003, ErrorMaster.get(ErrorConstants.TCH_R003));
+			}
+			sendToSwitch(input, Constants.TCH_REQUEST_REFUND);
+			paymentDto = input.getPaymentDTO();
+			// update the sale transaction if get the response as success update original amount entry 
+			if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+				paymentDto.setPaymentId(existingDto.getPaymentId());
+				paymentDto.setRefundApproved("1");
+				paymentDto.setOriginalAmount(existingDto.getOriginalAmount()); // explicit set original amount after calculation
+				paymentDto.setRetrivalRefNumber(existingDto.getRetrivalRefNumber()); // maintain sale rrn instead of Refund rrn
+				paymentDto.setInvoiceNumber(existingDto.getInvoiceNumber()); // maintain sale invoice number
+				paymentDto.setAuthorizationId(existingDto.getAuthorizationId()); // maintain auth id of original sale
+				paymentDto.setProcessingCode(null);
+				paymentDto.setMTI(null);
+				paymentDto.setField63(null);
+				paymentDto.setSchemaTransactionId(null);
+				
+				// new changes to save data in settled database.
+				/*
+				 * change by ashish on 04/09/2017
+				 */
+				PaymentSettleDTO paymentSettledDto = new PaymentSettleDTO();
+				BeanUtils.copyProperties(paymentDto, paymentSettledDto);
+				paymentSettledDto.setBatchNumber(input.getTempBatchNumber()); // update batch number issue.
+				refundSettledTxndao.update(paymentSettledDto); // changes to save refund in settled transaction table
+				
+				/*
+				 * end of change by ashish on 04/09/2017
+				 */
+			}
+		}else{ // refund on swipe basis 
+			List<TerminalParameterDTO> listTermParamDto;
+			try {
+				input.setTerminalSerialNumber(orgTermSerialNumber); 
+				listTermParamDto = paymentSaleDao.getTerminalParameter1(input);
+			} catch (TCHQueryException e) {
+				e.printStackTrace();
+				logger.debug(e.getMessage());
+				throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+			}
+			
+			checkRRNPresent(input); // Extra check to check RRN is bypass for Rupay card or not
+			ISOPaymentValidator.binSpecificParameterWithValidation(input, listTermParamDto);
+			
+			if("N".equalsIgnoreCase(input.getRefundNewFlag())){
+				throw new TCHServiceException(ErrorConstants.TCH_R008, ErrorMaster.get(ErrorConstants.TCH_R008));
+			}
+			
+			if(Constants.TCH_EMV.equals(input.getCardEntryMode()) && !Constants.TCH_Y1.equals(input.getDecisionFlag())){
+				getOriginalAmountInPrecision(input);
+				setNull(input);
+				return input;
+			}else if(Constants.TCH_Y1.equals(input.getDecisionFlag())){
+				input.setResponseCode("Y1");
+			}
+			
+			//get card entry mode
+			getCardEntryMode(input);
+			
+			//get account type
+			getAccountType(input);
+			
+			/*try {
+				payemntRefundDao.setMIDTID(input);
+			} catch (TCHQueryException e) {
+				logger.debug("Exception in fetching data :" + e.getMessage());
+				throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+			}*/
+			//input.setStanNumber(Long.valueOf(payemntRefundDao.getSequence(Constants.TCH_STAN_SEQUENCE)).toString());
+			sendToSwitch(input, Constants.TCH_REQUEST_REFUND);
+					
+		}
+		
+		// make new entry in table for refund 
+		paymentDto = input.getPaymentDTO();
+		paymentDto.setRequestType(Constants.TCH_REQUEST_REFUND);
+		if(Constants.TCH_AMEX.equals(paymentDto.getCardLabel())){
+			logger.debug("updating void valus for amex sale");
+			PaymentAmexDTO paymentAmexDto = new PaymentAmexDTO();
+			BeanUtils.copyProperties(paymentDto, paymentAmexDto);
+			
+			if("Y1".equals(input.getResponseCode())){
+				paymentAmexDto.setStatus(Constants.TCH_SUCCESS);
+				paymentAmexDto.setRefundFlag(1);
+				paymentAmexDto.setResponseCode("00");
+				paymentAmexDto.setRefundStatus(Constants.TCH_SUCCESS);
+				paymentAmexDao.save(paymentAmexDto);
+			}
+			else if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+				paymentAmexDto.setStatus(Constants.TCH_SUCCESS);
+				paymentAmexDto.setRefundFlag(1);
+				paymentAmexDto.setRefundStatus(Constants.TCH_SUCCESS);
+				paymentAmexDao.save(paymentAmexDto);
+			
+			}else{
+				paymentAmexDto.setStatus(Constants.TCH_UNSUCCESS);
+				paymentAmexDao.save(paymentAmexDto);
+				paymentDto.setRefundStatus(Constants.TCH_UNSUCCESS);
+				error82(input);
+				 throw new TCHServiceException(ErrorConstants.TCH_R007, ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode()));
+			}
+		}else{
+			if("Y1".equals(input.getResponseCode())){
+				paymentDto.setStatus(Constants.TCH_SUCCESS);
+				paymentDto.setRefundFlag(1);
+				paymentDto.setResponseCode("00");
+				paymentDto.setRefundStatus(Constants.TCH_SUCCESS);
+				payemntRefundDao.save(paymentDto);
+			}
+			else if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+				paymentDto.setStatus(Constants.TCH_SUCCESS);
+				paymentDto.setRefundFlag(1);
+				paymentDto.setRefundStatus(Constants.TCH_SUCCESS);
+				payemntRefundDao.save(paymentDto);
+			
+			}else{
+				paymentDto.setStatus(Constants.TCH_UNSUCCESS);
+				payemntRefundDao.save(paymentDto);
+				paymentDto.setRefundStatus(Constants.TCH_UNSUCCESS);
+				error82(input);
+				 throw new TCHServiceException(ErrorConstants.TCH_R007, ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode()));
+			}
+		}
+		
+		// setting original amount
+		getOriginalAmountInPrecision(input);
+		
+		//set null values
+		setNull(input);
+		
+		logger.debug("Exiting in service refund");
+		
+		return input;	
+	}
+	
+	private void calculationForRefund(final PaymentDTO exstDto, final Payment input)throws TCHServiceException{
+		
+		logger.debug("Caluculation for refund");
+		BigDecimal orgAmt = new BigDecimal(exstDto.getOriginalAmount()).stripTrailingZeros();
+		BigInteger exstOrgAmount = new BigInteger(orgAmt.toPlainString());
+		BigInteger inputOrgAmount = new BigInteger(input.getOriginalAmount());
+		
+		if(exstOrgAmount.compareTo(inputOrgAmount) == -1){
+			throw new TCHServiceException(ErrorConstants.TCH_R011, "Insufficient amount for refund");
+		}else{
+			exstOrgAmount = exstOrgAmount.subtract(inputOrgAmount);
+			//exstDto.setOriginalAmount(Double.valueOf(exstOrgAmount.toString())); settng sale amount as it is
+		}
+	}
+	
+	
+	/*
+	 * change by Saloni Jindal on 21/11/2017
+	 */
+	
+	protected boolean refundAckTransaction(final Payment input) throws TCHServiceException{
+		try {
+			logger.debug("Inside sale_ack condition");
+			PaymentDTO exstPaymentDTO = payemntRefundDao.getExistRefundParamter(input);
+			if(exstPaymentDTO != null){
+				BeanUtils.copyProperties(exstPaymentDTO, input);
+				input.setPaymentId(exstPaymentDTO.getPaymentId());
+				input.setBatchNumber(String.format("%06d", exstPaymentDTO.getBatchNumber()));
+				input.setAuthorizationId(exstPaymentDTO.getAuthorizationId());
+				input.setLastFourDigitValue(exstPaymentDTO.getLastFourDigitValue().toString());
+				logger.debug("Original transaction found pid :" +input.getPaymentId());
+				getOriginalAmountInPrecision(input);
+				if(exstPaymentDTO.getResponseCode() != null && Constants.TCH_SUCCESS_RESPONSE.equals(exstPaymentDTO.getResponseCode())){
+					logger.debug("Getting successful transaction ");
+					setNull(input);
+					return true;
+					} else {
+						logger.debug("generate reversal forcefully..");
+						throw new TCHServiceException(ErrorConstants.TCH_S014, ISOMessages.getSpecificMessageBasedOnResponseCode(exstPaymentDTO.getResponseCode()));
+					}
+				}else{
+					logger.debug("Original transaction not found");
+					input.setSaleAckWrong(Constants.TCH_Y);
+					throw new TCHServiceException(Constants.SACK_REJECT,"Exception in sale ack while not found orginal transaction and dont give response terminal");
+			}
+		} catch (TCHQueryException e) {
+			logger.debug(e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+		}
+	}
+	
+	/*
+	 * end of change by Saloni Jindal on 21/11/2017
+	 */
+
+	@Override
+	public Payment serviceQR(Payment input) throws TCHServiceException {
+
+		if(input.getReferenceValue() == null){
+			throw new TCHServiceException(ErrorConstants.TCH_R012, ErrorMaster.get(ErrorConstants.TCH_R012));
+		}else if(input.getMobileNumber() == null){
+			throw new TCHServiceException(ErrorConstants.TCH_R013, ErrorMaster.get(ErrorConstants.TCH_R013));
+		}else{
+			/*try {
+				input.setQrType(menuService.getMenuObjectValue("REF", input.getMenuobj()));
+				logger.debug("QR TYPE [ " +input.getQrType()+ "]");
+			} catch (Exception e1) {
+				logger.debug("Exception in fetching qr type",e1);
+				throw new TCHServiceException("QR-02", "INVALID INPUT");
+			}*/
+			try {
+				paymentSaleDao.getTerminalDetails(input);
+			} catch (TCHQueryException e) {
+				throw new TCHServiceException("QR-01","MAPPING NOT FOUND");
+			}
+			switch(input.getDecisionFlag()!=null ? input.getDecisionFlag() : ""){
+			case Constants.TCH_QRACK:
+				logger.debug("Getting information from table [" + input.getReferenceValue() + "]");
+				try {
+					PaymentDTO pDto = payemntRefundDao.getPaymentDetails(input.getReferenceValue());
+					logger.info("Payment dto : "+ pDto);
+					if(pDto != null){
+						if(1 == pDto.getRefundFlag()){
+							throw new TCHServiceException("Q-011", "REFUND ALREADY DONE");
+						}
+						input.setReferenceValue(pDto.getReferenceValue());
+						input.setQrType(pDto.getTransactionChannel());
+						input = qrAdaptor.refundQr(input);
+						pDto.setRefundApproved("1");
+						pDto.setRetrivalRefNumber(null);
+						pDto.setProcessingCode(null);
+						pDto.setMTI(null);
+						payemntRefundDao.update(pDto);
+						
+					}else{
+						logger.debug("Original sale transaction absent");
+						throw new TCHServiceException("Q-010", "INVLAID RRN");
+					}
+				} catch (TCHQueryException e) {
+					throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+				}
+				break;
+			case Constants.TCH_QRCAN:
+				input = qrAdaptor.qrCancel(input);
+				break;
+			default:
+			}
+			setNullQR(input);
+		}
+		return input;
+	}
+}

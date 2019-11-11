@@ -1,0 +1,7 @@
+
+–squid:S1192Í"dUse already-defined constant 'TCH_REQUEST_VOID_EMI_SALE_MENU' instead of duplicating its value here.(ô®ÃªHËæRCRITICALZ
+CODE_SMELL
+Rsquid:S1214""Move constants to a class or enum.(ğ¬:HÌæRCRITICALZ
+CODE_SMELL
+xsquid:CommentedOutCodeLineB"<This block of commented-out lines of code should be removed.(üò’BHÍæRMAJORZ
+CODE_SMELL

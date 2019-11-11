@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:orcl="http://www.springframework.org/schema/data/orcl"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	 http://www.springframework.org/schema/beans/spring-beans.xsd
+	 http://www.springframework.org/schema/context
+	 http://www.springframework.org/schema/context/spring-context-4.2.xsd
+  	 http://www.springframework.org/schema/data/orcl
+     http://www.springframework.org/schema/data/orcl/spring-data-orcl-1.0.xsd
+     http://www.springframework.org/schema/task
+     org/springframework/scheduling/config/spring-task-4.2.xsd
+     http://www.springframework.org/schema/cache 
+	 http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+	<context:component-scan base-package="com.awl.tch.brandemi"></context:component-scan>
+	
+	<context:property-placeholder
+		location="classpath:database.properties,classpath:database_kalkulas.properties" />
+		
+	<!-- Enable Cache -->
+    <!--  <cache:annotation-driven /> -->
+		
+	<bean id="dataSourceBrandEmi"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	
+	<bean id="jdbcTemplateBrandEmi" class="org.springframework.jdbc.core.JdbcTemplate">
+        <constructor-arg ref="dataSourceBrandEmi" />
+    </bean>
+    
+    <bean id="namedJdbcTemplateBrandEmi" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+        <constructor-arg ref="dataSourceBrandEmi" />
+    </bean>
+    
+    <bean id="simpleJdbcCallBrandEmi" class="org.springframework.jdbc.core.simple.SimpleJdbcCall">
+        <constructor-arg ref="dataSourceBrandEmi" />
+    </bean>
+    
+    <!-- Infinispan cache manager -->
+	<!-- <bean id="cacheManager"
+          class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
+          p:configurationFileLocation="classpath:/infinispan-config.xml" /> -->
+        
+</beans>

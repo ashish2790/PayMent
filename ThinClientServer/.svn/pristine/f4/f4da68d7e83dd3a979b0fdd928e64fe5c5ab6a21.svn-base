@@ -1,0 +1,8 @@
+package com.awl.tch.bridge;
+
+import com.awl.tch.exceptions.TCHServiceException;
+
+public interface ExternlaEntityInterface<T> {
+	public abstract T updateStatus(T input) throws TCHServiceException;
+	public abstract T getAmount(T input) throws TCHServiceException;
+}

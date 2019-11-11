@@ -1,0 +1,177 @@
+package com.awl.tch.externalentityImpl;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.axisepay.exception.TCHAxisepayException;
+import com.awl.tch.axisepay.model.AXISepayRequest;
+import com.awl.tch.axisepay.model.AXISepayResponse;
+import com.awl.tch.axisepay.service.AXISepayService;
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternalEntityBridge;
+import com.awl.tch.bridge.ExternlaEntityInterface;
+import com.awl.tch.constant.ExternalEntityConstants;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.AxisEpayDTO;
+import com.awl.tch.util.UtilityHelper;
+
+@Service(ExternalEntityConstants.TCH_AXIS_EPAY_BRIDGE)
+public class AxisEpayBridgeServiceImpl extends ExternalEntityBridge implements ExternlaEntityInterface<Payment>{
+
+	private static Logger logger = LoggerFactory.getLogger(AxisEpayBridgeServiceImpl.class);
+	@Override
+	public Payment updateStatus(Payment input) throws TCHServiceException {
+		logger.debug("ACK to Axis epay");
+		logger.debug("Fetched url from DB ->" +getUtilityInfo(input).get(ExternalEntityConstants.TCH_URL));
+		try{
+			AxisEpayDTO epayDTO= axisEpayDao.getExistingTransactionDetails(input.getReferenceValue());
+			
+			String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+			 input.setMerchantId(arr[0]);
+			 input.setTerminalId(arr[1]);
+			 
+			AXISepayRequest axisRequest = new AXISepayRequest();
+			axisRequest.setUrl(getUtilityInfo(input).get(ExternalEntityConstants.TCH_URL));
+			axisRequest.setMid(input.getMerchantId());
+			axisRequest.setTid(input.getTerminalId());
+			axisRequest.setUrn(input.getReferenceValue());
+			axisRequest.setCid(epayDTO.getCid());
+			axisRequest.setRid(epayDTO.getRid());
+			axisRequest.setRrn(input.getRetrivalRefNumber());
+			logger.debug("amount in update status"+new BigDecimal(epayDTO.getAmount()).movePointLeft(2).toPlainString());
+			axisRequest.setAmount(new BigDecimal(epayDTO.getAmount()).movePointLeft(2).toPlainString());
+		
+			AXISepayResponse response = AXISepayService.saleConfirmation(axisRequest);
+			epayDTO.setStatus(response.getStatus());
+			epayDTO.setRrn(input.getRetrivalRefNumber());
+			epayDTO.setErrCode(response.getErrorCode());
+			epayDTO.setErrDesc(response.getErrorDesc());
+			axisEpayDao.update(epayDTO);
+		}catch(TCHAxisepayException e ){
+			throw new TCHServiceException(e.getErrorCode(), e.getErroMessage());
+		} catch (TCHQueryException e) {
+			logger.debug(e.getErrorCode(),e.getErrorMessage());
+		}
+		return input;
+	}
+
+	@Override
+	public Payment getAmount(Payment input) throws TCHServiceException {
+		logger.debug("Inside get Transaction details and Amount for Axis");
+		 
+		try {
+			AXISepayRequest axisRequest = new AXISepayRequest();
+			String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+			 input.setMerchantId(arr[0]);
+			 input.setTerminalId(arr[1]);
+			
+			axisRequest.setMid(input.getMerchantId());
+			axisRequest.setTid(input.getTerminalId());
+			axisRequest.setUrl(getUtilityInfo(input).get(ExternalEntityConstants.TCH_URL));
+			axisRequest.setUrn(input.getReferenceValue());
+			axisRequest.setDatetime(UtilityHelper.dateIndddMMYYYYhyphen());
+			axisRequest.setUrl(getUtilityInfo(input).get(ExternalEntityConstants.TCH_URL));
+			AXISepayResponse response = AXISepayService.getAmount(axisRequest);
+			logger.debug("amount in getamount"+new BigDecimal(response.getAmount()).movePointRight(2).toPlainString());
+			input.setOriginalAmount(new BigDecimal(response.getAmount()).movePointRight(2).toPlainString());
+			
+			logger.debug("Merchant Id [" + axisRequest.getMid() +"] "
+					+ "Terminal Id [" + axisRequest.getTid() +"] Amount [" + input.getOriginalAmount() +"]");
+			List<BillingObj> lstBillingEpay = new ArrayList<BillingObj>();
+			BillingObj ePayBlg = new BillingObj();
+			ePayBlg.setLabelName(getUtilityInfo(input).get(ExternalEntityConstants.TCH_AXIS_EPAY_LABEL1));
+			ePayBlg.setLabelValue(response.getCustomerName());
+			lstBillingEpay.add(ePayBlg);
+			
+			ePayBlg = new BillingObj();
+			ePayBlg.setLabelName(getUtilityInfo(input).get(ExternalEntityConstants.TCH_AXIS_EPAY_LABEL2));
+			ePayBlg.setLabelValue(response.getUrn());
+			lstBillingEpay.add(ePayBlg);
+			
+			ePayBlg = new BillingObj();
+			ePayBlg.setLabelName(getUtilityInfo(input).get(ExternalEntityConstants.TCH_AXIS_EPAY_LABEL3));
+			ePayBlg.setLabelValue(response.getTrxnDatetime());
+			lstBillingEpay.add(ePayBlg);
+			
+			ePayBlg = new BillingObj();
+			ePayBlg.setLabelName(getUtilityInfo(input).get(ExternalEntityConstants.TCH_AXIS_EPAY_LABEL4));
+			ePayBlg.setLabelValue(response.getAmount());
+			lstBillingEpay.add(ePayBlg);
+			
+			BillingObj[] blgObjArr1 = new BillingObj[lstBillingEpay.size()];
+			input.setBillingObject(lstBillingEpay.toArray(blgObjArr1)); // set billing object
+			
+			saveResponse(response);
+			
+		} catch (TCHAxisepayException e1) {
+			throw new TCHServiceException(e1.getErrorCode(),e1.getErroMessage());
+		} catch (TCHQueryException e) {
+			logger.debug(e.getErrorCode(),e.getErrorMessage());
+		}
+		return input;
+	}
+
+	
+	
+	public Payment sendFailure(Payment input) throws TCHServiceException {
+		logger.debug("ACK to Axis epay");
+		logger.debug("Fetched url from DB ->" +getUtilityInfo(input).get(ExternalEntityConstants.TCH_URL));
+		try{
+			AxisEpayDTO epayDTO= axisEpayDao.getExistingTransactionDetails(input.getReferenceValue());
+			
+			String[] arr = getMidTids(input.getTerminalSerialNumber(), null);
+			 input.setMerchantId(arr[0]);
+			 input.setTerminalId(arr[1]);
+			 
+			AXISepayRequest axisRequest = new AXISepayRequest();
+			axisRequest.setUrl(getUtilityInfo(input).get(ExternalEntityConstants.TCH_URL));
+			axisRequest.setMid(input.getMerchantId());
+			axisRequest.setTid(input.getTerminalId());
+			axisRequest.setUrn(input.getReferenceValue());
+			axisRequest.setCid(epayDTO.getCid());
+			axisRequest.setRid(epayDTO.getRid());
+			axisRequest.setRrn(epayDTO.getRrn());
+			logger.debug("amount in send failure"+new BigDecimal(epayDTO.getAmount()).movePointLeft(2).toPlainString());
+			axisRequest.setAmount(new BigDecimal(epayDTO.getAmount()).movePointLeft(2).toPlainString());
+			
+			
+			AXISepayResponse response = AXISepayService.saleFailure(axisRequest);
+			epayDTO.setStatus(response.getStatus());
+			epayDTO.setErrCode(response.getErrorCode());
+			epayDTO.setErrDesc(response.getErrorDesc());
+			axisEpayDao.update(epayDTO);
+		}catch(TCHAxisepayException e ){
+			throw new TCHServiceException(e.getErrorCode(), e.getErroMessage());
+		} catch (TCHQueryException e) {
+			logger.debug(e.getErrorCode(),e.getErrorMessage());
+		}
+		return input;
+	}
+	
+	private void saveResponse(AXISepayResponse response) {
+		AxisEpayDTO epayDto = new AxisEpayDTO();
+		epayDto.setMid(response.getMid());
+		epayDto.setTid(response.getTid());
+		epayDto.setCid(response.getCid());
+		epayDto.setRid(response.getRid());
+		epayDto.setUrn(response.getUrn());
+		epayDto.setRrn(response.getRrn());
+		epayDto.setTransactionDate(response.getTrxnDatetime());
+		epayDto.setAmount(new BigDecimal(response.getAmount()).movePointRight(2).toPlainString());
+		epayDto.setStatus(response.getStatus());
+		epayDto.setErrCode(response.getErrorCode());
+		epayDto.setErrDesc(response.getErrorDesc());
+		epayDto.setCustomerName(response.getCustomerName());
+		epayDto.setCrn(response.getCrn());		
+		axisEpayDao.save(epayDto);
+	}
+
+	
+}

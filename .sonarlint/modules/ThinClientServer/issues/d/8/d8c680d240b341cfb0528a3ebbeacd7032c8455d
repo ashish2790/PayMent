@@ -1,0 +1,816 @@
+
+|squid:S3457Ä"AFormat specifiers should be used instead of string concatenation.(ã®µ½ÿÿÿÿÿ8ÁĞŞô÷,HËèRMAJORZ
+CODE_SMELL
+usquid:S3457Â"AFormat specifiers should be used instead of string concatenation.(”çÜ˜ÿÿÿÿÿHóäRMAJORZ
+CODE_SMELL
+|squid:S3457º	"AFormat specifiers should be used instead of string concatenation.(­ıŞ„üÿÿÿÿ8ÁĞŞô÷,H³èRMAJORZ
+CODE_SMELL
+wsquid:S3457è	"AFormat specifiers should be used instead of string concatenation.(Ğ¦å”8ÁĞŞô÷,HµèRMAJORZ
+CODE_SMELL
+msquid:S2629á"7Use the built-in formatting to construct this argument.(üâ»8ÁĞŞô÷,HŞæRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine´"<This block of commented-out lines of code should be removed.(Ä‚×ÙùÿÿÿÿH¹åRMAJORZ
+CODE_SMELL
+s
+squid:S106Â
+"9Replace this use of System.out or System.err by a logger.(®ÚİÓşÿÿÿÿ8ÁĞŞô÷,HÛçRMAJORZ
+CODE_SMELL
+squid:S2293Œ"YReplace the type specification in this constructor call with the diamond operator ("<>").(çÍ·¾8ÁĞŞô÷,HÀçRMINORZ
+CODE_SMELL
+usquid:S3457±"AFormat specifiers should be used instead of string concatenation.(”çÜ˜ÿÿÿÿÿH«åRMAJORZ
+CODE_SMELL
+ysquid:CommentedOutCodeLineË"<This block of commented-out lines of code should be removed.(Ù›XHÆæRMAJORZ
+CODE_SMELL
+ˆsquid:S1192…"ODefine a constant instead of duplicating this literal "C_UTILITY_INFO" 5 times.(â·¨˜8ÁĞŞô÷,H–çRCRITICALZ
+CODE_SMELL
+‡squid:S2293ã"YReplace the type specification in this constructor call with the diamond operator ("<>").(‡ı«@H’æRMINORZ
+CODE_SMELL
+n
+squid:S106É
+"9Replace this use of System.out or System.err by a logger.(ƒ…«¹8ÁĞŞô÷,HØçRMAJORZ
+CODE_SMELL
+|squid:S3457§
+"AFormat specifiers should be used instead of string concatenation.(­¾ÖÊüÿÿÿÿ8ÁĞŞô÷,HºèRMAJORZ
+CODE_SMELL
+msquid:S2629É"7Use the built-in formatting to construct this argument.(‹©·Î8ÁĞŞô÷,HÜæRMAJORZ
+CODE_SMELL
+fsquid:S2629Ğ"7Use the built-in formatting to construct this argument.(ì­üµHüäRMAJORZ
+CODE_SMELL
+vsquid:S3457Œ"AFormat specifiers should be used instead of string concatenation.(½„ÄL8ÁĞŞô÷,HÔèRMAJORZ
+CODE_SMELL
+vsquid:S3457›"AFormat specifiers should be used instead of string concatenation.(¡óÕR8ÁĞŞô÷,HÇèRMAJORZ
+CODE_SMELL
+jsquid:S1066Ş"/Merge this if statement with the enclosing one.(Ç›ÓŒúÿÿÿÿ8ÁĞŞô÷,H¸çRMAJORZ
+CODE_SMELL
+Psquid:S2111ç
+"!Use "BigDecimal.valueOf" instead.(ÑÔ¨š8ÁĞŞô÷,H„èRMAJORZBUG
+Usquid:S2111ã
+"!Use "BigDecimal.valueOf" instead.(™ùÌ¸øÿÿÿÿ8ÁĞŞô÷,H†èRMAJORZBUG
+†squid:CommentedOutCodeLineÅ"<This block of commented-out lines of code should be removed.(‰³µµøÿÿÿÿ8ÁĞŞô÷,HÊçRMAJORZ
+CODE_SMELL
+wsquid:S3457‹	"AFormat specifiers should be used instead of string concatenation.(¬íšÃ8ÁĞŞô÷,H­èRMAJORZ
+CODE_SMELL
+usquid:S3457«"AFormat specifiers should be used instead of string concatenation.(å¡ÔÉùÿÿÿÿH´äRMAJORZ
+CODE_SMELL
+Psquid:S2111µ	"!Use "BigDecimal.valueOf" instead.(ˆÙÿû8ÁĞŞô÷,HÿçRMAJORZBUG
+|squid:S3457¢	"AFormat specifiers should be used instead of string concatenation.(ç–ƒ°úÿÿÿÿ8ÁĞŞô÷,H±èRMAJORZ
+CODE_SMELL
+usquid:S3457©"AFormat specifiers should be used instead of string concatenation.(Ä­š…ıÿÿÿÿHŸæRMAJORZ
+CODE_SMELL
+psquid:S3457´"AFormat specifiers should be used instead of string concatenation.(Ôî»òHÄäRMAJORZ
+CODE_SMELL
+”squid:S1192¸"VDefine a constant instead of duplicating this literal "Debug Point from SP :" 4 times.(å¡ÔÉùÿÿÿÿ8ÁĞŞô÷,H—çRCRITICALZ
+CODE_SMELL
+wsquid:S3457©
+"AFormat specifiers should be used instead of string concatenation.(º•ø°8ÁĞŞô÷,H¼èRMAJORZ
+CODE_SMELL
+zsquid:S1854¸	"?Remove this useless assignment to local variable "totalAmount".(ıí‚üÿÿÿÿ8ÁĞŞô÷,HóçRMAJORZ
+CODE_SMELL
+wsquid:S3457ò"AFormat specifiers should be used instead of string concatenation.(ŞáœÙ8ÁĞŞô÷,HİèRMAJORZ
+CODE_SMELL
+ksquid:S2629Ê"7Use the built-in formatting to construct this argument.(€­úÿÿÿÿHçäRMAJORZ
+CODE_SMELL
+s
+squid:S106“"9Replace this use of System.out or System.err by a logger.(€¥Àäÿÿÿÿÿ8ÁĞŞô÷,HßçRMAJORZ
+CODE_SMELL
+wsquid:S3457"AFormat specifiers should be used instead of string concatenation.(¨»Éœ8ÁĞŞô÷,HÆèRMAJORZ
+CODE_SMELL
+ˆsquid:S1192é"JDefine a constant instead of duplicating this literal "CARD_TYPE" 4 times.(ƒÂÓ€ıÿÿÿÿ8ÁĞŞô÷,H¢çRCRITICALZ
+CODE_SMELL
+wsquid:S3457®
+"AFormat specifiers should be used instead of string concatenation.(şÆİş8ÁĞŞô÷,H¾èRMAJORZ
+CODE_SMELL
+ksquid:S2629Ì"7Use the built-in formatting to construct this argument.(Èó”ŞşÿÿÿÿHµæRMAJORZ
+CODE_SMELL
+Psquid:S2111ä
+"!Use "BigDecimal.valueOf" instead.(Œ ®²8ÁĞŞô÷,H€èRMAJORZBUG
+msquid:S2629„"7Use the built-in formatting to construct this argument.(ÒÆ §8ÁĞŞô÷,HøæRMAJORZ
+CODE_SMELL
+rsquid:S2629¶"7Use the built-in formatting to construct this argument.(ßî¨Æûÿÿÿÿ8ÁĞŞô÷,HŠçRMAJORZ
+CODE_SMELL
+wsquid:S1854Û"BRemove this useless assignment to local variable "simpleJdbcCall".(Ü¾©&8ÁĞŞô÷,HïçRMAJORZ
+CODE_SMELL
+|squid:S1192‹"JDefine a constant instead of duplicating this literal "SE_NUMBER" 4 times.(â‚Ÿ H¾æRCRITICALZ
+CODE_SMELL
+usquid:S3457¼"AFormat specifiers should be used instead of string concatenation.(äñÍ”ùÿÿÿÿH—åRMAJORZ
+CODE_SMELL
+‰squid:S1192ì"PDefine a constant instead of duplicating this literal "ISSUER_BIN_CODE" 3 times.(ËËƒõ8ÁĞŞô÷,HšçRCRITICALZ
+CODE_SMELL
+ksquid:S2629©"7Use the built-in formatting to construct this argument.(Ä­š…ıÿÿÿÿHÙãRMAJORZ
+CODE_SMELL
+†squid:CommentedOutCodeLineü"<This block of commented-out lines of code should be removed.(Æƒ°Ïÿÿÿÿÿ8ÁĞŞô÷,HÍçRMAJORZ
+CODE_SMELL
+msquid:S2629›	"7Use the built-in formatting to construct this argument.(ÿÏÂ8ÁĞŞô÷,HéæRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineü"<This block of commented-out lines of code should be removed.(Ï˜ü8ÁĞŞô÷,HÔçRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine·"<This block of commented-out lines of code should be removed.(Í‘öÒûÿÿÿÿHñåRMAJORZ
+CODE_SMELL
+msquid:S2629‹	"7Use the built-in formatting to construct this argument.(¬íšÃ8ÁĞŞô÷,HçæRMAJORZ
+CODE_SMELL
+Å%squid:RedundantThrowsDeclarationCheckÆ"vRemove the declaration of thrown exception 'org.springframework.dao.DataAccessException' which is a runtime exception.(šÌ‹8ÁĞŞô÷,HÖæRMINORZ
+CODE_SMELL
+psquid:S1854Ö"5Remove this useless assignment to local variable "p".(¦è¨ÿÿÿÿÿ8ÁĞŞô÷,HñçRMAJORZ
+CODE_SMELL
+wsquid:S3457ï
+"AFormat specifiers should be used instead of string concatenation.(×„½8ÁĞŞô÷,H¿èRMAJORZ
+CODE_SMELL
+squid:S2293ì
+"YReplace the type specification in this constructor call with the diamond operator ("<>").(µ Í8ÁĞŞô÷,HÄçRMINORZ
+CODE_SMELL
+s
+squid:S106¼
+"9Replace this use of System.out or System.err by a logger.(ªÓ¼áşÿÿÿÿ8ÁĞŞô÷,HÜçRMAJORZ
+CODE_SMELL
+squid:S2293Î"YReplace the type specification in this constructor call with the diamond operator ("<>").(ÚıûÑ8ÁĞŞô÷,HÁçRMINORZ
+CODE_SMELL
+fsquid:S2629—"7Use the built-in formatting to construct this argument.(¶Ö¼øHËåRMAJORZ
+CODE_SMELL
+msquid:S2629"7Use the built-in formatting to construct this argument.(•ÔÄ8ÁĞŞô÷,HıæRMAJORZ
+CODE_SMELL
+ssquid:S1854Œ	"=Remove this useless assignment to local variable "emiAmount".(­¿’Õ8ÁĞŞô÷,HòçRMAJORZ
+CODE_SMELL
+s
+squid:S106È
+"9Replace this use of System.out or System.err by a logger.(Ğó ùÿÿÿÿ8ÁĞŞô÷,HâçRMAJORZ
+CODE_SMELL
+‰squid:S3973«"WUse curly braces or indentation to denote the code conditionally executed by this "if".(µ›¿ãH®äRCRITICALZ
+CODE_SMELL
+ksquid:S2629Æ"7Use the built-in formatting to construct this argument.(œÆ÷¦ıÿÿÿÿHÁæRMAJORZ
+CODE_SMELL
+†squid:S1192z"NDefine a constant instead of duplicating this literal "O_DEBUG_POINT" 6 times.(¢Êµ¬8ÁĞŞô÷,H©çRCRITICALZ
+CODE_SMELL
+|squid:S3457š"AFormat specifiers should be used instead of string concatenation.(åØÌ ÿÿÿÿÿ8ÁĞŞô÷,H˜èRMAJORZ
+CODE_SMELL
+wsquid:S3457ï"AFormat specifiers should be used instead of string concatenation.(ùÑ¡±8ÁĞŞô÷,HÜèRMAJORZ
+CODE_SMELL
+|squid:S3457ê	"AFormat specifiers should be used instead of string concatenation.(Œğ Şûÿÿÿÿ8ÁĞŞô÷,H¶èRMAJORZ
+CODE_SMELL
+wsquid:S3457¬"AFormat specifiers should be used instead of string concatenation.(âúøÊ8ÁĞŞô÷,HÖèRMAJORZ
+CODE_SMELL
+—squid:S2629Ú"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(Å¶§†ûÿÿÿÿ8ÁĞŞô÷,H×æRMAJORZ
+CODE_SMELL
+ksquid:S2629¹"7Use the built-in formatting to construct this argument.(€­úÿÿÿÿHôãRMAJORZ
+CODE_SMELL
+Zsquid:S2129µ	"$Remove this "BigDecimal" constructor(ˆÙÿû8ÁĞŞô÷,HèRMAJORZ
+CODE_SMELL
+usquid:S3457¥"AFormat specifiers should be used instead of string concatenation.(«Ÿ‹÷úÿÿÿÿHåRMAJORZ
+CODE_SMELL
+lsquid:S2629›"7Use the built-in formatting to construct this argument.(¡óÕR8ÁĞŞô÷,HüæRMAJORZ
+CODE_SMELL
+m
+squid:S106Í
+"9Replace this use of System.out or System.err by a logger.(šû°t8ÁĞŞô÷,HãçRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineÄ"<This block of commented-out lines of code should be removed.(äÄœµùÿÿÿÿHÒåRMAJORZ
+CODE_SMELL
+wsquid:S3457Ş"AFormat specifiers should be used instead of string concatenation.(Ä¸µ–8ÁĞŞô÷,HÏèRMAJORZ
+CODE_SMELL
+ksquid:S2629Î"7Use the built-in formatting to construct this argument.(çäÀ¤ùÿÿÿÿH‚äRMAJORZ
+CODE_SMELL
+ˆsquid:S00117â"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(¦û•É8ÁĞŞô÷,HıçRMINORZ
+CODE_SMELL
+‚squid:S1192}"QDefine a constant instead of duplicating this literal "O_TERMINAL_SWAPP" 4 times.(ÈÜÒHåRCRITICALZ
+CODE_SMELL
+squid:S1192¶"RDefine a constant instead of duplicating this literal "SqlCode from Sp :" 4 times.(Ä­š…ıÿÿÿÿ8ÁĞŞô÷,H¯çRCRITICALZ
+CODE_SMELL
+s
+squid:S106¿
+"9Replace this use of System.out or System.err by a logger.(ªÓ¼áşÿÿÿÿ8ÁĞŞô÷,H×çRMAJORZ
+CODE_SMELL
+wsquid:S3457ô"AFormat specifiers should be used instead of string concatenation.(§ÛºŞ8ÁĞŞô÷,H“èRMAJORZ
+CODE_SMELL
+Œsquid:S1192Ù	"NDefine a constant instead of duplicating this literal "CASH_BACK_CAP" 3 times.(ªÒù®ùÿÿÿÿ8ÁĞŞô÷,HœçRCRITICALZ
+CODE_SMELL
+wsquid:S3457Ë"AFormat specifiers should be used instead of string concatenation.(ºªÀ‚8ÁĞŞô÷,H èRMAJORZ
+CODE_SMELL
+€squid:CommentedOutCodeLine "<This block of commented-out lines of code should be removed.(ã!8ÁĞŞô÷,HÆçRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine‰"<This block of commented-out lines of code should be removed.(ÿò§§HïäRMAJORZ
+CODE_SMELL
+fsquid:S2629´"7Use the built-in formatting to construct this argument.(Ôî»òH”åRMAJORZ
+CODE_SMELL
+»squid:S2681­"†This line will not be executed conditionally; only the first line of this 2-line block will be. The rest will execute unconditionally.(‡‚™ÆüÿÿÿÿH«äRMAJORZ
+CODE_SMELL
+hsquid:S1481ı"-Remove this unused "maxValue" local variable.(‡ÉÔ¾ıÿÿÿÿ8ÁĞŞô÷,HêçRMINORZ
+CODE_SMELL
+squid:CommentedOutCodeLine°"<This block of commented-out lines of code should be removed.(¾´ìÒøÿÿÿÿH¤äRMAJORZ
+CODE_SMELL
+‰squid:S3973µ"WUse curly braces or indentation to denote the code conditionally executed by this "if".(µ›¿ãH´åRCRITICALZ
+CODE_SMELL
+msquid:S2629Ş"7Use the built-in formatting to construct this argument.(Ä¸µ–8ÁĞŞô÷,HƒçRMAJORZ
+CODE_SMELL
+rsquid:S2629Æ"7Use the built-in formatting to construct this argument.(ÏâËæøÿÿÿÿ8ÁĞŞô÷,H€çRMAJORZ
+CODE_SMELL
+×%squid:RedundantThrowsDeclarationCheckà
+"Remove the declaration of thrown exception 'com.awl.tch.exceptions.TCHQueryException', as it cannot be thrown from method's body.(Ïüì‹ûÿÿÿÿ8ÁĞŞô÷,HÕæRMINORZ
+CODE_SMELL
+rsquid:S2629È"7Use the built-in formatting to construct this argument.(¤¦°Óøÿÿÿÿ8ÁĞŞô÷,HÛæRMAJORZ
+CODE_SMELL
+wsquid:S3457ß"AFormat specifiers should be used instead of string concatenation.(ºË¾À8ÁĞŞô÷,HĞèRMAJORZ
+CODE_SMELL
+„squid:S1192u"LDefine a constant instead of duplicating this literal "O_TXN_COUNT" 6 times.(ïİ8ÁĞŞô÷,H¥çRCRITICALZ
+CODE_SMELL
+|squid:S3457‘
+"AFormat specifiers should be used instead of string concatenation.(şŠåÚûÿÿÿÿ8ÁĞŞô÷,H¹èRMAJORZ
+CODE_SMELL
+ˆsquid:S1192ö"ODefine a constant instead of duplicating this literal "PAN_ENTRY_MODE" 4 times.(Ñ‹ç8ÁĞŞô÷,HŸçRCRITICALZ
+CODE_SMELL
+|squid:S3457©"AFormat specifiers should be used instead of string concatenation.(Û‘Ş¬ùÿÿÿÿ8ÁĞŞô÷,H§èRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine¼"<This block of commented-out lines of code should be removed.(¹œÀÇ8ÁĞŞô÷,HĞçRMAJORZ
+CODE_SMELL
+usquid:S3457˜"AFormat specifiers should be used instead of string concatenation.(ª‘³ÿÿÿÿÿH·åRMAJORZ
+CODE_SMELL
+rsquid:S2629€"7Use the built-in formatting to construct this argument.(†Üÿÿÿÿÿ8ÁĞŞô÷,HçRMAJORZ
+CODE_SMELL
+†squid:CommentedOutCodeLine·"<This block of commented-out lines of code should be removed.(òÂ¾¨ÿÿÿÿÿ8ÁĞŞô÷,HËçRMAJORZ
+CODE_SMELL
+†squid:CommentedOutCodeLine½	"<This block of commented-out lines of code should be removed.(Öƒ¶÷ùÿÿÿÿ8ÁĞŞô÷,HÎçRMAJORZ
+CODE_SMELL
+ksquid:S2629¼"7Use the built-in formatting to construct this argument.(äñÍ”ùÿÿÿÿHåRMAJORZ
+CODE_SMELL
+wsquid:S3457„"AFormat specifiers should be used instead of string concatenation.(ÒÆ §8ÁĞŞô÷,HÃèRMAJORZ
+CODE_SMELL
+”squid:S2293Ò	"YReplace the type specification in this constructor call with the diamond operator ("<>").(ÃâªËûÿÿÿÿ8ÁĞŞô÷,HÂçRMINORZ
+CODE_SMELL
+gsquid:S1197à"8Move the array designator from the variable to the type.(°±üËHÛäRMINORZ
+CODE_SMELL
+msquid:S2629ö"7Use the built-in formatting to construct this argument.(ñ»Ğ8ÁĞŞô÷,HàæRMAJORZ
+CODE_SMELL
+msquid:S2629Š	"7Use the built-in formatting to construct this argument.(‹È¨œ8ÁĞŞô÷,HææRMAJORZ
+CODE_SMELL
+msquid:S2629ß"7Use the built-in formatting to construct this argument.(ºË¾À8ÁĞŞô÷,H„çRMAJORZ
+CODE_SMELL
+psquid:S3457ª"AFormat specifiers should be used instead of string concatenation.(üâ»H¬æRMAJORZ
+CODE_SMELL
+lsquid:S2629¨
+"7Use the built-in formatting to construct this argument.(Âäİ	8ÁĞŞô÷,HñæRMAJORZ
+CODE_SMELL
+squid:S2629‘"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(ä»öÿÿÿÿÿH¾äRMAJORZ
+CODE_SMELL
+‚squid:S1192ˆ"KDefine a constant instead of duplicating this literal "dataSource" 4 times.(‹ÁÌÚûÿÿÿÿHıäRCRITICALZ
+CODE_SMELL
+psquid:S3457 "AFormat specifiers should be used instead of string concatenation.(ÎÉ”HÿäRMAJORZ
+CODE_SMELL
+vsquid:S3457¨
+"AFormat specifiers should be used instead of string concatenation.(Âäİ	8ÁĞŞô÷,H»èRMAJORZ
+CODE_SMELL
+psquid:S3457Á"AFormat specifiers should be used instead of string concatenation.(¬ö¶ëH‰æRMAJORZ
+CODE_SMELL
+‡squid:S1192€"PDefine a constant instead of duplicating this literal "O_DOWNLOAD_TIME" 4 times.(£Œ–úÿÿÿÿH€æRCRITICALZ
+CODE_SMELL
+|squid:S3457‚"AFormat specifiers should be used instead of string concatenation.(Í®¦ªüÿÿÿÿ8ÁĞŞô÷,HÑèRMAJORZ
+CODE_SMELL
+ˆsquid:S3776p"RRefactor this method to reduce its Cognitive Complexity from 81 to the 15 allowed.(µú„ÉşÿÿÿÿHÃåRCRITICALZ
+CODE_SMELL
+Œsquid:S1192¦"NDefine a constant instead of duplicating this literal "PRODUCTMINMRP" 3 times.(îÛúÂüÿÿÿÿ8ÁĞŞô÷,H¦çRCRITICALZ
+CODE_SMELL
+usquid:S3457É"AFormat specifiers should be used instead of string concatenation.(å¡ÔÉùÿÿÿÿH¹äRMAJORZ
+CODE_SMELL
+’squid:S2629Ô	"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(¼ë‚8ÁĞŞô÷,HëæRMAJORZ
+CODE_SMELL
+|squid:S3457­
+"AFormat specifiers should be used instead of string concatenation.(Ñ‡è²ùÿÿÿÿ8ÁĞŞô÷,H½èRMAJORZ
+CODE_SMELL
+Psquid:S2111æ
+"!Use "BigDecimal.valueOf" instead.(ë¦¤Î8ÁĞŞô÷,HƒèRMAJORZBUG
+vsquid:S3457Œ"AFormat specifiers should be used instead of string concatenation.(ÆŸ‹8ÁĞŞô÷,HÅèRMAJORZ
+CODE_SMELL
+ksquid:S2629¸"7Use the built-in formatting to construct this argument.(å¡ÔÉùÿÿÿÿH×ãRMAJORZ
+CODE_SMELL
+‘squid:S1192r"YDefine a constant instead of duplicating this literal "I_TERMINAL_SERIAL_NUMBER" 8 times.(®¸œÌ8ÁĞŞô÷,H”çRCRITICALZ
+CODE_SMELL
+wsquid:S3457³"AFormat specifiers should be used instead of string concatenation.(ïî¯Ÿ8ÁĞŞô÷,H×èRMAJORZ
+CODE_SMELL
+msquid:S1854Ï">Remove this useless assignment to local variable "paymentDto".(¨Õ—ËH®æRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine¼"<This block of commented-out lines of code should be removed.(Ê¿À¼ùÿÿÿÿH›äRMAJORZ
+CODE_SMELL
+wsquid:S3457ª"AFormat specifiers should be used instead of string concatenation.(–’ìë8ÁĞŞô÷,H¨èRMAJORZ
+CODE_SMELL
+n
+squid:S106"9Replace this use of System.out or System.err by a logger.(™€·÷8ÁĞŞô÷,HÚçRMAJORZ
+CODE_SMELL
+usquid:S3457Ì"AFormat specifiers should be used instead of string concatenation.(Èó”ŞşÿÿÿÿHöãRMAJORZ
+CODE_SMELL
+squid:S1192"PDefine a constant instead of duplicating this literal "EMI_MIN_TRN_CAP" 3 times.(‚ı¾üşÿÿÿÿ8ÁĞŞô÷,HçRCRITICALZ
+CODE_SMELL
+wsquid:S3457	"AFormat specifiers should be used instead of string concatenation.(´«’¢8ÁĞŞô÷,H®èRMAJORZ
+CODE_SMELL
+usquid:S3457Ê"AFormat specifiers should be used instead of string concatenation.(€­úÿÿÿÿHƒæRMAJORZ
+CODE_SMELL
+ksquid:S2629Ç"7Use the built-in formatting to construct this argument.(Ä­š…ıÿÿÿÿH’äRMAJORZ
+CODE_SMELL
+vsquid:S3457	"AFormat specifiers should be used instead of string concatenation.(Ú³Û8ÁĞŞô÷,H°èRMAJORZ
+CODE_SMELL
+|squid:S3457¹"AFormat specifiers should be used instead of string concatenation.(‘Óäıÿÿÿÿ8ÁĞŞô÷,HšèRMAJORZ
+CODE_SMELL
+fsquid:S2629È"7Use the built-in formatting to construct this argument.(üâ»H²äRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine¤"<This block of commented-out lines of code should be removed.(Ô¼”›ùÿÿÿÿH“äRMAJORZ
+CODE_SMELL
+ysquid:CommentedOutCodeLineÚ"<This block of commented-out lines of code should be removed.(ã!HåäRMAJORZ
+CODE_SMELL
+psquid:S3457°"AFormat specifiers should be used instead of string concatenation.(¬ö¶ëHíãRMAJORZ
+CODE_SMELL
+ksquid:S2629«"7Use the built-in formatting to construct this argument.(å¡ÔÉùÿÿÿÿH™åRMAJORZ
+CODE_SMELL
+msquid:S2629á"7Use the built-in formatting to construct this argument.(©¿²ñ8ÁĞŞô÷,HÙæRMAJORZ
+CODE_SMELL
+s
+squid:S106½
+"9Replace this use of System.out or System.err by a logger.(ªÓ¼áşÿÿÿÿ8ÁĞŞô÷,HİçRMAJORZ
+CODE_SMELL
+rsquid:S2629ø"7Use the built-in formatting to construct this argument.(È£ùÇıÿÿÿÿ8ÁĞŞô÷,HçRMAJORZ
+CODE_SMELL
+ssquid:S3878ì"8Remove this array creation and simply pass the elements.(ùÅÛ¥ûÿÿÿÿ8ÁĞŞô÷,HÅçRMINORZ
+CODE_SMELL
+Œsquid:S3776’"SRefactor this method to reduce its Cognitive Complexity from 106 to the 15 allowed.(Å£äÌ8ÁĞŞô÷,HìçRCRITICALZ
+CODE_SMELL
+psquid:S3457ç"AFormat specifiers should be used instead of string concatenation.(ğï´áH”æRMAJORZ
+CODE_SMELL
+‘squid:S3776à
+"SRefactor this method to reduce its Cognitive Complexity from 102 to the 15 allowed.(Ïüì‹ûÿÿÿÿ8ÁĞŞô÷,HíçRCRITICALZ
+CODE_SMELL
+wsquid:S3457–"AFormat specifiers should be used instead of string concatenation.(ßš8ÁĞŞô÷,HÕèRMAJORZ
+CODE_SMELL
+usquid:S3457»"AFormat specifiers should be used instead of string concatenation.(Èó”ŞşÿÿÿÿHêãRMAJORZ
+CODE_SMELL
+vsquid:S3457‚"AFormat specifiers should be used instead of string concatenation.(ÌĞıZ8ÁĞŞô÷,HÂèRMAJORZ
+CODE_SMELL
+wsquid:S1854€"<Remove this useless assignment to local variable "maxValue".(Ë×¦Ëúÿÿÿÿ8ÁĞŞô÷,HğçRMAJORZ
+CODE_SMELL
+usquid:S3457Ç"AFormat specifiers should be used instead of string concatenation.(Ä­š…ıÿÿÿÿH…åRMAJORZ
+CODE_SMELL
+Œsquid:S1192£"NDefine a constant instead of duplicating this literal "PRODUCTMAXMRP" 3 times.(µÜ­Çÿÿÿÿÿ8ÁĞŞô÷,HçRCRITICALZ
+CODE_SMELL
+wsquid:S3457­"AFormat specifiers should be used instead of string concatenation.(ïî¯Ÿ8ÁĞŞô÷,HØèRMAJORZ
+CODE_SMELL
+‡squid:S1192µ"IDefine a constant instead of duplicating this literal "RTM_FLAG" 4 times.(æÃµüÿÿÿÿ8ÁĞŞô÷,H°çRCRITICALZ
+CODE_SMELL
+fsquid:S2629·"7Use the built-in formatting to construct this argument.(üâ»HûäRMAJORZ
+CODE_SMELL
+s
+squid:S106¾
+"9Replace this use of System.out or System.err by a logger.(ªÓ¼áşÿÿÿÿ8ÁĞŞô÷,HŞçRMAJORZ
+CODE_SMELL
+‰squid:S1192y"QDefine a constant instead of duplicating this literal "O_APP_ERROR_CODE" 8 times.(û±ÿ©8ÁĞŞô÷,H³çRCRITICALZ
+CODE_SMELL
+|squid:S3457Ÿ"AFormat specifiers should be used instead of string concatenation.(•ıÅÿÿÿÿÿ8ÁĞŞô÷,H”èRMAJORZ
+CODE_SMELL
+_squid:S2129û
+"$Remove this "BigDecimal" constructor(Á§•¿şÿÿÿÿ8ÁĞŞô÷,HˆèRMAJORZ
+CODE_SMELL
+|squid:S3457ş
+"AFormat specifiers should be used instead of string concatenation.(“ÿ™¨ùÿÿÿÿ8ÁĞŞô÷,HÁèRMAJORZ
+CODE_SMELL
+usquid:S3457¶"AFormat specifiers should be used instead of string concatenation.(Ä­š…ıÿÿÿÿH¨åRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine¼"<This block of commented-out lines of code should be removed.(çåä¨HÛåRMAJORZ
+CODE_SMELL
+msquid:S2629…"7Use the built-in formatting to construct this argument.(™»ş½8ÁĞŞô÷,H†çRMAJORZ
+CODE_SMELL
+msquid:S2629ª"7Use the built-in formatting to construct this argument.(–’ìë8ÁĞŞô÷,HâæRMAJORZ
+CODE_SMELL
+ksquid:S1854¼	"5Remove this useless assignment to local variable "t".(©¯ıƒ8ÁĞŞô÷,HôçRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine®"<This block of commented-out lines of code should be removed.(Ô¼”›ùÿÿÿÿHœåRMAJORZ
+CODE_SMELL
+usquid:S3457™"AFormat specifiers should be used instead of string concatenation.(ä»öÿÿÿÿÿHÇåRMAJORZ
+CODE_SMELL
+s
+squid:S106À
+"9Replace this use of System.out or System.err by a logger.(ó¹ıÿÿÿÿ8ÁĞŞô÷,HåçRMAJORZ
+CODE_SMELL
+n
+squid:S106"9Replace this use of System.out or System.err by a logger.(£Ø¦À8ÁĞŞô÷,HàçRMAJORZ
+CODE_SMELL
+jsquid:S1066ô
+"/Merge this if statement with the enclosing one.(¢­´üÿÿÿÿ8ÁĞŞô÷,H»çRMAJORZ
+CODE_SMELL
+lsquid:S2629Ü"7Use the built-in formatting to construct this argument.(Úá»8ÁĞŞô÷,HØæRMAJORZ
+CODE_SMELL
+Psquid:S2111Ï"!Use "BigDecimal.valueOf" instead.(ûÕÅ¸8ÁĞŞô÷,HèRMAJORZBUG
+squid:S00117¶
+"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(æı·äüÿÿÿÿ8ÁĞŞô÷,HüçRMINORZ
+CODE_SMELL
+csquid:S1066“"/Merge this if statement with the enclosing one.(Ç›ÓŒúÿÿÿÿHÁåRMAJORZ
+CODE_SMELL
+„squid:S1192î"KDefine a constant instead of duplicating this literal "TIPPERCENT" 8 times.(İ¾Šë8ÁĞŞô÷,H±çRCRITICALZ
+CODE_SMELL
+psquid:S3457•"AFormat specifiers should be used instead of string concatenation.(¶Ö¼øHäRMAJORZ
+CODE_SMELL
+lsquid:S2629Œ"7Use the built-in formatting to construct this argument.(ÆŸ‹8ÁĞŞô÷,HúæRMAJORZ
+CODE_SMELL
+|squid:S3457Í"AFormat specifiers should be used instead of string concatenation.(ğ˜Ñøûÿÿÿÿ8ÁĞŞô÷,HÍèRMAJORZ
+CODE_SMELL
+‹squid:S1192ƒ"MDefine a constant instead of duplicating this literal "C_APP_CONFIG" 4 times.(ÍòÀìÿÿÿÿÿ8ÁĞŞô÷,H£çRCRITICALZ
+CODE_SMELL
+squid:S2629™"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(ä»öÿÿÿÿÿHÈåRMAJORZ
+CODE_SMELL
+‰squid:S1192w"LDefine a constant instead of duplicating this literal "O_CLIENT_ID" 4 times.(İã¤¸ùÿÿÿÿ8ÁĞŞô÷,HµçRCRITICALZ
+CODE_SMELL
+|squid:S3457È"AFormat specifiers should be used instead of string concatenation.(¤¦°Óøÿÿÿÿ8ÁĞŞô÷,HèRMAJORZ
+CODE_SMELL
+ˆsquid:S2293Ë"YReplace the type specification in this constructor call with the diamond operator ("<>").(çÍ·¾HÖãRMINORZ
+CODE_SMELL
+|squid:S3457İ"AFormat specifiers should be used instead of string concatenation.(ç©ºãıÿÿÿÿ8ÁĞŞô÷,HÎèRMAJORZ
+CODE_SMELL
+»squid:S2681·"†This line will not be executed conditionally; only the first line of this 2-line block will be. The rest will execute unconditionally.(‡‚™ÆüÿÿÿÿHŒåRMAJORZ
+CODE_SMELL
+_squid:S2129ã
+"$Remove this "BigDecimal" constructor(™ùÌ¸øÿÿÿÿ8ÁĞŞô÷,HèRMAJORZ
+CODE_SMELL
+usquid:S1854Ã
+"?Remove this useless assignment to local variable "intPerMonth".(¾Œ¸æ8ÁĞŞô÷,H÷çRMAJORZ
+CODE_SMELL
+psquid:S3457Ğ"AFormat specifiers should be used instead of string concatenation.(ì­üµH‚åRMAJORZ
+CODE_SMELL
+fsquid:S2629Å"7Use the built-in formatting to construct this argument.(Ôî»òHŞåRMAJORZ
+CODE_SMELL
+Usquid:S2111å
+"!Use "BigDecimal.valueOf" instead.(‰İ¹Üüÿÿÿÿ8ÁĞŞô÷,H‚èRMAJORZBUG
+squid:S2629"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(Å¶§†ûÿÿÿÿHÕåRMAJORZ
+CODE_SMELL
+fsquid:S2629•"7Use the built-in formatting to construct this argument.(¶Ö¼øHÙäRMAJORZ
+CODE_SMELL
+—squid:S2629Í"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(•ˆàûÿÿÿÿ8ÁĞŞô÷,HãæRMAJORZ
+CODE_SMELL
+rsquid:S2629º	"7Use the built-in formatting to construct this argument.(­ıŞ„üÿÿÿÿ8ÁĞŞô÷,HêæRMAJORZ
+CODE_SMELL
+lsquid:S2629‰"7Use the built-in formatting to construct this argument.(Ò¶šs8ÁĞŞô÷,HùæRMAJORZ
+CODE_SMELL
+rsquid:S2629¹"7Use the built-in formatting to construct this argument.(’õ³ıùÿÿÿÿ8ÁĞŞô÷,HşæRMAJORZ
+CODE_SMELL
+fsquid:S2629ª"7Use the built-in formatting to construct this argument.(üâ»HÿãRMAJORZ
+CODE_SMELL
+Œsquid:S1192†	"NDefine a constant instead of duplicating this literal "DISCOUNT_FLAG" 3 times.(¡¸Ô—úÿÿÿÿ8ÁĞŞô÷,H¶çRCRITICALZ
+CODE_SMELL
+|squid:S3457™"AFormat specifiers should be used instead of string concatenation.(…Ã´ğÿÿÿÿÿ8ÁĞŞô÷,H¦èRMAJORZ
+CODE_SMELL
+vsquid:S3457Ä"AFormat specifiers should be used instead of string concatenation.(ï—¨f8ÁĞŞô÷,H›èRMAJORZ
+CODE_SMELL
+msquid:S2629–"7Use the built-in formatting to construct this argument.(ßš8ÁĞŞô÷,H‰çRMAJORZ
+CODE_SMELL
+ksquid:S2629¶"7Use the built-in formatting to construct this argument.(Ä­š…ıÿÿÿÿHÎãRMAJORZ
+CODE_SMELL
+|squid:S3457í	"AFormat specifiers should be used instead of string concatenation.(ßÜ’¹ùÿÿÿÿ8ÁĞŞô÷,H·èRMAJORZ
+CODE_SMELL
+jsquid:S1066§"/Merge this if statement with the enclosing one.(ù©Â°ıÿÿÿÿ8ÁĞŞô÷,HºçRMAJORZ
+CODE_SMELL
+fsquid:S2629Á"7Use the built-in formatting to construct this argument.(¬ö¶ëH‚æRMAJORZ
+CODE_SMELL
+”squid:S1192Ö	"VDefine a constant instead of duplicating this literal "CASH_BACK_FLAT_AMOUNT" 3 times.(†İÔäûÿÿÿÿ8ÁĞŞô÷,H²çRCRITICALZ
+CODE_SMELL
+‹squid:S1192t"NDefine a constant instead of duplicating this literal "O_MERCHANT_ID" 4 times.(“…êÕùÿÿÿÿ8ÁĞŞô÷,H‘çRCRITICALZ
+CODE_SMELL
+rsquid:S2629‰"7Use the built-in formatting to construct this argument.(Ğïì¥üÿÿÿÿ8ÁĞŞô÷,H‡çRMAJORZ
+CODE_SMELL
+esquid:S1066˜"/Merge this if statement with the enclosing one.(÷¡×˜8ÁĞŞô÷,H·çRMAJORZ
+CODE_SMELL
+ksquid:S2629É"7Use the built-in formatting to construct this argument.(å¡ÔÉùÿÿÿÿHïåRMAJORZ
+CODE_SMELL
+psquid:S1854È	":Remove this useless assignment to local variable "tenArr".(°®şâ8ÁĞŞô÷,HõçRMAJORZ
+CODE_SMELL
+msquid:S2629é"7Use the built-in formatting to construct this argument.(ê˜¾Ä8ÁĞŞô÷,HŒçRMAJORZ
+CODE_SMELL
+rsquid:S2629ê	"7Use the built-in formatting to construct this argument.(Œğ Şûÿÿÿÿ8ÁĞŞô÷,HíæRMAJORZ
+CODE_SMELL
+†squid:S1192²"HDefine a constant instead of duplicating this literal "NAC_VAL" 4 times.(¡“ ³úÿÿÿÿ8ÁĞŞô÷,H˜çRCRITICALZ
+CODE_SMELL
+rsquid:S2629İ"7Use the built-in formatting to construct this argument.(ç©ºãıÿÿÿÿ8ÁĞŞô÷,H‚çRMAJORZ
+CODE_SMELL
+†squid:CommentedOutCodeLine€"<This block of commented-out lines of code should be removed.(éØ»Úûÿÿÿÿ8ÁĞŞô÷,HÉçRMAJORZ
+CODE_SMELL
+psquid:S3457·"AFormat specifiers should be used instead of string concatenation.(üâ»HÅæRMAJORZ
+CODE_SMELL
+msquid:S2629©
+"7Use the built-in formatting to construct this argument.(º•ø°8ÁĞŞô÷,HòæRMAJORZ
+CODE_SMELL
+wsquid:S3457›	"AFormat specifiers should be used instead of string concatenation.(ÿÏÂ8ÁĞŞô÷,H¯èRMAJORZ
+CODE_SMELL
+ˆsquid:S00117¤
+"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(‚éŸÓ8ÁĞŞô÷,HûçRMINORZ
+CODE_SMELL
+‡squid:S2293ä"YReplace the type specification in this constructor call with the diamond operator ("<>").(¥ø"HùãRMINORZ
+CODE_SMELL
+Zsquid:S2129æ
+"$Remove this "BigDecimal" constructor(ë¦¤Î8ÁĞŞô÷,H‹èRMAJORZ
+CODE_SMELL
+€squid:CommentedOutCodeLineÂ"<This block of commented-out lines of code should be removed.(ÖÆØ|8ÁĞŞô÷,HÑçRMAJORZ
+CODE_SMELL
+wsquid:S3457Š	"AFormat specifiers should be used instead of string concatenation.(‹È¨œ8ÁĞŞô÷,H¬èRMAJORZ
+CODE_SMELL
+usquid:S3457Ø"AFormat specifiers should be used instead of string concatenation.(•ıÅÿÿÿÿÿH†äRMAJORZ
+CODE_SMELL
+rsquid:S2629Í"7Use the built-in formatting to construct this argument.(ğ˜Ñøûÿÿÿÿ8ÁĞŞô÷,HçRMAJORZ
+CODE_SMELL
+Âsquid:S2681 "†This line will not be executed conditionally; only the first line of this 2-line block will be. The rest will execute unconditionally.(•Ÿ‡Äşÿÿÿÿ8ÁĞŞô÷,HéçRMAJORZ
+CODE_SMELL
+wsquid:S3457ñ	"AFormat specifiers should be used instead of string concatenation.(î†ÎĞ8ÁĞŞô÷,H¸èRMAJORZ
+CODE_SMELL
+…squid:S1192~"NDefine a constant instead of duplicating this literal "O_DAILY_LIMIT" 6 times.(»ÃÍ+8ÁĞŞô÷,H§çRCRITICALZ
+CODE_SMELL
+psquid:S3457—"AFormat specifiers should be used instead of string concatenation.(¶Ö¼øH°åRMAJORZ
+CODE_SMELL
+psquid:S3457Å"AFormat specifiers should be used instead of string concatenation.(Ôî»òH¤åRMAJORZ
+CODE_SMELL
+psquid:S3457Ï"AFormat specifiers should be used instead of string concatenation.(â›ÑHòãRMAJORZ
+CODE_SMELL
+usquid:S3457µ"AFormat specifiers should be used instead of string concatenation.(œÆ÷¦ıÿÿÿÿH˜åRMAJORZ
+CODE_SMELL
+rsquid:S2629à"7Use the built-in formatting to construct this argument.(Ä­š…ıÿÿÿÿ8ÁĞŞô÷,HİæRMAJORZ
+CODE_SMELL
+ksquid:S2629µ"7Use the built-in formatting to construct this argument.(œÆ÷¦ıÿÿÿÿH»åRMAJORZ
+CODE_SMELL
+rsquid:S2629À"7Use the built-in formatting to construct this argument.(òê–Åøÿÿÿÿ8ÁĞŞô÷,HÿæRMAJORZ
+CODE_SMELL
+rsquid:S2629‚"7Use the built-in formatting to construct this argument.(Í®¦ªüÿÿÿÿ8ÁĞŞô÷,H…çRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineÄ"<This block of commented-out lines of code should be removed.(òĞ¼›8ÁĞŞô÷,HÌçRMAJORZ
+CODE_SMELL
+|squid:S3457ğ"AFormat specifiers should be used instead of string concatenation.(¯½¤¾ùÿÿÿÿ8¢”êô÷,HåèRMAJORZ
+CODE_SMELL
+šsquid:S1192‘"\Define a constant instead of duplicating this literal "I_TERMINAL_SERIAL_NUMBER: [" 4 times.(ä»öÿÿÿÿÿ8ÁĞŞô÷,H“çRCRITICALZ
+CODE_SMELL
+s
+squid:S106»
+"9Replace this use of System.out or System.err by a logger.(®ÚİÓşÿÿÿÿ8ÁĞŞô÷,HäçRMAJORZ
+CODE_SMELL
+|squid:S3457¸"AFormat specifiers should be used instead of string concatenation.(ÑÕ½Úÿÿÿÿÿ8ÁĞŞô÷,H™èRMAJORZ
+CODE_SMELL
+squid:S2293®"YReplace the type specification in this constructor call with the diamond operator ("<>").(¥ø"8ÁĞŞô÷,H¿çRMINORZ
+CODE_SMELL
+|squid:S3457Í"AFormat specifiers should be used instead of string concatenation.(•ˆàûÿÿÿÿ8ÁĞŞô÷,H©èRMAJORZ
+CODE_SMELL
+|squid:S3457ø"AFormat specifiers should be used instead of string concatenation.(È£ùÇıÿÿÿÿ8ÁĞŞô÷,HŞèRMAJORZ
+CODE_SMELL
+lsquid:S2629‚"7Use the built-in formatting to construct this argument.(ÌĞıZ8ÁĞŞô÷,H÷æRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineÑ"<This block of commented-out lines of code should be removed.(åûªÉøÿÿÿÿHèäRMAJORZ
+CODE_SMELL
+„squid:S1854¿"IRemove this useless assignment to local variable "cashBackPercentageAmt".(‹¤é ıÿÿÿÿ8ÁĞŞô÷,HøçRMAJORZ
+CODE_SMELL
+rsquid:S2629â"7Use the built-in formatting to construct this argument.(å¡ÔÉùÿÿÿÿ8ÁĞŞô÷,HßæRMAJORZ
+CODE_SMELL
+wsquid:S3457á"AFormat specifiers should be used instead of string concatenation.(üâ»8ÁĞŞô÷,H¢èRMAJORZ
+CODE_SMELL
+wsquid:S3457…"AFormat specifiers should be used instead of string concatenation.(™»ş½8ÁĞŞô÷,HÒèRMAJORZ
+CODE_SMELL
+…squid:S1192	"LDefine a constant instead of duplicating this literal "TENURE_CODE" 3 times.(¬º›ˆ8ÁĞŞô÷,H®çRCRITICALZ
+CODE_SMELL
+|squid:S3457¹"AFormat specifiers should be used instead of string concatenation.(’õ³ıùÿÿÿÿ8ÁĞŞô÷,HÉèRMAJORZ
+CODE_SMELL
+ksquid:S2629±"7Use the built-in formatting to construct this argument.(”çÜ˜ÿÿÿÿÿHäRMAJORZ
+CODE_SMELL
+vsquid:S1854«"@Remove this useless assignment to local variable "proFeeAmount".(ƒÒª8ÁĞŞô÷,HùçRMAJORZ
+CODE_SMELL
+†squid:CommentedOutCodeLine"<This block of commented-out lines of code should be removed.(‡¹óŸøÿÿÿÿ8ÁĞŞô÷,HÈçRMAJORZ
+CODE_SMELL
+rsquid:S2629Á"7Use the built-in formatting to construct this argument.(è­÷ûÿÿÿÿ8ÁĞŞô÷,H‹çRMAJORZ
+CODE_SMELL
+squid:S1192Ø	"RDefine a constant instead of duplicating this literal "CASH_BACK_PERCENT" 4 times.(‘Åü‡ÿÿÿÿÿ8ÁĞŞô÷,HçRCRITICALZ
+CODE_SMELL
+fsquid:S2629°"7Use the built-in formatting to construct this argument.(¬ö¶ëHÑåRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLine‡"<This block of commented-out lines of code should be removed.(²ÔãÃ8ÁĞŞô÷,HÇçRMAJORZ
+CODE_SMELL
+n
+squid:S106Ë
+"9Replace this use of System.out or System.err by a logger.(»°ÍÓ8ÁĞŞô÷,HæçRMAJORZ
+CODE_SMELL
+Zsquid:S2129ç
+"$Remove this "BigDecimal" constructor(ÑÔ¨š8ÁĞŞô÷,H‘èRMAJORZ
+CODE_SMELL
+|squid:S3457Æ"AFormat specifiers should be used instead of string concatenation.(ÏâËæøÿÿÿÿ8ÁĞŞô÷,HÌèRMAJORZ
+CODE_SMELL
+|squid:S3457‰"AFormat specifiers should be used instead of string concatenation.(Ğïì¥üÿÿÿÿ8ÁĞŞô÷,HÓèRMAJORZ
+CODE_SMELL
+—squid:S2629í	"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(ßÜ’¹ùÿÿÿÿ8ÁĞŞô÷,HîæRMAJORZ
+CODE_SMELL
+tsquid:S1155ì	">Use isEmpty() to check whether the collection is empty or not.(ıºŠŠ8ÁĞŞô÷,HàèRMINORZ
+CODE_SMELL
+squid:CommentedOutCodeLine²"<This block of commented-out lines of code should be removed.(¤œë³8ÁĞŞô÷,HÕçRMAJORZ
+CODE_SMELL
+Šsquid:S1192‚"QDefine a constant instead of duplicating this literal "C_TERMINAL_PARAM" 4 times.(˜ñ¤8ÁĞŞô÷,H¨çRCRITICALZ
+CODE_SMELL
+wsquid:S3457ƒ	"AFormat specifiers should be used instead of string concatenation.(ê­Ä­8ÁĞŞô÷,HªèRMAJORZ
+CODE_SMELL
+ˆsquid:S1192x"KDefine a constant instead of duplicating this literal "O_SQL_CODE" 8 times.(¼ìïÆùÿÿÿÿ8ÁĞŞô÷,H›çRCRITICALZ
+CODE_SMELL
+rsquid:S2589÷"7Remove this expression which always evaluates to "true"(Éçºüÿÿÿÿ8ÁĞŞô÷,HèçRMAJORZ
+CODE_SMELL
+usquid:S3457"AFormat specifiers should be used instead of string concatenation.(Å¶§†ûÿÿÿÿH¢äRMAJORZ
+CODE_SMELL
+wsquid:S3457Ç"AFormat specifiers should be used instead of string concatenation.(İ‘®ã8ÁĞŞô÷,HœèRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineœ"<This block of commented-out lines of code should be removed.(›²‘ÛüÿÿÿÿH·æRMAJORZ
+CODE_SMELL
+usquid:S3457–"AFormat specifiers should be used instead of string concatenation.(‘ÓäıÿÿÿÿH¡æRMAJORZ
+CODE_SMELL
+|squid:S3457Ê"AFormat specifiers should be used instead of string concatenation.(Éë¼¤ÿÿÿÿÿ8ÁĞŞô÷,HŸèRMAJORZ
+CODE_SMELL
+esquid:S2629²"7Use the built-in formatting to construct this argument.(¯¤ş5HäãRMAJORZ
+CODE_SMELL
+usquid:S3457‘"AFormat specifiers should be used instead of string concatenation.(ä»öÿÿÿÿÿH¬åRMAJORZ
+CODE_SMELL
+usquid:S3457¹"AFormat specifiers should be used instead of string concatenation.(€­úÿÿÿÿHæRMAJORZ
+CODE_SMELL
+”squid:S2293ê"YReplace the type specification in this constructor call with the diamond operator ("<>").(¼ÓŸ²ùÿÿÿÿ8ÁĞŞô÷,HÃçRMINORZ
+CODE_SMELL
+_squid:S2129å
+"$Remove this "BigDecimal" constructor(‰İ¹Üüÿÿÿÿ8ÁĞŞô÷,HŒèRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineÈ"<This block of commented-out lines of code should be removed.(µ˜€¿8ÁĞŞô÷,HÒçRMAJORZ
+CODE_SMELL
+ˆsquid:S2293º"YReplace the type specification in this constructor call with the diamond operator ("<>").(çÍ·¾HäRMINORZ
+CODE_SMELL
+Zsquid:S2129ä
+"$Remove this "BigDecimal" constructor(Œ ®²8ÁĞŞô÷,HŠèRMAJORZ
+CODE_SMELL
+Usquid:S2111û
+"!Use "BigDecimal.valueOf" instead.(Á§•¿şÿÿÿÿ8ÁĞŞô÷,H…èRMAJORZBUG
+squid:CommentedOutCodeLine³"<This block of commented-out lines of code should be removed.(äÄœµùÿÿÿÿH›åRMAJORZ
+CODE_SMELL
+usquid:S3457¸"AFormat specifiers should be used instead of string concatenation.(å¡ÔÉùÿÿÿÿHÆåRMAJORZ
+CODE_SMELL
+zsquid:CommentedOutCodeLine®"<This block of commented-out lines of code should be removed.(ßŸø½H»æRMAJORZ
+CODE_SMELL
+s
+squid:S106Á
+"9Replace this use of System.out or System.err by a logger.(¨ı’óşÿÿÿÿ8ÁĞŞô÷,HÙçRMAJORZ
+CODE_SMELL
+|squid:S3457€"AFormat specifiers should be used instead of string concatenation.(†Üÿÿÿÿÿ8ÁĞŞô÷,HßèRMAJORZ
+CODE_SMELL
+psquid:S3457È"AFormat specifiers should be used instead of string concatenation.(üâ»HªæRMAJORZ
+CODE_SMELL
+wsquid:S3457Ô	"AFormat specifiers should be used instead of string concatenation.(¼ë‚8ÁĞŞô÷,H´èRMAJORZ
+CODE_SMELL
+squid:S2077Ä"RUse a variable binding mechanism to construct this query instead of concatenation.(«ë®÷8ÁĞŞô÷,HÔæRCRITICALZVULNERABILITY
+fsquid:S2629Ï"7Use the built-in formatting to construct this argument.(â›ÑHºåRMAJORZ
+CODE_SMELL
+‹squid:S1192v"NDefine a constant instead of duplicating this literal "O_TERMINAL_ID" 4 times.(áÙÑ üÿÿÿÿ8ÁĞŞô÷,HªçRCRITICALZ
+CODE_SMELL
+usquid:S3457Î"AFormat specifiers should be used instead of string concatenation.(çäÀ¤ùÿÿÿÿHÀäRMAJORZ
+CODE_SMELL
+msquid:S2629	"7Use the built-in formatting to construct this argument.(´«’¢8ÁĞŞô÷,HèæRMAJORZ
+CODE_SMELL
+wsquid:S3457¦	"AFormat specifiers should be used instead of string concatenation.(ç Úß8ÁĞŞô÷,H²èRMAJORZ
+CODE_SMELL
+|squid:S3457à"AFormat specifiers should be used instead of string concatenation.(Ä­š…ıÿÿÿÿ8ÁĞŞô÷,H¡èRMAJORZ
+CODE_SMELL
+rsquid:S2629†	"7Use the built-in formatting to construct this argument.(¡¸Ô—úÿÿÿÿ8ÁĞŞô÷,HåæRMAJORZ
+CODE_SMELL
+wsquid:S3457É"AFormat specifiers should be used instead of string concatenation.(‹©·Î8ÁĞŞô÷,HèRMAJORZ
+CODE_SMELL
+usquid:S3457—"AFormat specifiers should be used instead of string concatenation.(ãÉÍ®øÿÿÿÿHÁäRMAJORZ
+CODE_SMELL
+’squid:S1192·"YDefine a constant instead of duplicating this literal "App Error Code from SP :" 4 times.(üâ»8ÁĞŞô÷,H•çRCRITICALZ
+CODE_SMELL
+esquid:S1066€"/Merge this if statement with the enclosing one.(¨ğ±Ï8ÁĞŞô÷,H¼çRMAJORZ
+CODE_SMELL
+osquid:S3457Ã"AFormat specifiers should be used instead of string concatenation.(¯¤ş5H™æRMAJORZ
+CODE_SMELL
+‘squid:S3776õ"SRefactor this method to reduce its Cognitive Complexity from 167 to the 15 allowed.(Öø¬Œÿÿÿÿÿ8ÁĞŞô÷,HëçRCRITICALZ
+CODE_SMELL
+ksquid:S2629Â"7Use the built-in formatting to construct this argument.(”çÜ˜ÿÿÿÿÿHİåRMAJORZ
+CODE_SMELL
+Zsquid:S2129Ï"$Remove this "BigDecimal" constructor(ûÕÅ¸8ÁĞŞô÷,HèRMAJORZ
+CODE_SMELL
+msquid:S2629"7Use the built-in formatting to construct this argument.(¨»Éœ8ÁĞŞô÷,HûæRMAJORZ
+CODE_SMELL
+rsquid:S2629­
+"7Use the built-in formatting to construct this argument.(Ñ‡è²ùÿÿÿÿ8ÁĞŞô÷,HóæRMAJORZ
+CODE_SMELL
+|squid:S3457†	"AFormat specifiers should be used instead of string concatenation.(¡¸Ô—úÿÿÿÿ8ÁĞŞô÷,H«èRMAJORZ
+CODE_SMELL
+msquid:S2629Ç"7Use the built-in formatting to construct this argument.(İ‘®ã8ÁĞŞô÷,HÚæRMAJORZ
+CODE_SMELL
+wsquid:S3457é"AFormat specifiers should be used instead of string concatenation.(ê˜¾Ä8ÁĞŞô÷,HÛèRMAJORZ
+CODE_SMELL
+ysquid:S1854Ç	">Remove this useless assignment to local variable "tenObjList".(«„ï¨ûÿÿÿÿ8ÁĞŞô÷,HöçRMAJORZ
+CODE_SMELL
+squid:S1192Í"HDefine a constant instead of duplicating this literal "AC_NAME" 7 times.(æ¼â 8ÁĞŞô÷,H çRCRITICALZ
+CODE_SMELL
+Zsquid:S2129£	"$Remove this "BigDecimal" constructor(ˆÙÿû8ÁĞŞô÷,HèRMAJORZ
+CODE_SMELL
+Zsquid:S2129ÿ
+"$Remove this "BigDecimal" constructor(¤ßêş8ÁĞŞô÷,H‰èRMAJORZ
+CODE_SMELL
+€squid:CommentedOutCodeLine½"<This block of commented-out lines of code should be removed.(™ó§8ÁĞŞô÷,HÖçRMAJORZ
+CODE_SMELL
+ˆsquid:S00117µ
+"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(‚éŸÓ8ÁĞŞô÷,HúçRMINORZ
+CODE_SMELL
+dsquid:S1066æ"/Merge this if statement with the enclosing one.(ûÛı(8ÁĞŞô÷,H¾çRMAJORZ
+CODE_SMELL
+ˆsquid:S1192"KDefine a constant instead of duplicating this literal "O_RTM_FLAG" 4 times.(ñÄ³Œøÿÿÿÿ8ÁĞŞô÷,H«çRCRITICALZ
+CODE_SMELL
+jsquid:S1066É"/Merge this if statement with the enclosing one.(Š¼êÁıÿÿÿÿ8ÁĞŞô÷,H½çRMAJORZ
+CODE_SMELL
+|squid:S3457Ú"AFormat specifiers should be used instead of string concatenation.(Å¶§†ûÿÿÿÿ8ÁĞŞô÷,H•èRMAJORZ
+CODE_SMELL
+‰squid:S1192ÿ"PDefine a constant instead of duplicating this literal "EMI_MAX_TRN_CAP" 3 times.(¿¹æ®8ÁĞŞô÷,H’çRCRITICALZ
+CODE_SMELL
+wsquid:S3457á"AFormat specifiers should be used instead of string concatenation.(©¿²ñ8ÁĞŞô÷,H—èRMAJORZ
+CODE_SMELL
+|squid:S3457â"AFormat specifiers should be used instead of string concatenation.(å¡ÔÉùÿÿÿÿ8ÁĞŞô÷,H£èRMAJORZ
+CODE_SMELL
+Psquid:S2111ÿ
+"!Use "BigDecimal.valueOf" instead.(¤ßêş8ÁĞŞô÷,H‡èRMAJORZBUG
+†squid:CommentedOutCodeLineî
+"<This block of commented-out lines of code should be removed.(€ë¼»ùÿÿÿÿ8ÁĞŞô÷,HÏçRMAJORZ
+CODE_SMELL
+Œsquid:S1192|"ODefine a constant instead of duplicating this literal "O_BATCH_NUMBER" 4 times.(«ˆ¹şÿÿÿÿ8ÁĞŞô÷,H­çRCRITICALZ
+CODE_SMELL
+ksquid:S2629»"7Use the built-in formatting to construct this argument.(Èó”ŞşÿÿÿÿHóãRMAJORZ
+CODE_SMELL
+rsquid:S2629ş
+"7Use the built-in formatting to construct this argument.(“ÿ™¨ùÿÿÿÿ8ÁĞŞô÷,HöæRMAJORZ
+CODE_SMELL
+fsquid:S2629ç"7Use the built-in formatting to construct this argument.(ğï´áHøåRMAJORZ
+CODE_SMELL
+wsquid:S3457ö"AFormat specifiers should be used instead of string concatenation.(ñ»Ğ8ÁĞŞô÷,H¥èRMAJORZ
+CODE_SMELL
+msquid:S2629ñ	"7Use the built-in formatting to construct this argument.(î†ÎĞ8ÁĞŞô÷,HïæRMAJORZ
+CODE_SMELL
+jsquid:S1066û"/Merge this if statement with the enclosing one.(‡ÓĞĞüÿÿÿÿ8ÁĞŞô÷,H¹çRMAJORZ
+CODE_SMELL
+esquid:S2629Ã"7Use the built-in formatting to construct this argument.(¯¤ş5H‡æRMAJORZ
+CODE_SMELL
+squid:S1192„"PDefine a constant instead of duplicating this literal "C_HEALTH_OBJECT" 4 times.(‰ß¼Çùÿÿÿÿ8ÁĞŞô÷,H¡çRCRITICALZ
+CODE_SMELL
+ysquid:CommentedOutCodeLineº"<This block of commented-out lines of code should be removed.(Ù›XH‡äRMAJORZ
+CODE_SMELL
+vsquid:S3457Ü"AFormat specifiers should be used instead of string concatenation.(Úá»8ÁĞŞô÷,H–èRMAJORZ
+CODE_SMELL
+rsquid:S2629§
+"7Use the built-in formatting to construct this argument.(­¾ÖÊüÿÿÿÿ8ÁĞŞô÷,HğæRMAJORZ
+CODE_SMELL
+wsquid:S3457ğ
+"AFormat specifiers should be used instead of string concatenation.(†Èİù8ÁĞŞô÷,HÀèRMAJORZ
+CODE_SMELL
+|squid:S3457¶"AFormat specifiers should be used instead of string concatenation.(ßî¨Æûÿÿÿÿ8ÁĞŞô÷,HÙèRMAJORZ
+CODE_SMELL
+usquid:S3457Í"AFormat specifiers should be used instead of string concatenation.(äñÍ”ùÿÿÿÿHšåRMAJORZ
+CODE_SMELL
+s
+squid:S106Î
+"9Replace this use of System.out or System.err by a logger.(®ÚİÓşÿÿÿÿ8ÁĞŞô÷,HáçRMAJORZ
+CODE_SMELL
+|squid:S3457Á"AFormat specifiers should be used instead of string concatenation.(è­÷ûÿÿÿÿ8ÁĞŞô÷,HÚèRMAJORZ
+CODE_SMELL
+|squid:S3457è"AFormat specifiers should be used instead of string concatenation.(©ğÙÃûÿÿÿÿ8ÁĞŞô÷,H¤èRMAJORZ
+CODE_SMELL
+ksquid:S2629Í"7Use the built-in formatting to construct this argument.(äñÍ”ùÿÿÿÿH°äRMAJORZ
+CODE_SMELL
+osquid:S3457²"AFormat specifiers should be used instead of string concatenation.(¯¤ş5HËäRMAJORZ
+CODE_SMELL
+|squid:S3457À"AFormat specifiers should be used instead of string concatenation.(òê–Åøÿÿÿÿ8ÁĞŞô÷,HÊèRMAJORZ
+CODE_SMELL
+msquid:S2629®
+"7Use the built-in formatting to construct this argument.(şÆİş8ÁĞŞô÷,HôæRMAJORZ
+CODE_SMELL
+squid:CommentedOutCodeLineò"<This block of commented-out lines of code should be removed.(¥‰ïÓ8ÁĞŞô÷,HÓçRMAJORZ
+CODE_SMELL
+lsquid:S1197Ú"8Move the array designator from the variable to the type.(Ó“„øÿÿÿÿHÖåRMINORZ
+CODE_SMELL
+msquid:S2629ï
+"7Use the built-in formatting to construct this argument.(×„½8ÁĞŞô÷,HõæRMAJORZ
+CODE_SMELL
+Psquid:S2111£	"!Use "BigDecimal.valueOf" instead.(ˆÙÿû8ÁĞŞô÷,HşçRMAJORZBUG
+vsquid:S3457‰"AFormat specifiers should be used instead of string concatenation.(Ò¶šs8ÁĞŞô÷,HÄèRMAJORZ
+CODE_SMELL
+lsquid:S2629Œ"7Use the built-in formatting to construct this argument.(½„ÄL8ÁĞŞô÷,HˆçRMAJORZ
+CODE_SMELL
+šsquid:S1192»
+"\Define a constant instead of duplicating this literal "***************************" 3 times.(®ÚİÓşÿÿÿÿ8ÁĞŞô÷,HçRCRITICALZ
+CODE_SMELL
+wsquid:S3457"AFormat specifiers should be used instead of string concatenation.(•ÔÄ8ÁĞŞô÷,HÈèRMAJORZ
+CODE_SMELL
+squid:S1192£"RDefine a constant instead of duplicating this literal "C_CASHBACK_DETAIL" 3 times.(Ğ­üıÿÿÿÿ8ÁĞŞô÷,H´çRCRITICALZ
+CODE_SMELL
+msquid:S2629ƒ	"7Use the built-in formatting to construct this argument.(ê­Ä­8ÁĞŞô÷,HäæRMAJORZ
+CODE_SMELL
+‡squid:S1192—"NDefine a constant instead of duplicating this literal "I_APP_NAME: [" 3 times.(¶Ö¼ø8ÁĞŞô÷,H¬çRCRITICALZ
+CODE_SMELL
+msquid:S2629è	"7Use the built-in formatting to construct this argument.(Ğ¦å”8ÁĞŞô÷,HìæRMAJORZ
+CODE_SMELL
+fsquid:S2629Ÿ"7Use the built-in formatting to construct this argument.(¶Ö¼øHöäRMAJORZ
+CODE_SMELL
+psquid:S3457Ÿ"AFormat specifiers should be used instead of string concatenation.(¶Ö¼øHÚåRMAJORZ
+CODE_SMELL
+wsquid:S1126‹
+"AReplace this if-then-else statement by a single return statement.(šÇô„8ÁĞŞô÷,HççRMINORZ
+CODE_SMELL
+rsquid:S2629©"7Use the built-in formatting to construct this argument.(Û‘Ş¬ùÿÿÿÿ8ÁĞŞô÷,HáæRMAJORZ
+CODE_SMELL
+…squid:S1192º"LDefine a constant instead of duplicating this literal "TXN_TIMEOUT" 4 times.(İ¢˜™8ÁĞŞô÷,H™çRCRITICALZ
+CODE_SMELL
+ˆsquid:S1192s"KDefine a constant instead of duplicating this literal "I_APP_NAME" 6 times.(ÉÈ÷ƒùÿÿÿÿ8ÁĞŞô÷,H¤çRCRITICALZ
+CODE_SMELL
+usquid:S3457Æ"AFormat specifiers should be used instead of string concatenation.(œÆ÷¦ıÿÿÿÿH²åRMAJORZ
+CODE_SMELL
+jsquid:S1066Ó"/Merge this if statement with the enclosing one.(ÀôÆôÿÿÿÿÿ8‘‹ñô÷,HìèRMAJORZ
+CODE_SMELL

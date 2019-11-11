@@ -1,0 +1,185 @@
+package com.awl.tch.externalentityImpl;
+
+import java.math.BigDecimal;
+import java.rmi.RemoteException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.tempuri.BankStatus_info;
+import org.tempuri.Pos_data;
+
+import com.awl.tch.bean.BillingObj;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternalEntityBridge;
+import com.awl.tch.bridge.ExternlaEntityInterface;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.EgrassReportDTO;
+import com.awl.tch.util.AppConfigMaster;
+import com.egras.constant.EgrasEnumConstant;
+import com.egras.entity.SaveStatus;
+import com.egras.exception.EGRASServiceException;
+
+@Service(Constants.TCH_EGRAS_BRIDGE)
+public class EgrasBridgeServiceImpl extends ExternalEntityBridge implements ExternlaEntityInterface<Payment>{
+
+	private static Logger logger = LoggerFactory.getLogger(EgrasBridgeServiceImpl.class);
+	
+	@Override
+	public Payment updateStatus(Payment input) throws TCHServiceException {
+		EgrassReportDTO egrasReportDTO = new EgrassReportDTO();
+		String status = "";
+		SaveStatus saveStatus = new SaveStatus();
+		try {
+			saveStatus.setBankCode(Constants.BANKCODE);
+			saveStatus.setUserId(Constants.USERID);
+			saveStatus.setPassword(Constants.PASS);
+			saveStatus.setGrn(input.getReferenceValue());
+			
+			saveStatus.setPaid_Amount(String.valueOf(new BigDecimal(input.getOriginalAmount()).movePointLeft(2).intValue()));
+			saveStatus.setCIN(input.getRetrivalRefNumber());
+			saveStatus.setBankRefNumber(input.getRetrivalRefNumber());
+			saveStatus.setTran_Status(Constants.STATUS_S);
+			
+			SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd");
+			SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
+			try {
+				saveStatus.setPaidDate(sdf1.format(sdf.parse(input.getDate())));
+			} catch (ParseException e1) {
+				logger.debug("Exception in parsing :",e1);
+			}
+			
+			//save in report dto
+			egrasReportDTO.setGrn(input.getReferenceValue());
+			egrasReportDTO.setDateOfProcessing(saveStatus.getPaidDate());
+			egrasReportDTO.setFundReceivedDate(saveStatus.getPaidDate());
+			egrasReportDTO.setPosReference(saveStatus.getCIN());
+			
+			sdf=null;
+			sdf1=null;
+		
+			try {
+				// call the web service to update status
+				BankStatus_info info = egrasAdaptor.updateStatus(saveStatus,AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_URL));
+				if(info!=null){
+					if(EgrasEnumConstant.STATUS.equals(info.getSuccess())){
+						status=Constants.TCH_SUCCESS;
+					}else{
+						throw new TCHServiceException("EG-04", info.getError()+"|" + info.getSuccess());
+					}
+				}
+			} catch (RemoteException e) {
+				logger.debug("Exception ",e);
+				throw new TCHServiceException("EG-03", "INTERNAL ERROR");
+			}
+		} catch (EGRASServiceException e1) {
+			status=Constants.TCH_UNSUCCESS;
+			throw new TCHServiceException(e1.getErrorCode(), e1.getErrorMessage(), e1.getResponseCode());
+		}finally{
+			saveEnqAck(input, status);
+			//save the information in Egras report for making the report
+			if(Constants.TCH_SUCCESS.equals(status)){
+				logger.debug("GRN [" +input.getReferenceValue()+"]");
+				logger.debug("RRN [" +input.getRetrivalRefNumber()+"]");
+				logger.debug("Amount [" +input.getOriginalAmount()+"]");
+				logger.debug("paid Date [" +saveStatus.getPaidDate()+"]");
+				try {
+					Map<String, String> result = egrasAdaptor.getNontrasoryInfo(input.getReferenceValue(), input.getRetrivalRefNumber(), input.getOriginalAmount(),
+							saveStatus.getPaidDate(), 'S', AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_URL));
+					for(String str : result.keySet()){
+						getMappingDTO(egrasReportDTO, result, str);
+					}
+				} catch (NumberFormatException | RemoteException e) {
+					logger.debug("Exception while invoking non trasory service :",e);
+				}
+				egrasReportDTO.setStatus("P"); // p stands for Pending
+			}else{
+				egrasReportDTO.setStatus("U"); // U stands for unsucess
+			}
+			egrasdao.update(egrasReportDTO);
+		}
+		return input;
+	}
+
+	@Override
+	public Payment getAmount(Payment input) throws TCHServiceException {
+		EgrassReportDTO egrasReportDTO = new EgrassReportDTO();
+		Pos_data posData = null;
+		try {
+			 posData = egrasAdaptor.getGRN(input.getReferenceValue(),AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_URL));
+			 
+			 if(EgrasEnumConstant.STATUS_SUCCESS.equals(posData.getStatus())){
+				 egrasReportDTO.setAmount(new BigDecimal(posData.getAmount()).movePointRight(2).toPlainString());
+				 egrasReportDTO.setGrn(posData.getGrn());
+				 egrasReportDTO.setRemitterName(posData.getName());
+				 egrasdao.save(egrasReportDTO);
+			 }else{
+				 throw new TCHServiceException("EG-04", posData.getStatus());
+			 }
+			 
+		} catch (RemoteException e2) {
+			logger.debug("Exception in get amount" ,e2);
+			throw new TCHServiceException("EG-03", "INTERNAL ERROR");
+		}
+		
+		input.setReferenceValue(posData.getGrn());
+		input.setOriginalAmount(new BigDecimal(posData.getAmount()).movePointRight(2).toPlainString());
+		
+		List<BillingObj> lstBillingEgras = new ArrayList<BillingObj>();
+		BillingObj eGrasBlg = new BillingObj();
+		eGrasBlg.setLabelName(AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_EGRAS_LABEL1));
+		eGrasBlg.setLabelValue(posData.getGrn());
+		lstBillingEgras.add(eGrasBlg);
+		eGrasBlg = new BillingObj();
+		
+		eGrasBlg.setLabelName(AppConfigMaster.getConfigValue(Constants.TCH_EGRAS, Constants.TCH_EGRAS_LABEL2));
+		eGrasBlg.setLabelValue(posData.getName());
+		lstBillingEgras.add(eGrasBlg);
+		BillingObj[] blgObjArr = new BillingObj[lstBillingEgras.size()];
+		input.setBillingObject(lstBillingEgras.toArray(blgObjArr)); // set billing object
+		return input;
+	}
+
+private void getMappingDTO(final EgrassReportDTO egrasDTO, Map<String, String> map, String key) {
+		
+		switch(key){
+		case EgrasEnumConstant.EGRAS_ACCOUNT6:
+			egrasDTO.setAccount_6(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT7:
+			egrasDTO.setAccount_7(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT8:
+			egrasDTO.setAccount_8(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT9:
+			egrasDTO.setAccount_9(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_ACCOUNT10:
+			egrasDTO.setAccount_10(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT10:
+			egrasDTO.setAmount_10(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT6:
+			egrasDTO.setAmount_6(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT7:
+			egrasDTO.setAmount_7(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT8:
+			egrasDTO.setAmount_8(map.get(key));
+			break;
+		case EgrasEnumConstant.EGRAS_AMOUNT9:
+			egrasDTO.setAmount_9(map.get(key));
+			break;
+		}
+	}
+
+}

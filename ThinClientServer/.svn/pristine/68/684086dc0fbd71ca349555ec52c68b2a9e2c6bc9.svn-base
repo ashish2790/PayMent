@@ -1,0 +1,208 @@
+package com.awl.tch.service;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
+import com.awl.tch.bean.Handshake;
+import com.awl.tch.bean.MenuObject;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.dao.HandshakeDaoImpl;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.iso8583.ISOHandshakePG;
+import com.awl.tch.model.HandshakeDTO;
+import com.awl.tch.tcp.TcpClient;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.ISOMessages;
+/**
+* <h1>Processing request parameter.</h1>
+* HandshakeServiceImpl program is used to set all
+* the business logic related to handshake , and if
+* all the business logic <tt>satisfy</tt> all the condition for getting 
+* response from switch then and then only appropriate response send.
+* 
+* <p>
+* In which request parameter must contain mandatory 
+* field as <tt>Terminal serial number</tt>,
+* base on which all the related information like <tt>client id</tt>,<tt>version number</tt>,
+* <tt>card ranges</tt>,<tt>flags</tt>,<tt>handshake version number</tt>, is going to
+* send as response object as <tt>json</tt> format.
+* 
+* <b>Note:</b> Business logic set as per the standard followed by WL.
+*
+* @author  Kunal Surana
+* @version 1.0
+* @since   2016-09-21
+*/
+@Service("handshakeService")
+public class HandshakeServiceImpl extends AbstractServiceImpl implements HandshakeService{
+
+	private static final Logger logger = LoggerFactory.getLogger(HandshakeServiceImpl.class);
+
+	@Autowired
+	@Qualifier("handshakeDao")
+	private HandshakeDaoImpl handshakeDao;
+
+	@Autowired
+	@Qualifier("tcpClient")
+	private TcpClient tcpClient;
+
+	@Autowired
+	MenuObjectServiceImpl menuService;
+	/**
+	   * Service the request received and add business logic as per standard of WL. 
+	   *
+	   * @param input Contains request in <tt>json</tt> format with mandatory field in it. 
+	   * @return <tt>Handshake</tt> if no error contain information for installation of terminal is response packet.
+	   * 							<p> if error present it contains only error related information.
+	   * @exception TCHServiceException On output error.
+	   * @see TCHServiceException
+	   */
+
+	@Override
+	public Handshake service(Handshake input) throws TCHServiceException {
+
+		String modelID = "";
+		String orgTerminalSerialNumber = "";
+
+		// For Stored Procedure
+		long existingId = 0L;
+		try {
+			orgTerminalSerialNumber=input.getTerminalSerialNumber().trim();
+			logger.info("Serial Number in Request :"+orgTerminalSerialNumber);
+			modelID =  orgTerminalSerialNumber.substring(0, 3);
+			input.setTerminalSerialNumber(orgTerminalSerialNumber); // changes as per discussion with Aji 9/9/2016
+			existingId = handshakeDao.setHandshakeDetails(input);
+			
+			/*
+			 * CHANGES TO INCLUDE MENU OBJECT
+			 */
+				
+				getMenu(input);
+			/*
+			 * END OF CHANGES TO INCLUDE MENU OBJECT 
+			 */
+			
+		} catch (TCHQueryException e) {
+			logger.error("Exception in handshake service :"+e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+		}
+		catch (Exception e) {
+			logger.error("Exception in handshake service :"+e.getMessage());
+			throw new TCHServiceException(ErrorConstants.TCH_H001, ErrorMaster.get(ErrorConstants.TCH_H001));
+		}
+		if(!(ErrorConstants.TCH_S999).equals(input.getDescFlag())){// as per discussion just to avoid session key change
+			doKeyExchange(input);
+
+			if(input.getResponseCode() == null)
+			{
+				throw new TCHServiceException(ErrorConstants.TCH_H002, ErrorMaster.get(ErrorConstants.TCH_H002));
+			}
+			if(input.getResponseCode()!=null && !"00".equals( input.getResponseCode() ))
+			{
+				throw new TCHServiceException(ErrorConstants.TCH_H003,  ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode()));
+			}
+		}
+		
+		
+		
+		
+		try{
+			/*String binValues[] = null;
+			input.setBinValue(binValues);*/
+			
+			if(!isNewVersionPresent(input.getTerminalSerialNumber())){
+				logger.debug("Older version before 141117 hence not setting host id");
+				input.setHostId(null);
+			}
+			
+			input.setTerminalModel(modelID);
+			logger.info("Handshake Output :"+input.toString());
+			if(existingId != 0)
+			{
+				HandshakeDTO hskDTO =  input.createDTO();
+				hskDTO.setId(existingId);
+				hskDTO.setRtmFlag(0);
+				handshakeDao.update(hskDTO);
+			}
+			else
+				handshakeDao.save(input.createDTO());	
+		}catch(Exception e)
+		{
+			logger.error("Exception in handshake service :"+e.getMessage());
+			throw new TCHServiceException(ErrorConstants.TCH_H001, ErrorMaster.get(ErrorConstants.TCH_H001));
+		}
+		//updating open pcr flag
+		handshakeDao.updateOpenPCR(input);
+		input.setTerminalSerialNumber(orgTerminalSerialNumber);
+		input.setEdcAppVersion(null);
+		input.setDescFlag(null);
+		input.setHealthObject(null);
+		input.setBranchName(null);
+		logger.debug("Key exchange value :" + input.getKeyExchange());
+		if(Constants.TCH_Y.equals(input.getKeyExchange())){
+			input.setCardObj(null);
+			input.setBillingObj(null);
+			input.setBinValue(null);
+			input.setMenuObj(null);
+			input.setFlags(null);
+			input.setHostId(null);
+		}
+		
+		
+		return input;
+	}
+	/**
+	   * Do key exchange with switch and get response and store it in response.
+	   *<p>
+	   * This method get the request in <tt>Handshake</tt> object and based on the 
+	   * request parameter present it will make the <tt>ISO800</tt> for the sending it to switch.
+	   * After receiving response from switch <tt>ISO810</tt> , it will going to parse it in string format 
+	   * and store it is response object.
+	   *
+	   * @param input type of this parameter must be <tt>Handshake</tt> 
+	   */
+	public void doKeyExchange(Handshake input) throws TCHServiceException
+	{
+		logger.debug("Sending request to th client");
+		String str = tcpClient.send(ISOHandshakePG.keyExchange(input),input.getBankCode());
+		ISOHandshakePG.parseKeyExchangeResponse(str,input);
+	}
+
+	/**
+	 * Get menu object hierarchy from TCH db and set it in handshake response
+	 * @param request
+	 * @author ashish.bhavsar
+	 */
+	private void getMenu(final Handshake request){
+		logger.debug("set menu object");
+		try{
+			List<String> menuFlags = new ArrayList<String>();
+			List<String> originalRequest = new ArrayList<String>(Arrays.asList(request.getFlags()));
+			List<String> enableMenu = request.getMenuEnableList();
+			List<MenuObject> listMenu = new  ArrayList<MenuObject>();
+			if(request.getFlags().length > 0){
+				for(String flagValue : request.getFlags()){
+					if(menuService.isMenuPresent(flagValue)){
+						menuFlags.add(flagValue); // get flag for which menu object present
+						 listMenu.addAll(Arrays.asList(menuService.getMenuList(flagValue, enableMenu.toArray(new String[enableMenu.size()]))));
+					}
+				}
+				// remove flags from handshake response for which menu object present
+				//originalRequest.removeAll(menuFlags);
+			}
+			request.setFlags(originalRequest.toArray(new String[originalRequest.size()]));
+			request.setMenuObj(listMenu.toArray(new MenuObject[listMenu.size()]));
+		}catch(Exception e){
+			logger.debug("Exception occue in setting menu ",e);
+		}
+	}
+}

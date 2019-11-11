@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aop-reference-model>
+<aop-project name="TCH_UPI"/>
+<aop-project name="MPOS"/>
+<aop-project name="SBIEPAY"/>
+<aop-project name="ThinClientServer"/>
+<aop-project name="EGRAS"/>
+<aop-project name="IRCTC"/>
+<aop-project name="GBSS"/>
+<aop-project name="BrandEMI"/>
+<aop-project name="AAB"/>
+</aop-reference-model>

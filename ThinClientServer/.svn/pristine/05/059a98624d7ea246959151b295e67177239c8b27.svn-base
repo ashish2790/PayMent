@@ -1,0 +1,524 @@
+package com.awl.tch.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+
+import com.aab.exception.AABServiceException;
+import com.aab.utility.AABExternalEntity;
+import com.awl.tch.bean.ExtraObject;
+import com.awl.tch.bean.FirstMenu;
+import com.awl.tch.bean.MenuObject;
+import com.awl.tch.bean.Payment;
+import com.awl.tch.bridge.ExternalEntityBridge;
+import com.awl.tch.constant.Constants;
+import com.awl.tch.constant.ErrorConstants;
+import com.awl.tch.controller.AbstractQR;
+import com.awl.tch.exceptions.TCHQueryException;
+import com.awl.tch.exceptions.TCHServiceException;
+import com.awl.tch.model.PaymentAmexDTO;
+import com.awl.tch.model.PaymentDTO;
+import com.awl.tch.model.SbiepayDTO;
+import com.awl.tch.model.TerminalParameterDTO;
+import com.awl.tch.model.UtilityDTO;
+import com.awl.tch.util.ErrorMaster;
+import com.awl.tch.util.ISOMessages;
+import com.awl.tch.validator.ISOPaymentValidator;
+import com.tch.irctc.model.IrctcCacheObject;
+
+/**
+* <h1>Processing request parameter.</h1>
+* SaleServiceImpl program is used to set all
+* the business logic related to sale transaction , and if
+* all the business logic <tt>satisfy</tt> all the condition for getting 
+* response from switch then and then only appropriate response send.
+* 
+* <p>
+* In which request parameter must contain mandatory 
+* field as <tt>Terminal serial number</tt>,
+* base on which all the related information like <tt>client id</tt>,
+* <tt>MID</tt>,<tt>TID</tt> is going to
+* send as response object as <tt>json</tt> format.
+* 
+* <b>Note:</b> Business logic set as per the standard followed by WL.
+*
+* @author  Ashish Bhavsar
+* @version 1.0
+* @since   2016-09-21
+*/
+
+@Service(Constants.TCH_SALE_SERVICE)
+public class SaleServiceImpl extends AbstractQR<Payment> implements SaleService{
+
+	private static final Logger logger  = LoggerFactory.getLogger(SaleServiceImpl.class);
+	
+	/*@Autowired
+	@Qualifier("terminalhardwareParameterDao")
+	TerminalHardwareParameterDaoImpl terminalHardwareParameterDao;*/
+	
+	/**
+	   * Service the request received and add business logic as per standard of WL.
+	   *
+	   * @param input Contains request in <tt>json</tt> format with mandatory field in it. 
+	   * @return <tt>Payment</tt> if no error contain response send with appropriate response code and 
+	   * 							all fields which need to be print on charge slip.
+	   * 							And success response is saved in DB.
+	   * 							<p> if error present it contains only error related information <tt>error code</tt>
+	   * 								<tt> error message</tt>.
+	   * @exception TCHServiceException On output error.
+	   * @see TCHServiceException
+	   */
+	
+	@Override
+	public Payment service(Payment input) throws TCHServiceException{
+		
+		logger.debug("Entering in payment service");
+		List<TerminalParameterDTO> listTermParamDto;
+		
+		// validate fields in request packet for length and data type only
+		ISOPaymentValidator.validate(input);
+		
+		 // First check for PCR flag is yes or not and then proceed further for actual transaction.
+		checkForPcrFlag(input);
+		checkSU99(input);
+		if(!Constants.TCH_Y.equals(input.getSaleOfflineFlag())){ // check for convert to INR transaction
+			// condition for sale_ack 
+			if(Constants.TCH_SALE_ACK.equalsIgnoreCase(input.getDecisionFlag())){
+				if(saleAckTransaction(input))
+					return input;
+			}
+			/// end of sale ACK
+			try {
+				listTermParamDto = paymentSaleDao.getTerminalParameter1(input);
+			} catch (TCHQueryException e) {
+				logger.debug("Exception getting values for terminal parameter :" + e.getMessage());
+				throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+			}
+			
+			if(listTermParamDto != null){
+				if(!ISOPaymentValidator.binSpecificParameterWithValidation(input, listTermParamDto)){
+					throw new TCHServiceException(ErrorConstants.TCH_S011, ErrorMaster.get(ErrorConstants.TCH_S011)); // Card not accepted , bin value error
+				}
+			}
+			if(!ISOPaymentValidator.expiryDateValidation(input)){
+				throw new TCHServiceException(ErrorConstants.TCH_S012, ErrorMaster.get(ErrorConstants.TCH_S012)); // Card expired
+			}
+			if(!ISOPaymentValidator.nonZeroAmount(input)){
+				throw new TCHServiceException(ErrorConstants.TCH_S013, ErrorMaster.get(ErrorConstants.TCH_S013)); // nonzero or Negative value check
+			}
+			
+			// Setting card entry mode
+			getCardEntryMode(input);
+			
+			// Setting account type
+			getAccountType(input);
+		
+			// Condition for EMI sale
+			
+			Payment p = getEmiInfo(input);
+			if(p != null){
+				if(!Constants.TCH_Y.equals(input.getNormaltxn()))
+				return p;
+			}
+			// end of the EMI sale condition
+			
+			//DCC trasaction check and if yes
+			if(!Constants.TCH_EMI_SALE.equals(input.getDecisionFlag())){
+				if(Constants.TCH_PROMT_N_PROC.equals(input.getDecisionFlag())|| Constants.TCH_DCC_SALE.equals(input.getDecisionFlag()) || Constants.TCH_PROC_N_PROMT.equals(input.getDecisionFlag())){
+					input.setIsoDCCFlag(Constants.TCH_DCC_SALE);
+					input.setDecisionFlag(null);
+				}else {
+					if(!Constants.TCH_DCCCAN.equals(input.getDecisionFlag())){
+						logger.debug("dcc flag : " +input.getDccTransactionFlag() );
+						if(Constants.TCH_YES.equals(input.getDccTransactionFlag())){
+							Map<String, String> m = getEMIDCCFlag(input.getTerminalSerialNumber().trim());
+							if(m!=null){
+								if(Constants.TCH_YES.equals(m.get(Constants.TCH_PROMT_N_PROC))){
+									input.setDecisionFlag(Constants.TCH_PROMT_N_PROC); // edc will take decision 
+								}else{
+									input.setDecisionFlag(Constants.TCH_PROC_N_PROMT); // by default DCC approved
+								}
+								getConversionEnquiryInfo(input);
+								//getOriginalAmountInPrecision(input);
+								//getDccAmountInPrecision(input);
+								if(input.getRetrivalRefNumber() != null)
+									return input;
+							}
+						}
+					}else{
+						input.setIsoDCCFlag(null);
+						input.setDecisionFlag(null);
+					}
+				}
+			}
+			// end of DCC trasaction check and if yes
+		
+			logger.debug("Packet transfer to switch");
+				sendToSwitch(input, Constants.TCH_REQUEST_SALE);
+			logger.debug("Response from switch");
+		}else{
+			// Setting card entry mode
+			getCardEntryMode(input);
+			// Setting account type
+			getAccountType(input);
+			logger.debug("Packet transfer to switch for offline sale");
+			sendToSwitch(input, Constants.TCH_REQUEST_SALE_OFFLINE);
+			input.setDecisionFlag(null);
+			logger.debug("Response from switch for offline sale");
+		}
+		
+		input.setExtraInfo(getExtraInfo(input));//Changes made by Priyanka Gawas on 11-09-2017
+		logger.debug("Locking request in DB");
+		
+		if(input.getSeNumber() != null){
+			logger.debug("Se number present");
+			PaymentAmexDTO paymentDto = input.getPaymentAmexDto();
+			paymentDto.setRequestType(Constants.TCH_REQUEST_SALE);
+			paymentDto.setBankCode(Constants.TCH_PAYMENT_00066);
+			if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode()))	paymentDto.setStatus(Constants.TCH_SUCCESS);
+			else paymentDto.setStatus(Constants.TCH_UNSUCCESS);
+			paymentAmexDao.save(paymentDto);
+		}else {
+			logger.debug("Se number missing");
+			PaymentDTO paymentDto = input.getPaymentDTO();
+			if (input.getEmiIndicator()!=null && !input.getEmiIndicator().isEmpty()){
+				paymentDto.setRequestType(Constants.TCH_REQUEST_SALE_EMI);
+			}
+			else{
+				paymentDto.setRequestType(Constants.TCH_REQUEST_SALE);
+			}
+			
+			if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode()))	paymentDto.setStatus(Constants.TCH_SUCCESS);
+			else paymentDto.setStatus(Constants.TCH_UNSUCCESS);
+			paymentSaleDao.save(paymentDto);
+		}
+		
+		logger.debug("Request locked");
+			
+		getOriginalAmountInPrecision(input);
+		/*
+		 * External utility related changes 16/01/2017	
+		 */
+		if(input.getAppName() != null)
+			updateToBillingSystem(input);
+		/*
+		 * External utility related changes\
+		 */
+		if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+			
+			error82(input);
+			if(ErrorConstants.TCH_S999.equals(input.getDecisionFlag())){
+				logger.debug("Exception from switch with error code : [" +input.getResponseCode()+"]");
+				logger.debug("Setting s-999 as PCR raised");
+				throw new TCHServiceException(ErrorConstants.TCH_S999,  ErrorMaster.get(ErrorConstants.TCH_S999),input.getResponseCode(), input.getIssuerField55());
+			}
+			else
+				throw new TCHServiceException(ErrorConstants.TCH_S014,  ISOMessages.getSpecificMessageBasedOnResponseCode(input.getResponseCode()) , input.getResponseCode(), input.getIssuerField55()); // if getting field 55
+		}
+		
+		logger.debug("Exiting in payment service");
+		
+		//Setting null for parameter need to be absent in response
+		
+		setNull(input);
+		return input;	
+	}
+	
+	private void setFailureStatusToAxisEpay(final Payment input) throws TCHServiceException{
+
+		logger.info("inside setFailureStatusToAxisEpay ");
+		logger.debug("App name :[" + input.getAppName().trim()+"]");
+		logger.debug("Reference value :["+input.getReferenceValue()+"]");
+		// setting false value in RRN for failure sale trsanction
+		input.setRetrivalRefNumber("false");
+		logger.debug("Acknowledment id ["+input.getRetrivalRefNumber()+"]");
+		
+		try {
+			HashMap<String, String> uDto = enquiryDaoImpl.getUtilityInfo(input.getAppName().trim());
+			if(uDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_A004, ErrorMaster.get(ErrorConstants.TCH_A004));
+			}
+			logger.debug("Fetched url from DB ->" + uDto.get(Constants.TCH_URL));
+			input.setUrl(uDto.get(Constants.TCH_URL));
+			axisEpayService.sendFailure(input);
+		} catch (TCHQueryException e) {
+			logger.debug("Exception :" + e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+	}
+	
+	private void setFailureStatusToAAB(final Payment input) throws TCHServiceException{
+
+		logger.info("inside setFailureStatusToAAB ");
+		logger.debug("App name :[" + input.getAppName().trim()+"]");
+		logger.debug("Reference value :["+input.getReferenceValue()+"]");
+		// setting false value in RRN for failure sale trsanction
+		input.setRetrivalRefNumber("false");
+		logger.debug("Acknowledment id ["+input.getRetrivalRefNumber()+"]");
+		
+		try {
+			UtilityDTO uDto = enquiryDaoImpl.getUtilityDetailInfo(input.getAppName().trim());
+			if(uDto == null){
+				throw new TCHServiceException(ErrorConstants.TCH_A004, ErrorMaster.get(ErrorConstants.TCH_A004));
+			}
+			logger.debug("Fetched url from DB ->" +uDto.getUrl());
+			input.setUrl(uDto.getUrl());
+			
+			try{
+				input.setOriginalAmount(AABExternalEntity.setFailureStatus(input.getBranchCode(), input.getReferenceValue(), input.getRetrivalRefNumber(), uDto.getUrl(), input.getBinNumber(), input.getLastFourDigitValue()));
+			} catch (AABServiceException e) {
+				throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage(), e.getResponseCode());
+			}
+			//UtilityExternalEntityHelper.setFailureStatus(input, getExternalEntityService(input.getAppName()));
+		} catch (TCHQueryException e) {
+			logger.debug("Exception :" + e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+		}
+	}
+	private Payment getEmiInfo(final Payment input) throws TCHServiceException{
+		if(!Constants.TCH_DCC_SALE.equals(input.getDecisionFlag())){
+			if(Constants.TCH_CANCELLED.equals(input.getDecisionFlag())){
+				input.setEmiObject(null);
+			}else if(Constants.TCH_EMI_SALE.equals(input.getDecisionFlag()) || Constants.TCH_BRDSALE.equals(input.getDecisionFlag()) || "S-999".equals(input.getDecisionFlag())){ // TCH_BRDSALE condition added for brandemi
+				if(input.getEmiObject() == null && !"S-999".equals(input.getDecisionFlag())){
+					throw new TCHServiceException(ErrorConstants.TCH_S803, ErrorMaster.get(ErrorConstants.TCH_S803));
+				}
+				if(input.getEmiObject().getProgramObject()!=null){
+					if(input.getEmiObject().getTenureObject()==null){
+						//return getEMIEnquiry(input);
+						try {
+							paymentSaleDao.getEMIEnquiry(input);// get tenure details
+							setNull(input);
+							return input;
+						} catch (TCHQueryException e) {
+							logger.debug("Exception in fetching details :" +e.getErrorMessage());
+							throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+						}
+					}else{
+						try {
+							paymentSaleDao.getEMIEnquiry(input);
+						} catch (TCHQueryException e) {
+							logger.debug("Exception in fetching details :" +e.getErrorMessage());
+							throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+						}
+					}
+				}
+			}else{
+				boolean binPresent = false;
+				Map<String, String> m = getEMIDCCFlag(input.getTerminalSerialNumber().trim());
+				if(m != null){
+					if("Y".equals(m.get(Constants.TCH_EMI_FLAG))){
+						try {
+							for(String str : paymentSaleDao.getEmiBin()){
+								if(input.getBinNumber().substring(0,6).equals(str)){
+									binPresent = true;
+									break;
+								}
+							}	
+						} catch (TCHQueryException e) {
+							logger.debug("Exception in getting EMI bin");
+							throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+						}
+						if(binPresent){
+							if(input.getEmiObject() == null){
+								//return getProgramEnquiry(input);
+								try {
+									paymentSaleDao.getEMIEnquiry(input); // get program details
+									if(Constants.TCH_Y.equals(input.getNormaltxn())){
+										logger.debug("continue with normal sale....");
+									}else{
+										setNull(input);
+										return input;
+									}
+								} catch (TCHQueryException e) {
+									logger.debug("Exception in fetching details :" +e.getErrorMessage());
+									throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+								}
+							}else{
+								throw new TCHServiceException(ErrorConstants.TCH_S802, ErrorMaster.get(ErrorConstants.TCH_S802));
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	protected boolean saleAckTransaction(final Payment input) throws TCHServiceException{
+		try {
+			logger.debug("Inside sale_ack condition");
+			PaymentDTO exstPaymentDTO = paymentSaleDao.getExistSaleParamter(input);
+			if(exstPaymentDTO != null){
+				BeanUtils.copyProperties(exstPaymentDTO, input);
+				input.setPaymentId(exstPaymentDTO.getPaymentId());
+				input.setBatchNumber(String.format("%06d", exstPaymentDTO.getBatchNumber()));
+				input.setAuthorizationId(exstPaymentDTO.getAuthorizationId());
+				input.setLastFourDigitValue(exstPaymentDTO.getLastFourDigitValue().toString());
+				logger.debug("Original transaction found pid :" +input.getPaymentId());
+				getOriginalAmountInPrecision(input);
+				if(exstPaymentDTO.getResponseCode() != null && Constants.TCH_SUCCESS_RESPONSE.equals(exstPaymentDTO.getResponseCode())){
+					logger.debug("Getting successful transaction ");
+					setNull(input);
+					return true;
+					} else {
+						logger.debug("generate reversal forcefully..");
+						throw new TCHServiceException(ErrorConstants.TCH_S014, ISOMessages.getSpecificMessageBasedOnResponseCode(exstPaymentDTO.getResponseCode()));
+					}
+				}else{
+					logger.debug("Original transaction not found");
+					input.setSaleAckWrong(Constants.TCH_Y);
+					throw new TCHServiceException(Constants.SACK_REJECT,"Exception in sale ack while not found orginal transaction and dont give response terminal");
+			}
+		} catch (TCHQueryException e) {
+			logger.debug(e.getMessage());
+			throw new TCHServiceException(e.getErrorCode(), ErrorMaster.get(e.getErrorCode()));
+		}
+	}
+	
+	
+	private void updateToBillingSystem(final Payment input) throws TCHServiceException{
+			switch (input.getAppName().trim()){
+			case Constants.TCH_AAB :
+				if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+					try{
+						setFailureStatusToAAB(input);
+					}catch(TCHServiceException e){
+						if(!"01".equals(e.getResponseCode())){
+							throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+						}
+					}
+				}
+				break;
+				
+			case Constants.TCH_AXIS_EPAY:
+				if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+					try{
+						setFailureStatusToAxisEpay(input);
+					}catch(TCHServiceException e){
+						if(!"00".equals(e.getResponseCode())){
+							throw new TCHServiceException(e.getErrorCode(), e.getErrorMessage());
+						}
+					}
+				}
+				break;
+			case Constants.TCH_EGRAS: 
+				break;
+			case Constants.TCH_SBIEPAY:
+				if(Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+					SbiepayDTO sbiDto = new SbiepayDTO();
+					sbiDto.setAtrn(input.getReferenceValue());
+					sbiDto.setStatus(Constants.TCH_SUCCESS);
+					sbiDto.setRrn(input.getRetrivalRefNumber());
+					if(input.getTime() != null)
+						sbiDto.setTransactionDate(input.getDate() + " " + new StringBuilder(input.getTime()).insert(2, ":").insert(5, ":").toString());
+					
+					sbiEpayDao.update(sbiDto);
+				}
+				break;
+			case Constants.TCH_IRCTC:
+				IrctcCacheObject cacheObject =  ExternalEntityBridge.irctcCache.get(input.getTerminalSerialNumber());
+				if(cacheObject != null && Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+					logger.debug("Storing information irctc cache");
+					cacheObject.setCardLabel(input.getCardLabel().substring(0,input.getCardLabel().indexOf(' ')).trim());
+					cacheObject.setInvoiceNumber(input.getInvoiceNumber());
+					cacheObject.setLast4Digit(input.getLastFourDigitValue());
+					cacheObject.setRrn(input.getRetrivalRefNumber());
+					cacheObject.setBankCode("SB");
+					cacheObject.setCardType("D");
+				}else if(!Constants.TCH_SUCCESS_RESPONSE.equals(input.getResponseCode())){
+					ExternalEntityBridge.irctcCache.remove(input.getRetrivalRefNumber());
+				}
+				break;
+			default : break;
+			}
+	}
+
+	@Override
+	public Payment serviceQR(Payment input) throws TCHServiceException {
+		logger.debug("inside qr request");
+		try {
+			input.setQrType(menuService.getMenuObjectValue(Constants.TCH_REQUEST_SALE, getMenuObjectArray(input)));
+			logger.debug("QR TYPE [ " +input.getQrType()+ "]");
+		} catch (Exception e1) {
+			logger.debug("Exception in fetching qr type",e1);
+			throw new TCHServiceException("QR-02", "INVALID INPUT");
+		}
+		try {
+			//set MID TID Bankcode
+			paymentSaleDao.getTerminalDetails(input);
+		} catch (TCHQueryException e) {
+			throw new TCHServiceException("QR-01","MAPPING NOT FOUND");
+		}
+		
+		switch(input.getDecisionFlag()!=null ? input.getDecisionFlag() : ""){
+		case Constants.TCH_QRACK:
+			input = qrAdaptor.checkStatus(input);	
+			break;
+		case Constants.TCH_QRCAN:
+			input = qrAdaptor.qrCancel(input);
+			break;
+		default:
+			input = qrAdaptor.getQRCodeString(input);
+		}
+		setNullQR(input);
+		return input;
+	}
+	
+	
+	
+	/**
+	 * Get menu object array from input selected menu object
+	 * @param input
+	 * @return
+	 */
+	private MenuObject[] getMenuObjectArray(final Payment input){
+		List<MenuObject> listMenu = new ArrayList<MenuObject>();
+		for(FirstMenu menu : input.getMenuobj()){
+			MenuObject m = new MenuObject();
+			m.setTableNumber(Integer.parseInt(menu.getTableNumberString()));
+			m.setCurrentTableCode(Integer.parseInt(menu.getCurrentTableCodeString()));
+			m.setNextTableCode(Integer.parseInt(menu.getNextTableCodeString()));
+			m.setHeaderName(menu.getHeaderName());
+			m.setDisplayName(menu.getDisplayName());
+			listMenu.add(m);
+		}
+		return listMenu.toArray(new MenuObject[listMenu.size()]);
+	}
+	//Changes made by Priyanka Gawas on 13-09-2017
+	/**
+	 * Get String extraInfo from input
+	 * @param input
+	 * @return
+	 */
+	private String getExtraInfo(final Payment input){
+		StringBuilder sb=new StringBuilder();
+		
+		if(input.getExtraDataObject() != null && input.getExtraDataObject().length > 0){
+			ExtraObject[] a=input.getExtraDataObject();
+			for (ExtraObject extraObject : a) {
+				if(extraObject!=null){
+				sb.append(extraObject.getExtraDataValue()+"~");
+				}
+			}
+			logger.info("Length of extra info :" + sb.length());
+			logger.info("Extra info :" + sb.substring(0,sb.length()-1));
+			if(sb.length()>100){
+				String finalExtraInfo=sb.substring(0,99);
+				return finalExtraInfo;
+			}else{
+				return sb.substring(0,sb.length()-1).toString();
+			}
+		}
+		return null;
+	}
+	
+}
+
+

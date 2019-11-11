@@ -1,0 +1,41 @@
+--------------------------------------------------------
+--  File created - Thursday-February-23-2017   
+--------------------------------------------------------
+DROP TABLE "TCH_HEALTH_OBJECT";
+--------------------------------------------------------
+--  DDL for Table TCH_HEALTH_OBJECT
+--------------------------------------------------------
+
+  CREATE TABLE "TCH_HEALTH_OBJECT" 
+   (	"SIM_NUMBER" VARCHAR2(15 BYTE), 
+	"IMEI_NUMBER" VARCHAR2(20 BYTE), 
+	"COMMON_MODE" VARCHAR2(5 BYTE), 
+	"DISPLAY_STAT" VARCHAR2(1 BYTE), 
+	"PRINT_STAT" VARCHAR2(1 BYTE), 
+	"MODEM_STAT" VARCHAR2(1 BYTE), 
+	"USER_PROC_TIME" NUMBER(5,0), 
+	"FAIL_TXN_TO_HOST" NUMBER(5,0), 
+	"IP_NUMBER" VARCHAR2(20 BYTE), 
+	"PORT_NUMBER" VARCHAR2(5 BYTE), 
+	"NAC_VAL" NUMBER(5,0), 
+	"TMS_IP" VARCHAR2(20 BYTE), 
+	"TMS_PORT" VARCHAR2(5 BYTE), 
+	"APN" VARCHAR2(32 BYTE), 
+	"RTM_FLAG" NUMBER(1,0), 
+	"TXN_TIMEOUT" NUMBER(5,0), 
+	"HO_ID" NUMBER, 
+	"MID" VARCHAR2(15 BYTE), 
+	"TID" VARCHAR2(8 BYTE), 
+	"CLIENT_ID" VARCHAR2(20 BYTE), 
+	"TERMINAL_SERIAL_NUMBER" VARCHAR2(20 BYTE), 
+	"ADDED_BY" VARCHAR2(50 BYTE)
+   ) ;
+--------------------------------------------------------
+--  Constraints for Table TCH_HEALTH_OBJECT
+--------------------------------------------------------
+
+  ALTER TABLE "TCH_HEALTH_OBJECT" MODIFY ("RTM_FLAG" NOT NULL ENABLE);
+  ALTER TABLE "TCH_HEALTH_OBJECT" MODIFY ("APN" NOT NULL ENABLE);
+  ALTER TABLE "TCH_HEALTH_OBJECT" MODIFY ("TMS_PORT" NOT NULL ENABLE);
+  ALTER TABLE "TCH_HEALTH_OBJECT" MODIFY ("TMS_IP" NOT NULL ENABLE);
+  ALTER TABLE "TCH_HEALTH_OBJECT" MODIFY ("TERMINAL_SERIAL_NUMBER" NOT NULL ENABLE);

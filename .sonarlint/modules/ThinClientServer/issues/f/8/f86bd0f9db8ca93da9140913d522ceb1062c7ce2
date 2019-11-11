@@ -1,0 +1,13 @@
+
+jsquid:S2629G"7Use the built-in formatting to construct this argument.(Œ¹ÖÂùÿÿÿÿHèØRMAJORZ
+CODE_SMELL
+osquid:S3457M"AFormat specifiers should be used instead of string concatenation.(‘¥¹ŒHìØRMAJORZ
+CODE_SMELL
+tsquid:S3457G"AFormat specifiers should be used instead of string concatenation.(Œ¹ÖÂùÿÿÿÿHéØRMAJORZ
+CODE_SMELL
+Žsquid:S00120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(¾Š´œüÿÿÿÿHíØRMINORZ
+CODE_SMELL
+nsquid:S34575"AFormat specifiers should be used instead of string concatenation.(ÂˆöHîØRMAJORZ
+CODE_SMELL
+dsquid:S26295"7Use the built-in formatting to construct this argument.(ÂˆöHðØRMAJORZ
+CODE_SMELL
